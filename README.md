@@ -11,7 +11,8 @@ $$c ::= x:=e ~|~ output ~e ~| ~skip~ | ~c;c ~|~ \texttt{if} ~e ~\texttt{then} ~c
 A simplified C-like language $Toy^C$ :
 $$e ::= x~|~ i ~|~ e_1 \oplus e_2 ~|~ null ~|~ *e ~|~ \&lv $$
 $$ lv ::= x ~|~ *lv$$
-$$ c ::= p(e_1, .., e_n) ~|~ lv :=e ~|~ output ~e ~|~ skip ~|~ c;c ~|~ \texttt{if} ~e ~\texttt{then} ~c ~\texttt{else} ~c ~| ~\texttt{while} ~e ~\texttt{do}~ c$$
+$$ c ::= p(e_1, .., e_n) ~|~ lv :=e ~|~ output ~e ~|~ skip ~|~ c;c $$
+$$~|~ \texttt{if} ~e ~\texttt{then} ~c ~\texttt{else} ~c ~| ~\texttt{while} ~e ~\texttt{do}~ c$$
 
 ### DOP attack
 Take DOP as an example where *IMP* is the source language, $Toy^C$ is the target language.
@@ -54,7 +55,7 @@ Take DOP as an example where *IMP* is the source language, $Toy^C$ is the target
 A DOP attack can be written as follows:
 $$A \triangleq main(x,y; a, b, d, r) ( a:=-x; b:=0; d:=0; r:=0; hole(x, y, d, r, a, b))$$
 
-We say $A \in WM(J)$, because $\neg \exist C^S. B(C^S[J]) \mapsto B(A[J\downarrow])$. there is no such a trace/output in the $J$ *IMP* program can be mapped to the trace/output in $J\downarrow$ in $Toy^C$ language.
+We say $A \in WM(J)$, because $\neg \exists C^S. B(C^S[J]) \mapsto B(A[J\downarrow])$. there is no such a trace/output in the $J$ *IMP* program can be mapped to the trace/output in $J\downarrow$ in $Toy^C$ language.
 
 #### Prove
 1. Prove the attack $A$ is an exploit.
@@ -90,9 +91,9 @@ Define a mitigation measure $M$ for the attack $A$: check and change all negativ
 ```
 
 We say a mitigation measure is effective for the attack $A$ iff
-$$\forall V, \exist C^S. B(C^S[V]) \mapsto B(A[V\downarrow_M])$$
+$$\forall V, \exists C^S. B(C^S[V]) \mapsto B(A[V\downarrow_M])$$
 or
-$$\forall V, \not \exist C^T. B(C^T[V\downarrow_M]) \mapsto B(A[V\downarrow])$$
+$$\forall V, \not \exists C^T. B(C^T[V\downarrow_M]) \mapsto B(A[V\downarrow])$$
 
 \downarrow_M is the compilation with the mitigation method. In other words, not matter how V is defined, the context $A$ is not an exploit. Here, $B(A[V\downarrow_M])$ has changed(output is different). 
 
@@ -101,4 +102,4 @@ $$ \{|x = x0 ∧ y = y0 ∧ r = r0 ∧ d = d0 ∧ a=-x0 ∧ b=0 |\}~ J\downarrow
 Intuitively, it says the original attack is unrealizable in newly compiled program.
 
 A type of attack, such as all DOP attacks, defined as $AT$, is a set of exploit $A$ while $A \in AT$. We say a mitigation measure is effective for a type of attack iff
-$$\forall V \in P, \forall A \in AT, \exist C^S. B(C^S[V]) \mapsto B(A[V\downarrow])$$
+$$\forall V \in P, \forall A \in AT, \exists C^S. B(C^S[V]) \mapsto B(A[V\downarrow])$$
