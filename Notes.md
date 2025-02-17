@@ -56,7 +56,7 @@ while(m--){
 ```
 Hyper logic triples:
 $$\{P\}\left[ \begin{array}{l} p \in C_- : p;C \\ l \in L_- : l\end{array} \right] 
-\left\{ \begin{array}{l} C^- |~\forall~l \in L, \exist~p \in C_- \\
+\left\{ \begin{array}{l} C^- |~ \forall ~l \in L, \exist~p \in C_- \\
 L^- |~C(p) = L(l) \end{array}\right\}$$
 
 Program state: $\sigma : Var \to Val$
