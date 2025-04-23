@@ -5,6 +5,17 @@
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{listings}
+\usepackage{ dsfont }
+\usepackage{xcolor} % for color customization
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  breaklines=true
+}
+
 \newcommand{\hspec}[1]{{\color{grown}\set{#1}}}
 \newcommand{\precond}[1]{\left{#1\right}}
 \newcommand{\hmid}[1]{\left[#1\right]}
@@ -18,14 +29,90 @@
 
 \maketitle
 
-\section{Introduction}
+\section{Examples}
+The hyper triple:
+\[
+\{ \top \} 
+\left[ \begin{array}{l} p \in P : C(p) \\ l \in L : l\end{array} \right] 
+\left\{ \begin{array}{l} V_C \\ V_L \end{array}
+\ \middle|\
+\begin{array}{l}
+~ \forall ~l \in L, \exists ~p \in P \\
+~ Q(p,l,V_C(p), V_L(l)) \end{array}\right\}
+\]
 
+\subsection{\texttt{if-else}}
+Given a Doppler attack language $L$:
 
-$$\{ ... \} 
-\left[ \begin{array}{l} p \in P : p;C \\ l \in L : l\end{array} \right] 
-\left\{ \begin{array}{l} V_P |~ \forall ~l \in L, \exists ~p \in P \\
-V_L |~ Q(p,l,V_P(p), V_L(l)) \end{array}\right\}$$
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~x=x+1 \\
+       &   & |~x=x+2 \\
+\end{array}
+\]
 
+and vulnerable program $C$:
+\begin{lstlisting}
+choose a
+if a then
+    x = x+1
+else
+    x = x+2
+\end{lstlisting}
+
+write the triple: 
+\[
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in P & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in P \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+where $P = \{a_\top, a_{\bot} \}$,
+
+\[
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \{a_\top, a_{\bot}\} & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L, \exists p \in P \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+Apply if-rule:
+
+\[
+\forall i \in \{\top, \bot\}, 
+\left\{  \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \{a_i\} & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L, \exists p \in P \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
 
 
 \end{document}
