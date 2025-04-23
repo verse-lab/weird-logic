@@ -1,0 +1,34 @@
+\documentclass[12pt]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\newcommand{\hspec}[1]{{\color{grown}\set{#1}}}
+\newcommand{\precond}[1]{\left{#1\right}}
+\newcommand{\hmid}[1]{\left[#1\right]}
+\newcommand{\hdummy}{\hspec{\!\!\!\!\begin{array}{c}\phantom{a}\\[2pt]\phantom{a}\end{array}\!\!\!\! \!}}
+
+% Title
+\title{Weird Logic}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+
+$$\{ ... \} 
+\left[ \begin{array}{l} p \in P : p;C \\ l \in L : l\end{array} \right] 
+\left\{ \begin{array}{l} V_P |~ \forall ~l \in L, \exists ~p \in P \\
+V_L |~ Q(p,l,V_P(p), V_L(l)) \end{array}\right\}$$
+
+
+
+\end{document}
+
+\bibliographystyle{plain}  % or another style like ieeetr, acm, etc.
+\bibliography{references}
