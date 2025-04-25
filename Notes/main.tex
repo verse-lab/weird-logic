@@ -33,11 +33,11 @@
 The hyper triple:
 \[
 \{ \top \} 
-\left[ \begin{array}{l} p \in P : C(p) \\ l \in L : l\end{array} \right] 
+\left[ \begin{array}{l} p \in \mathcal{P} : C(p) \\ l \in L : l\end{array} \right] 
 \left\{ \begin{array}{l} V_C \\ V_L \end{array}
 \ \middle|\
 \begin{array}{l}
-~ \forall ~l \in L, \exists ~p \in P \\
+~ \forall ~l \in L, \exists ~p \in \mathcal{P} \\
 ~ Q(p,l,V_C(p), V_L(l)) \end{array}\right\}
 \]
 
@@ -46,8 +46,8 @@ Given a Doppler attack language $L$:
 
 \[
 \begin{array}{rrl}
-     L & \rightarrow & ~~x=x+1 \\
-       &   & |~x=x+2 \\
+     L & \rightarrow & ~~S_1 : x=x+1 \\
+       &   & |~S_2 : x=x+2 \\
 \end{array}
 \]
 
@@ -65,13 +65,13 @@ write the triple:
 \left\{ \forall l, p, x(C(p)) = x(l) \right\}
 \left[
 \begin{array}{ll}
-p \in P & , ~C(p) \\
+p \in \mathcal{P} & , ~C(p) \\
 l \in L & , ~l
 \end{array}
 \right]
 \left\{
 \begin{array}{c}
-\forall l \in L , \exists p \in P \\
+\forall l \in L , \exists p \in \mathcal{P} \\
 x(C(p)) = x(l)
 \end{array}
 \right\}
@@ -84,12 +84,12 @@ where $P = \{a_\top, a_{\bot} \}$,
 \left[
 \begin{array}{ll}
 p \in \{a_\top, a_{\bot}\} & , ~C(p) \\
-l \in L & , ~l
+l \in S_1 \mid S_2 & , ~l
 \end{array}
 \right]
 \left\{
 \begin{array}{c}
-\forall l \in L, \exists p \in P \\
+\forall l \in L, \exists p \in \mathcal{P} \\
 x(C(p)) = x(l)
 \end{array}
 \right\}
@@ -97,23 +97,123 @@ x(C(p)) = x(l)
 
 Apply if-rule:
 
+
 \[
-\forall i \in \{\top, \bot\}, 
+\quad
+\frac{
+\begin{array}{c}
+L = L_1 \mid L_2 \\
+\{ P \} \ [C(\mathcal{P}) ; L_1] \ \{ Q\} ~~~~
+\{ P \} \ [C(\mathcal{P}) ; L_2] \ \{ Q\} \\
+\end{array}
+}{
+\{ P \} \ [ C(\mathcal{P}); L] \ \{ Q \}
+}
+\]
+
+Partition $S_1$ and $S_2$:
+
+\[
+\forall i \in \{1, 2\}, 
 \left\{  \forall l, p, x(C(p)) = x(l) \right\}
 \left[
 \begin{array}{ll}
-p \in \{a_i\} & , ~C(p) \\
-l \in L & , ~l
+p \in \{a_\top, a_\bot\} & , ~C(p) \\
+l \in S_i & , ~l
 \end{array}
 \right]
 \left\{
 \begin{array}{c}
-\forall l \in L, \exists p \in P \\
+\forall l \in S_i, \exists p \in \mathcal{P} \\
 x(C(p)) = x(l)
 \end{array}
 \right\}
 \]
 
+Apply Strength-rule:
+\[
+\quad
+\frac{
+\begin{array}{c}
+ \mathcal{P} \supseteq \mathcal{P}_1 ~~~~
+\{ P \} \ [C(\mathcal{P}_1) ; L_2] \ \{ Q\} \\
+\end{array}
+}{
+\{ P \} \ [ C(\mathcal{P}); L] \ \{ Q \}
+}
+\]
+
+Let $\mathcal{P}_1 = \{a_\top\}; \mathcal{P}_2 = \{a_\bot\}$, shrink $\mathcal{P}$:
+
+\[
+\forall i \in \{1, 2\}, 
+\left\{  \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in  \mathcal{P}_i& , ~C(p) \\
+l \in S_i & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in S_i, \exists p \in \mathcal{P}_i \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+Apply XXX-rule:
+
+\[
+\quad
+\frac{
+\begin{array}{c}
+ \exists s , L = \{s\}~~~~
+\exists p \in \mathcal{P},~\{ P \} \ [C(p) ; s] \ \{ Q(s,p)\} \\
+\end{array}
+}{
+\{ P \} \ [ C(\mathcal{P}); L] \ \{ \forall l \in L, \exists p \in \mathcal{P}, Q(l,p) \}
+}
+\]
+
+
+\subsection{\texttt{choose-while}}
+Given a Doppler attack language $L$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~S_1 \\
+     S_1 & \rightarrow & ~~x=x+1\\
+      &  & \mid S_1;S_1
+\end{array}
+\]
+
+and vulnerable program $C$:
+\begin{lstlisting}
+choose b
+while b>0 do
+    b--
+    x = x+1
+\end{lstlisting}
+
+\subsection{\texttt{while-choose}}
+Given a Doppler attack language $L$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~S_1 \\
+     S_1 & \rightarrow & ~~x=x+1 \\
+     &  & \mid S_1;S_1
+\end{array}
+\]
+
+and vulnerable program $C$:
+\begin{lstlisting}
+while b>0 do
+    b--
+    choose b
+    x = x+1
+\end{lstlisting}
 
 \end{document}
 
