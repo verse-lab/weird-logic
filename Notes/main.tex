@@ -95,7 +95,7 @@ x(C(p)) = x(l)
 \right\}
 \]
 
-Apply if-rule:
+Apply GrmDisj-rule:
 
 
 \[
@@ -130,7 +130,7 @@ x(C(p)) = x(l)
 \right\}
 \]
 
-Apply Strength-rule:
+Apply Weaken-rule:
 \[
 \quad
 \frac{
@@ -196,6 +196,80 @@ while b>0 do
     x = x+1
 \end{lstlisting}
 
+write the triple: 
+\[
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+Apply GrmDisj-rule:
+\[
+(1)~
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{x=x+1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+\[
+(2)~
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{S_1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+(1) is similar to \texttt{if-else} example, prove (2):
+
+Apply Weaken-rule to (2):
+\[
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \{b \mid b \geq 2 \} & , ~while ~p>0~do \\
+& ~~~p-- ;x=x+1 \\
+l \in \{S_1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+
+
 \subsection{\texttt{while-choose}}
 Given a Doppler attack language $L$:
 
@@ -209,11 +283,92 @@ Given a Doppler attack language $L$:
 
 and vulnerable program $C$:
 \begin{lstlisting}
-while b>0 do
-    b--
+while a>0 do
+    a--
+    choose a
+    x = x+1
+\end{lstlisting}
+
+or vulnerable program $C'$:
+\begin{lstlisting}
+while b do
     choose b
     x = x+1
 \end{lstlisting}
+
+write the triple for $C'$: 
+\[
+\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+where $\mathcal{P} := \mathbb{B}^*$
+
+Apply while-rule (wrong):
+\[
+\quad
+\frac{
+\begin{array}{c}
+ p = \{p_\top \cup p_\bot\},~\mathcal{P} = p \cdot \mathcal{P}, ~~L = s;L \\
+\{ P \wedge p=\{p_\top \cdot p_\bot \}\} \ [C(p) ; s] \ \{ P\} \\
+\end{array}
+}{
+\{ P \} \ [ C(\mathcal{P}); \{L\}] \ \{ P \wedge \mathcal{P} = \mathcal{P} \cdot \{p_\bot\}\}
+}
+{\text{While}}
+\]
+
+$Q': \forall l \in L , \mathcal{P} =\mathcal{P} \cdot \{ p_\bot\} \wedge x(C(p)) = x(l) $
+
+$\implies Q: \forall l \in L , \exists p \in \mathcal{P}, x(C(p)) = x(l)$ 
+
+get:
+
+\[
+\left\{ \forall l, \mathcal{P} =\{p_\top \cdot p_\bot\}\wedge x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{x=x+1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+Apply XXX-rule:
+
+\[ 
+\left\{ x(C(p)) = x(l) \right\}
+\left[
+\begin{array}{ll}
+C(p)\\
+x=x+1
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+where $p=\{p_\top \cdot p_\bot\}$
 
 \end{document}
 
