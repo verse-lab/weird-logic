@@ -30,16 +30,19 @@
 \maketitle
 
 \section{Examples}
-The hyper triple:
+Correctness of Doppler in hyper triple:
 \[
-\{ \top \} 
+\{ \forall x \in Var, x(C) = x(L) \} 
 \left[ \begin{array}{l} p \in \mathcal{P} : C(p) \\ l \in L : l\end{array} \right] 
-\left\{ \begin{array}{l} V_C \\ V_L \end{array}
-\ \middle|\
+\left\{ 
+% \begin{array}{l} V_C \\ V_L \end{array}
+% \ \middle|\
 \begin{array}{l}
 ~ \forall ~l \in L, \exists ~p \in \mathcal{P} \\
-~ Q(p,l,V_C(p), V_L(l)) \end{array}\right\}
+~ x(C(p)) = x(l) \end{array}\right\}
 \]
+
+For any program \texttt{l} written in the language \texttt{L}, there always exists a payload \texttt{p} such that the program \texttt{C} and \texttt{l} execute the same behaviour.
 
 \subsection{\texttt{if-else}}
 Given a Doppler attack language $L$:
@@ -62,7 +65,7 @@ else
 
 write the triple: 
 \[
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C) = x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -80,7 +83,8 @@ x(C(p)) = x(l)
 where $P = \{a_\top, a_{\bot} \}$,
 
 \[
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \{a_\top, a_{\bot}\} & , ~C(p) \\
@@ -115,7 +119,8 @@ Partition $S_1$ and $S_2$:
 
 \[
 \forall i \in \{1, 2\}, 
-\left\{  \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+% \left\{  \forall l, p, x(C(p)) = x(l) \right\}
 \left[
 \begin{array}{ll}
 p \in \{a_\top, a_\bot\} & , ~C(p) \\
@@ -147,7 +152,8 @@ Let $\mathcal{P}_1 = \{a_\top\}; \mathcal{P}_2 = \{a_\bot\}$, shrink $\mathcal{P
 
 \[
 \forall i \in \{1, 2\}, 
-\left\{  \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+% \left\{  \forall l, p, x(C(p)) = x(l) \right\}
 \left[
 \begin{array}{ll}
 p \in  \mathcal{P}_i& , ~C(p) \\
@@ -176,129 +182,27 @@ Apply XXX-rule:
 }
 \]
 
-
-\subsection{\texttt{choose-while}}
-Given a Doppler attack language $L$:
-
-\[
-\begin{array}{rrl}
-     L & \rightarrow & ~~S_1 \\
-     S_1 & \rightarrow & ~~x=x+1\\
-      &  & \mid S_1;S_1
-\end{array}
-\]
-
-and vulnerable program $C$:
-\begin{lstlisting}
-choose b
-while b>0 do
-    b--
-    x = x+1
-\end{lstlisting}
-
-write the triple: 
-\[
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left[
-\begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
-l \in L & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
-\end{array}
-\right\}
-\]
-
-Apply GrmDisj-rule:
-\[
-(1)~
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left[
-\begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
-l \in \{x=x+1\} & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
-\end{array}
-\right\}
-\]
-
-\[
-(2)~
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left[
-\begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
-l \in \{S_1;S_1\} & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
-\end{array}
-\right\}
-\]
-
-(1) is similar to \texttt{if-else} example, prove (2):
-
-Apply Weaken-rule to (2):
-\[
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left[
-\begin{array}{ll}
-p \in \{b \mid b \geq 2 \} & , ~while ~p>0~do \\
-& ~~~p-- ;x=x+1 \\
-l \in \{S_1;S_1\} & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
-\end{array}
-\right\}
-\]
-
-
-
 \subsection{\texttt{while-choose}}
 Given a Doppler attack language $L$:
 
 \[
 \begin{array}{rrl}
      L & \rightarrow & ~~S_1 \\
-     S_1 & \rightarrow & ~~x=x+1 \\
-     &  & \mid S_1;S_1
+     S_1 & \rightarrow & ~~x=x+1;S_1 \\
+     &  & \mid \epsilon
 \end{array}
 \]
 
-and vulnerable program $C$:
+or vulnerable program $C$:
 \begin{lstlisting}
-while a>0 do
-    a--
-    choose a
+while (choose b) do
     x = x+1
 \end{lstlisting}
 
-or vulnerable program $C'$:
-\begin{lstlisting}
-while b do
-    choose b
-    x = x+1
-\end{lstlisting}
-
-write the triple for $C'$: 
+write the triple for $C$: 
 \[
 \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+% \left\{ x(C)=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -320,23 +224,24 @@ Apply while-rule (wrong):
 \quad
 \frac{
 \begin{array}{c}
- p = \{p_\top \cup p_\bot\},~\mathcal{P} = p \cdot \mathcal{P}, ~~L = s;L \\
-\{ P \wedge p=\{p_\top \cdot p_\bot \}\} \ [C(p) ; s] \ \{ P\} \\
+ p = \{p_\top \cup p_\bot\},~\mathcal{P} = p*, ~~L = L'|(L;L) \\
+\{ P \wedge \mathcal{P'}=\{p_\top\}\} \ [C(\mathcal{P'}) ; L'] \ \{ P\} \\
 \end{array}
 }{
-\{ P \} \ [ C(\mathcal{P}); \{L\}] \ \{ P \wedge \mathcal{P} = \mathcal{P} \cdot \{p_\bot\}\}
+\{ P \} \ [ C(\mathcal{P}); \{L\}] \ \{ P \wedge \exists p', p =p';p_\bot \}
 }
 {\text{While}}
 \]
 
-$Q': \forall l \in L , \mathcal{P} =\mathcal{P} \cdot \{ p_\bot\} \wedge x(C(p)) = x(l) $
+
+$Q': \forall l \in L , p \in \mathcal{P}, x(C(p)) = x(l) \wedge \exists p', p =p';p_\bot$
 
 $\implies Q: \forall l \in L , \exists p \in \mathcal{P}, x(C(p)) = x(l)$ 
 
 get:
 
 \[
-\left\{ \forall l, \mathcal{P} =\{p_\top \cdot p_\bot\}\wedge x(C(p)) = x(l) \right\}
+\left\{ \forall l, p, x(C(p)) = x(l) \wedge \mathcal{P} =\{p_\top \cdot p_\bot\} \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -358,7 +263,7 @@ Apply XXX-rule:
 \left[
 \begin{array}{ll}
 C(p)\\
-x=x+1
+l:x=x+1
 \end{array}
 \right]
 \left\{
@@ -369,6 +274,221 @@ x(C(p)) = x(l)
 \]
 
 where $p=\{p_\top \cdot p_\bot\}$
+
+\subsection{\texttt{choose-while}}
+Given a Doppler attack language $L$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~S_1 \\
+     S_1 & \rightarrow & ~~x=x+1 ; S_1\\
+      &  & \mid \epsilon
+\end{array}
+\]
+
+and vulnerable program $C$:
+\begin{lstlisting}
+choose b
+while b>0 do
+    b--
+    x = x+1
+\end{lstlisting}
+
+or vulnerable program $C'$:
+\begin{lstlisting}
+choose b
+while b>0 do
+    b = b-2;
+    x = x+1
+\end{lstlisting}
+
+Write the triple for $C$: 
+\[
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+where $\mathcal{P} := \{b \mid b \in \mathbb{N}\}$.
+
+Borrow the HP rule from unrealisability logic:
+\[
+\quad
+\frac{
+\begin{array}{ccl}
+     \{P\}\left[ C(\mathcal{P});L\right] \{Q\} \vdash & \{P\}\left[ C(\mathcal{P});S_1\right] \{Q\} & \\
+     ... \\
+     \{P\}\left[ C(\mathcal{P});L\right] \{Q\} \vdash & \{P\}\left[ C(\mathcal{P});S_n\right] \{Q\} & L \rightarrow S_1|...| S_n\\
+\end{array}
+}
+{\vdash \{P\}\left[ C(\mathcal{P});L\right] \{Q\}}
+{HP}
+\]
+
+Get
+\[
+(1)~ \Gamma \vdash
+\
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{\epsilon\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+\[
+(2)~ \Gamma \vdash
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{x=x+1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+where $\Gamma := \{P\}\left[ C(\mathcal{P});S_1\right] \{Q\}$
+
+Apply Weaken-rule to (2):
+\[
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \{b \mid b \geq 1 \} & , C(p) \\
+l \in \{x=x+1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+Apply XXX-rule:
+
+\[
+\quad
+\frac{
+xxx
+}
+{
+xxx}
+{Induction}
+\]
+
+\subsection{\texttt{do-while}}
+Given a Doppler attack language $L$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~S_1 \\
+     S_1 & \rightarrow & ~~x=x+1 \\
+     &  & \mid S_1;S_1
+\end{array}
+\]
+
+and vulnerable program $C$:
+\begin{lstlisting}
+a=1
+while a>0 do
+    a--
+    choose a
+    x = x+1
+\end{lstlisting}
+
+or vulnerable program $C'$:
+\begin{lstlisting}
+b=true
+while b do
+    choose b
+    x = x+1
+\end{lstlisting}
+
+Write the triple for $C'$:
+\[
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{x=x+1, S_1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+where $\mathcal{P}:=\mathbb{B}*$
+
+Apply GrmDisj-rule:
+\[
+(1)
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{x=x+1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
+
+\[
+(2)
+% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(C)=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in \{S_1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(C(p)) = x(l)
+\end{array}
+\right\}
+\]
 
 \end{document}
 
