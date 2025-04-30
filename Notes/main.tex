@@ -32,14 +32,14 @@
 \section{Examples}
 Correctness of Doppler in hyper triple:
 \[
-\{ \forall x \in Var, x(C) = x(L) \} 
+\{ \forall x \in Var, x(\mathcal{P}) = x(L) \} 
 \left[ \begin{array}{l} p \in \mathcal{P} : C(p) \\ l \in L : l\end{array} \right] 
 \left\{ 
 % \begin{array}{l} V_C \\ V_L \end{array}
 % \ \middle|\
 \begin{array}{l}
 ~ \forall ~l \in L, \exists ~p \in \mathcal{P} \\
-~ x(C(p)) = x(l) \end{array}\right\}
+~ x(p) = x(l) \end{array}\right\}
 \]
 
 For any program \texttt{l} written in the language \texttt{L}, there always exists a payload \texttt{p} such that the program \texttt{C} and \texttt{l} execute the same behaviour.
@@ -65,7 +65,7 @@ else
 
 write the triple: 
 \[
-\left\{ x(C) = x(L) \right\}
+\left\{ x(\mathcal{P}) = x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -75,7 +75,7 @@ l \in L & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -83,8 +83,8 @@ x(C(p)) = x(l)
 where $P = \{a_\top, a_{\bot} \}$,
 
 \[
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \{a_\top, a_{\bot}\} & , ~C(p) \\
@@ -94,7 +94,7 @@ l \in S_1 \mid S_2 & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L, \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -119,8 +119,8 @@ Partition $S_1$ and $S_2$:
 
 \[
 \forall i \in \{1, 2\}, 
-\left\{ x(C)=x(L) \right\}
-% \left\{  \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
+% \left\{  \forall l, p, x(p) = x(l) \right\}
 \left[
 \begin{array}{ll}
 p \in \{a_\top, a_\bot\} & , ~C(p) \\
@@ -130,7 +130,7 @@ l \in S_i & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in S_i, \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -141,7 +141,7 @@ Apply Weaken-rule:
 \frac{
 \begin{array}{c}
  \mathcal{P} \supseteq \mathcal{P}_1 ~~~~
-\{ P \} \ [C(\mathcal{P}_1) ; L_2] \ \{ Q\} \\
+\{ P \} \ [C(\mathcal{P}_1) ; L] \ \{ Q\} \\
 \end{array}
 }{
 \{ P \} \ [ C(\mathcal{P}); L] \ \{ Q \}
@@ -152,8 +152,8 @@ Let $\mathcal{P}_1 = \{a_\top\}; \mathcal{P}_2 = \{a_\bot\}$, shrink $\mathcal{P
 
 \[
 \forall i \in \{1, 2\}, 
-\left\{ x(C)=x(L) \right\}
-% \left\{  \forall l, p, x(C(p)) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
+% \left\{  \forall l, p, x(p) = x(l) \right\}
 \left[
 \begin{array}{ll}
 p \in  \mathcal{P}_i& , ~C(p) \\
@@ -163,22 +163,35 @@ l \in S_i & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in S_i, \exists p \in \mathcal{P}_i \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
 
-Apply XXX-rule:
+Apply lang-rule:
 
 \[
 \quad
 \frac{
 \begin{array}{c}
- \exists s , L = \{s\}~~~~
-\exists p \in \mathcal{P},~\{ P \} \ [C(p) ; s] \ \{ Q(s,p)\} \\
+ \exists l , L = \{l\}~~~~
+~\{ P \} \ [C(\mathcal{P}) ; l] \ \{ \exists p \in \mathcal{P}, Q(l,p)\} \\
 \end{array}
 }{
 \{ P \} \ [ C(\mathcal{P}); L] \ \{ \forall l \in L, \exists p \in \mathcal{P}, Q(l,p) \}
+}
+\]
+
+Apply payload-rule:
+
+\[
+\quad
+\frac{
+\begin{array}{c}
+\exists p \in \mathcal{P},~\{ P \} \ [C(p) ; l] \ \{ Q(l,p)\} \\
+\end{array}
+}{
+\{ P \} \ [ C(\mathcal{P}); l] \ \{ \exists p \in \mathcal{P}, Q(l,p) \}
 }
 \]
 
@@ -201,8 +214,8 @@ while (choose b) do
 
 write the triple for $C$: 
 \[
-\left\{ \forall l, p, x(C(p)) = x(l) \right\}
-% \left\{ x(C)=x(L) \right\}
+\left\{ \forall l, p, x(p) = x(l) \right\}
+% \left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -212,7 +225,7 @@ l \in L & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -234,14 +247,14 @@ Apply while-rule (wrong):
 \]
 
 
-$Q': \forall l \in L , p \in \mathcal{P}, x(C(p)) = x(l) \wedge \exists p', p =p';p_\bot$
+$Q': \forall l \in L , p \in \mathcal{P}, x(p) = x(l) \wedge \exists p', p =p';p_\bot$
 
-$\implies Q: \forall l \in L , \exists p \in \mathcal{P}, x(C(p)) = x(l)$ 
+$\implies Q: \forall l \in L , \exists p \in \mathcal{P}, x(p) = x(l)$ 
 
 get:
 
 \[
-\left\{ \forall l, p, x(C(p)) = x(l) \wedge \mathcal{P} =\{p_\top \cdot p_\bot\} \right\}
+\left\{ \forall l, p, x(p) = x(l) \wedge \mathcal{P} =\{p_\top \cdot p_\bot\} \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -251,7 +264,7 @@ l \in \{x=x+1\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -259,7 +272,7 @@ x(C(p)) = x(l)
 Apply XXX-rule:
 
 \[ 
-\left\{ x(C(p)) = x(l) \right\}
+\left\{ x(p) = x(l) \right\}
 \left[
 \begin{array}{ll}
 C(p)\\
@@ -268,7 +281,7 @@ l:x=x+1
 \right]
 \left\{
 \begin{array}{c}
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -304,8 +317,8 @@ while b>0 do
 
 Write the triple for $C$: 
 \[
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -315,7 +328,7 @@ l \in L & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -340,8 +353,8 @@ Get
 \[
 (1)~ \Gamma \vdash
 \
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -351,15 +364,15 @@ l \in \{\epsilon\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
 
 \[
 (2)~ \Gamma \vdash
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -369,7 +382,7 @@ l \in \{x=x+1;S_1\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -378,8 +391,8 @@ where $\Gamma := \{P\}\left[ C(\mathcal{P});S_1\right] \{Q\}$
 
 Apply Weaken-rule to (2):
 \[
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \{b \mid b \geq 1 \} & , C(p) \\
@@ -389,7 +402,7 @@ l \in \{x=x+1;S_1\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -436,8 +449,8 @@ while b do
 
 Write the triple for $C'$:
 \[
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -447,7 +460,7 @@ l \in \{x=x+1, S_1;S_1\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
@@ -456,8 +469,8 @@ where $\mathcal{P}:=\mathbb{B}*$
 Apply GrmDisj-rule:
 \[
 (1)
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -467,15 +480,15 @@ l \in \{x=x+1\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
 
 \[
 (2)
-% \left\{ \forall l, p, x(C(p)) = x(l) \right\}
-\left\{ x(C)=x(L) \right\}
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -485,10 +498,54 @@ l \in \{S_1;S_1\} & , ~l
 \left\{
 \begin{array}{c}
 \forall l \in L , \exists p \in \mathcal{P} \\
-x(C(p)) = x(l)
+x(p) = x(l)
 \end{array}
 \right\}
 \]
+
+\subsection{context-free}
+Given a Doppler attack language $L$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~S_1 \\
+     S_1 & \rightarrow & ~~x=x+1; S_1; y=y+1 \\
+     & & \mid \epsilon
+\end{array}
+\]
+
+or in the form of $L=\{(x=x+1)^n;(y=y+1)^n \mid n \geq 0\}$
+
+and vulnerable program $C$:
+\begin{lstlisting}
+choose n
+a=n; b=n
+while a>0
+    a--
+    x = x+1
+while b>0
+    b--
+    y = y+1
+\end{lstlisting}
+
+Write the triple for $C$:
+\[
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \wedge y(\mathcal{P}) = y(L)\right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P} & , ~C(p) \\
+l \in L & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(p) = x(l) \wedge y(p) = y(l)
+\end{array}
+\right\}
+\]
+where $\mathcal{P}:=\mathbb{N}$
 
 \end{document}
 
