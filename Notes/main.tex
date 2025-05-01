@@ -232,32 +232,97 @@ x(p) = x(l)
 
 where $\mathcal{P} := \mathbb{B}^*$
 
-Apply while-rule (wrong):
+Apply weaken-rule and shrink $\mathcal{P}$ to $\{b_\top^*b_\bot\}$
+
+Apply LeftReg-rule:
 \[
 \quad
 \frac{
 \begin{array}{c}
- p = \{p_\top \cup p_\bot\},~\mathcal{P} = p*, ~~L = L'|(L;L) \\
-\{ P \wedge \mathcal{P'}=\{p_\top\}\} \ [C(\mathcal{P'}) ; L'] \ \{ P\} \\
+ \mathcal{P} = \{p_\top*p_\bot\}\\
+\{ P \wedge \mathcal{P}_1=\{p_\top\}\} \ [C'(\mathcal{P}_1) ; L_1] \ \{ P\} \\
 \end{array}
 }{
-\{ P \} \ [ C(\mathcal{P}); \{L\}] \ \{ P \wedge \exists p', p =p';p_\bot \}
+\{ P \} \ \left[ 
+\begin{array}{c}
+     (\texttt{while} ~p_\top~\texttt{do}~C')* (\texttt{while}~p_\bot~\texttt{do}...);  \\
+     L\rightarrow (L_1;L)\mid \epsilon
+\end{array}\right] \ 
+\{ P \wedge \exists p', p =p';p_\bot \}
 }
-{\text{While}}
+{\text{LeftReg}}
 \]
+
+Seq-rule:
+\[
+\quad 
+\frac{
+\{P\}\left[C_1(\mathcal{P}_1),~L_1\right]\{H\} ~~
+\{H\}\left[C_2(\mathcal{P}_2),~L_2\right]\{Q\}
+}
+{
+\{P\}\left[
+\begin{array}{ll}
+     p \in \mathcal{P}_1 \times \mathcal{P}_2 &, C_1(p_1);C_2(p_2) \\
+     l \in L_1;L_2&, l 
+\end{array}\right]\{Q\}
+}
+{Seq}
+\]
+
+SeqLeft-rule:
+\[
+\quad
+\frac{
+\begin{array}{c}
+\{ P \} \ [C_1(\mathcal{P}_1) ; L\rightarrow (L_1;L)\mid \epsilon] \ \{ H\} \\
+\{ H \} \ [C_2(\mathcal{P}_2) ; L\rightarrow L_2] \ \{ Q\} \\
+\end{array}
+}{
+\{ P \} \ \left[ 
+\begin{array}{ll}
+     p \in \mathcal{P}_1 \times \mathcal{P}_2 &, C_1(p_1);C_2(p_2) \\
+     l \in L\rightarrow (L_1;L)\mid L_2 &, l
+\end{array}\right] \ 
+\{ Q\}
+}
+{\text{SeqLeft}}
+\]
+
+SeqRight-rule:
+\[
+\quad
+\frac{
+\begin{array}{c}
+\{ P \} \ [C_1(\mathcal{P}_1) ; L\rightarrow L_2] \ \{ H\} \\
+\{ H \} \ [C_2(\mathcal{P}_2) ; L\rightarrow (L_1;L)\mid \epsilon] \ \{ Q\} \\
+\end{array}
+}{
+\{ P \} \ \left[ 
+\begin{array}{ll}
+     p \in \mathcal{P}_1 \times \mathcal{P}_2 &, C_1(p_1);C_2(p_2) \\
+     l \in L\rightarrow (L;L_1)\mid L_2 &, l
+\end{array}\right] \ 
+\{ Q\}
+}
+{\text{SeqRight}}
+\]
+
+
+Apply RightReg-rule:
 
 
 $Q': \forall l \in L , p \in \mathcal{P}, x(p) = x(l) \wedge \exists p', p =p';p_\bot$
 
 $\implies Q: \forall l \in L , \exists p \in \mathcal{P}, x(p) = x(l)$ 
 
-get:
+Get:
 
 \[
-\left\{ \forall l, p, x(p) = x(l) \wedge \mathcal{P} =\{p_\top \cdot p_\bot\} \right\}
+\left\{ \forall l, p, x(p) = x(l) \wedge \mathcal{P} =\{p_\top\} \right\}
 \left[
 \begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
+p \in \mathcal{P} & , ~x=x+1 \\
 l \in \{x=x+1\} & , ~l
 \end{array}
 \right]
@@ -269,24 +334,24 @@ x(p) = x(l)
 \right\}
 \]
 
-Apply XXX-rule:
+Apply lang-rule and payload-rule.
 
-\[ 
-\left\{ x(p) = x(l) \right\}
-\left[
-\begin{array}{ll}
-C(p)\\
-l:x=x+1
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-x(p) = x(l)
-\end{array}
-\right\}
-\]
+% \[ 
+% \left\{ x(p) = x(l) \right\}
+% \left[
+% \begin{array}{ll}
+% C(p)\\
+% l:x=x+1
+% \end{array}
+% \right]
+% \left\{
+% \begin{array}{c}
+% x(p) = x(l)
+% \end{array}
+% \right\}
+% \]
 
-where $p=\{p_\top \cdot p_\bot\}$
+% where $p=\{p_\top \cdot p_\bot\}$
 
 \subsection{\texttt{choose-while}}
 Given a Doppler attack language $L$:
@@ -407,7 +472,7 @@ x(p) = x(l)
 \right\}
 \]
 
-Apply XXX-rule:
+Apply Induction-rule:
 
 \[
 \quad
@@ -427,6 +492,14 @@ Given a Doppler attack language $L$:
      L & \rightarrow & ~~S_1 \\
      S_1 & \rightarrow & ~~x=x+1 \\
      &  & \mid S_1;S_1
+\end{array}
+\]
+or language $L'$:
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~x=x+1;S_1 \\
+     S_1 & \rightarrow & ~~x=x+1; S_1 \\
+     &  & \mid \epsilon
 \end{array}
 \]
 
@@ -454,7 +527,7 @@ Write the triple for $C'$:
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
-l \in \{x=x+1, S_1;S_1\} & , ~l
+l \in \{S_1 \rightarrow x=x+1 \mid S_1;S_1\} & , ~l
 \end{array}
 \right]
 \left\{
