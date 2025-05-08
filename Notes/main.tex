@@ -44,6 +44,12 @@ Correctness of Doppler in hyper triple:
 
 For any program \texttt{l} written in the language \texttt{L}, there always exists a payload \texttt{p} such that the program \texttt{C} and \texttt{l} execute the same behaviour.
 
+% intuition, then add more explanation of symbols.
+
+% definition of C in another language.
+% symbol of x(P) and C(p), confusing.
+
+
 \subsection{\texttt{if-else}}
 Given a Doppler attack language $L$:
 
@@ -106,7 +112,7 @@ Apply GrmDisj-rule:
 \quad
 \frac{
 \begin{array}{c}
-L = L_1 \mid L_2 \\
+L \rightarrow L_1 \mid L_2, L \notin L_1, L \notin L_2 \\
 \{ P \} \ [C(\mathcal{P}) ; L_1] \ \{ Q\} ~~~~
 \{ P \} \ [C(\mathcal{P}) ; L_2] \ \{ Q\} \\
 \end{array}
@@ -114,6 +120,8 @@ L = L_1 \mid L_2 \\
 \{ P \} \ [ C(\mathcal{P}); L] \ \{ Q \}
 }
 \]
+
+% conflicts of symbols (L)
 
 Partition $S_1$ and $S_2$:
 
@@ -232,20 +240,20 @@ x(p) = x(l)
 
 where $\mathcal{P} := \mathbb{B}^*$
 
-Apply weaken-rule and shrink $\mathcal{P}$ to $\{b_\top^*b_\bot\}$
+Apply weaken-rule and shrink $\mathcal{P}$ to $\{b_\top*;b_\bot\}$
 
 Apply LeftReg-rule:
 \[
 \quad
 \frac{
 \begin{array}{c}
- \mathcal{P} = \{p_\top*p_\bot\}\\
+ \mathcal{P} = \{p_\top*;p_\bot\}\\
 \{ P \wedge \mathcal{P}_1=\{p_\top\}\} \ [C'(\mathcal{P}_1) ; L_1] \ \{ P\} \\
 \end{array}
 }{
 \{ P \} \ \left[ 
 \begin{array}{c}
-     (\texttt{while} ~p_\top~\texttt{do}~C')* (\texttt{while}~p_\bot~\texttt{do}...);  \\
+     \texttt{while} ~\mathcal{P}~\texttt{do}~C'  \\
      L\rightarrow (L_1;L)\mid \epsilon
 \end{array}\right] \ 
 \{ P \wedge \exists p', p =p';p_\bot \}
@@ -253,7 +261,7 @@ Apply LeftReg-rule:
 {\text{LeftReg}}
 \]
 
-Seq-rule:
+Seq-rule (should have more constraints):
 \[
 \quad 
 \frac{
@@ -352,6 +360,114 @@ Apply lang-rule and payload-rule.
 % \]
 
 % where $p=\{p_\top \cdot p_\bot\}$
+
+\subsection{\texttt{do-while}}
+Given a Doppler attack language $L$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~S_1 \\
+     S_1 & \rightarrow & ~~x=x+1 \\
+     &  & \mid S_1;S_1
+\end{array}
+\]
+or language $L'$:
+\[
+\begin{array}{rrl}
+     L & \rightarrow & ~~x=x+1;S_1 \\
+     S_1 & \rightarrow & ~~x=x+1; S_1 \\
+     &  & \mid \epsilon
+\end{array}
+\]
+
+and vulnerable program $C$:
+\begin{lstlisting}
+do
+    choose a
+    x = x+1
+while a
+\end{lstlisting}
+
+or vulnerable program $C'$:
+\begin{lstlisting}
+b=1
+while b>0 do
+    b--
+    choose b
+    x = x+1
+\end{lstlisting}
+
+or vulnerable program $C''$:
+\begin{lstlisting}
+c=true
+while c do
+    choose c
+    x = x+1
+\end{lstlisting}
+TODO: The mapping between program and language is not isomorphic. One solution is to restrict the language to left-regular format when it can be converted.
+For example, restrict the language to $L'$ as shown above.
+
+Write the triple for $C$:
+\[
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L) \right\}
+\left[
+\begin{array}{ll}
+p \in \{\epsilon\} \times \mathcal{P}' & , ~C_1(\epsilon);C_2(p') \\
+l \in \{L \rightarrow x=x+1;S_1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L , \exists p \in \mathcal{P} \\
+x(p) = x(l)
+\end{array}
+\right\}
+\]
+where $\mathcal{P}:=\mathbb{B}*$, $\mathcal{P} := \{\epsilon\} \times \mathcal{P}'$, and $p' \in \mathcal{P}'$; 
+
+$C_1 := x=x+1$; 
+
+$C_2 := \texttt{while}~choose~a~\texttt{do}~x=x+1$
+
+Apply Seq-rule:
+\[
+(1)
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P})=x(L_1) \right\}
+\left[
+\begin{array}{ll}
+p \in \{\epsilon\} & , ~C_1(p) \\
+l \in \{L_1 \rightarrow x=x+1\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in L_1 , \exists p \in \mathcal{P} \\
+x(p) = x(l)
+\end{array}
+\right\}
+\]
+
+\[
+(2)
+% \left\{ \forall l, p, x(p) = x(l) \right\}
+\left\{ x(\mathcal{P}')=x(S_1) \right\}
+\left[
+\begin{array}{ll}
+p \in \mathcal{P}' & , C_2(\mathcal{P}') \\
+l \in \{S_1 \rightarrow x=x+1;S_1|\epsilon\} & , ~l
+\end{array}
+\right]
+\left\{
+\begin{array}{c}
+\forall l \in S_1 , \exists p \in \mathcal{P}' \\
+x(p) = x(l)
+\end{array}
+\right\}
+\]
+
+(2) is the same as the \texttt{while-choose} example.
 
 \subsection{\texttt{choose-while}}
 Given a Doppler attack language $L$:
@@ -484,98 +600,6 @@ xxx}
 {Induction}
 \]
 
-\subsection{\texttt{do-while}}
-Given a Doppler attack language $L$:
-
-\[
-\begin{array}{rrl}
-     L & \rightarrow & ~~S_1 \\
-     S_1 & \rightarrow & ~~x=x+1 \\
-     &  & \mid S_1;S_1
-\end{array}
-\]
-or language $L'$:
-\[
-\begin{array}{rrl}
-     L & \rightarrow & ~~x=x+1;S_1 \\
-     S_1 & \rightarrow & ~~x=x+1; S_1 \\
-     &  & \mid \epsilon
-\end{array}
-\]
-
-and vulnerable program $C$:
-\begin{lstlisting}
-a=1
-while a>0 do
-    a--
-    choose a
-    x = x+1
-\end{lstlisting}
-
-or vulnerable program $C'$:
-\begin{lstlisting}
-b=true
-while b do
-    choose b
-    x = x+1
-\end{lstlisting}
-
-Write the triple for $C'$:
-\[
-% \left\{ \forall l, p, x(p) = x(l) \right\}
-\left\{ x(\mathcal{P})=x(L) \right\}
-\left[
-\begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
-l \in \{S_1 \rightarrow x=x+1 \mid S_1;S_1\} & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(p) = x(l)
-\end{array}
-\right\}
-\]
-where $\mathcal{P}:=\mathbb{B}*$
-
-Apply GrmDisj-rule:
-\[
-(1)
-% \left\{ \forall l, p, x(p) = x(l) \right\}
-\left\{ x(\mathcal{P})=x(L) \right\}
-\left[
-\begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
-l \in \{x=x+1\} & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(p) = x(l)
-\end{array}
-\right\}
-\]
-
-\[
-(2)
-% \left\{ \forall l, p, x(p) = x(l) \right\}
-\left\{ x(\mathcal{P})=x(L) \right\}
-\left[
-\begin{array}{ll}
-p \in \mathcal{P} & , ~C(p) \\
-l \in \{S_1;S_1\} & , ~l
-\end{array}
-\right]
-\left\{
-\begin{array}{c}
-\forall l \in L , \exists p \in \mathcal{P} \\
-x(p) = x(l)
-\end{array}
-\right\}
-\]
-
 \subsection{context-free}
 Given a Doppler attack language $L$:
 
@@ -604,7 +628,7 @@ while b>0
 Write the triple for $C$:
 \[
 % \left\{ \forall l, p, x(p) = x(l) \right\}
-\left\{ x(\mathcal{P})=x(L) \wedge y(\mathcal{P}) = y(L)\right\}
+\Gamma \vdash \left\{ x(\mathcal{P})=x(L) \wedge y(\mathcal{P}) = y(L)\right\}
 \left[
 \begin{array}{ll}
 p \in \mathcal{P} & , ~C(p) \\
@@ -618,8 +642,12 @@ x(p) = x(l) \wedge y(p) = y(l)
 \end{array}
 \right\}
 \]
-where $\mathcal{P}:=\mathbb{N}$
+where $\mathcal{P}:=\mathbb{N}$ and $\Gamma := \{a=b\}$.
 
+
+% add context, move local/ global variable alias information to context
+
+% add more examples when multiple variables are embedded in the if/while condition. whether dependent.
 \end{document}
 
 \bibliographystyle{plain}  % or another style like ieeetr, acm, etc.
