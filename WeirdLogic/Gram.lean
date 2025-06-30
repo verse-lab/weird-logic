@@ -17,22 +17,21 @@ inductive Gram : Type
   | terminal : trm → Gram
   | seq : Gram → Gram → Gram
   | choice : Gram → Gram → Gram
-  | eq : Gram → Gram
+  | ref : Gram → Gram → Gram
   | eps : Gram
-  -- | star : Gram → Gram
-
--- S1 → x = x + 1 ; S1 | ε
-def S1 : Gram :=
-  Gram.choice
-    (Gram.seq
-      (Gram.terminal (trm.trm_let "x" "x" "1"))
-      (Gram.nonterminal "S1")
-    )
-    Gram.eps
 
 -- L → S1
 def L : Gram :=
-  Gram.eq (Gram.nonterminal "S1")
+  Gram.nonterminal "S1"
+
+-- S1 → (x = x + 1 ; S1) | ε
+def S1 : Gram :=
+  Gram.choice
+    (Gram.seq
+      (Gram.terminal (trm.trm_ref "x" (trm.trm_app (trm.trm_app prim.val_add (trm.trm_var "x")) (trm.trm_val 1)) (trm.trm_val 0) ))
+      (Gram.nonterminal "S1")
+    )
+    Gram.eps
 
 -- macro "gram_def" n:ident ":=" g:gram : command => do
 --   `(def $n:ident : val := [gram| $g])
@@ -40,13 +39,10 @@ def L : Gram :=
 declare_syntax_cat gram
 
 syntax str : gram
--- syntax gram " → " gram : gram
 syntax gram " + " gram : gram
 syntax "ε" : gram
+syntax "[gram| " gram "]" : gram
 
--- syntax "[gram| " gram "]" : gram
-
--- local notation "%" x => (Lean.quote (toString (Lean.Syntax.getId x)))
 
 -- macro_rules
 --   | `([gram| ε]) => `(Gram.eps)
