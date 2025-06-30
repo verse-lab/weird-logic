@@ -480,6 +480,15 @@ Given a Doppler attack language $L$:
 \end{array}
 \]
 
+or $L'$:
+
+\[
+\begin{array}{rrl}
+     L & \rightarrow & \texttt{for}~i~\texttt{in}~b~\texttt{do}~S_1\\
+     S_1 & \rightarrow & x=x+1 
+\end{array}
+\]
+
 and vulnerable program $C$:
 \begin{lstlisting}
 choose b
