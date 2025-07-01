@@ -1,0 +1,3 @@
+[submodule "lean-lgtm-weird"]
+	path = lean-lgtm-weird
+	url = https://github.com/YuxiLing/lean-lgtm-weird
