@@ -147,7 +147,7 @@ instance Set.PartialOrder {α : Type} : PartialOrder (Set α) :=
       by
         intro A B C hAB hBC a ha
         aesop
-    lt_iff_le_not_ge :=
+    lt_iff_le_not_le :=
       by
         intro A B
         apply Iff.intro

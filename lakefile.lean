@@ -14,10 +14,17 @@ lean_lib WeirdLogic {
   globs := #[Glob.submodules `WeirdLogic]
 }
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"
+require batteries from
+    git "https://github.com/leanprover-community/batteries" @ "v4.17.0"
+
+require mathlib from
+    git "https://github.com/leanprover-community/mathlib4.git" @ "v4.17.0"
+
 require ssreflect from
-    git "https://github.com/verse-lab/lean-ssr.git" @ "v4.15.0"
+    git "https://github.com/verse-lab/lean-ssr.git" @ "v4.17.0"
+
+require lgtm from
+    git "https://github.com/YuxiLing/lean-lgtm-weird.git" @ "yuxi"
 
 -- @[default_target]
 -- lean_lib «WeirdLogic» where
