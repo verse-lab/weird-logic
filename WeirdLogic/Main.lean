@@ -31,6 +31,8 @@ def lang_c := [lang|
     else
       x := x +2]
 
+#print lang_c
+
 
 /- Exampel Grammar L1 -/
 /-  L ::= S1
@@ -38,23 +40,32 @@ def lang_c := [lang|
     S2 ::= x := x + 1 -/
 
 def S2 : T := [lang| x := x + 1]
+def S3 : T := [lang| x := x + 2]
 def S1 : N := "S1"
+def S4 : N := "S4"
 def L : N := "L"
 
 def prod1 : production :=
-  {
-    l := symbol.nonterminal S1,
-    r := [symbol.seq (symbol.terminal S2) (symbol.nonterminal S1), symbol.eps] }
+  (Finmap.singleton S1 [symbol.seq (symbol.terminal S2) (symbol.nonterminal S1), symbol.eps]).insert
+  L [symbol.nonterminal S1]
 
 def prod2 : production :=
-  {
-    l := symbol.nonterminal L,
-    r := [symbol.nonterminal S1] }
+  (Finmap.singleton S1 [(symbol.terminal S2), symbol.seq (symbol.terminal S2) (symbol.terminal S1)]).insert
+  L [symbol.nonterminal S1]
+
+def prod3 : production :=
+  ((Finmap.singleton S1 [symbol.seq (symbol.terminal S2) (symbol.terminal S1), symbol.seq (symbol.terminal S4) (symbol.terminal S2)]
+  ).insert
+  L [symbol.nonterminal S1]
+  ).insert S4 [(symbol.terminal S2),(symbol.terminal S2)]
 
 def L1 : ctx_grammar :=
-  { nonterminals := {S1, L},
-    terminals := {S2}
-    prods := [prod1],
-    start := L }
+  { nonterminals := {S1, L, S4},
+    -- terminals := {S2, S3},
+    prods := prod1,
+    start := symbol.nonterminal L }
+
+#reduce expandSymbol L1 10 L1.start
+#eval (expandSymbol L1 10 L1.start).length
 
 end WeirdLogic

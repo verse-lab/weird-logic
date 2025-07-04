@@ -2,12 +2,17 @@ import Mathlib.Data.Finmap
 import Mathlib.Data.Real.Basic
 
 import Lgtm.Unary.Lang
+import Lgtm.Common.Util
+import Lgtm.Common.Heap
+
+import Lean
+
+open Lean Elab Tactic Meta
 
 -- import WeirdLogic.Util
 -- import WeirdLogic.Heap
 
-
-open Classical
+-- open Classical
 
 /- =========================== Context-Free Grammar =========================== -/
 open trm var
@@ -19,19 +24,49 @@ inductive symbol : Type where
   | terminal : T → symbol
   | nonterminal : N → symbol
   | eps : symbol
-  -- | choice : List symbol → symbol
   | seq : symbol → symbol → symbol
 
-structure production where
-  l : symbol
-  r : List symbol
+
+-- def eval_symbol : symbol → trm
+--   | symbol.terminal t => t
+--   | symbol.nonterminal n => trm_var n -- not true
+--   -- | symbol.eps => none
+--   | symbol.seq s1 s2 => trm_seq (eval_symbol s1) (eval_symbol s2)
+
+abbrev production := Finmap ( λ _ : N ↦ List symbol)
+
+-- structure production where
+--   l : symbol
+--   r : List symbol
 
 structure ctx_grammar where
-  nonterminals : Set N
-  terminals : Set T
-  prods : List production
-  start : N
+  nonterminals : Finset N
+  -- terminals : Finset T
+  prods : production
+  start : symbol
 
+partial def expandSymbol (g : ctx_grammar) (depth : ℕ ) (s : symbol) : List trm :=
+  if decide (depth <= 0) then []
+  else
+    match s with
+    | symbol.terminal t => [t]
+    | symbol.nonterminal n =>
+      -- if decide (n ∈ g.nonterminals) then
+        match g.prods.lookup n with
+        | some p =>
+          p.flatMap fun re => expandSymbol g (depth - 1) re
+        | none => []
+      -- else []
+    | symbol.eps => []
+    | symbol.seq s1 s2 =>
+      (expandSymbol g (depth-1) s1).flatMap fun x => (expandSymbol g (depth-1) s2).map (fun y => trm_seq x y)
+-- termination_by depth
+
+def check_cfg (g : ctx_grammar) (depth : ℕ ) (prog : trm) : Prop :=
+  ∃ p ∈ (expandSymbol g depth g.start), eval_like p prog
+
+
+/- **TODO** Macros. Too many bugs, solve later -/
 declare_syntax_cat gram
 declare_syntax_cat sym
 declare_syntax_cat prod
@@ -51,7 +86,6 @@ syntax "[prod| " sym "::=" sym* "]" : term
 
 local notation "%" x => (Lean.quote (toString (Lean.Syntax.getId x)))
 
-/- **TODO** Macros. Too many bugs, solve later -/
 -- macro_rules
 --   | `([sym| $x:var]) => `(symbol.nonterminal $(%x))
 --   | `([sym| $t:term]) => `(symbol.terminal trm_var $t)
