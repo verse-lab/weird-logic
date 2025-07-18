@@ -7,61 +7,86 @@ import Lgtm.Hyper.SepLog
 
 import WeirdLogic.Gram
 
+open Lean Lean.Expr Lean.Meta Qq
+open Lean Elab Command Term Meta Tactic
+
 section WTriple
 
 variable {α : Type} (s : Set α)
 
 def hgram (α : Type) := α -> trm
 
-local notation "hheap"  => @hheap α
-local notation "htrm" => htrm α
-local notation "hval" => hval α
-local notation "hhProp" => hhProp α
-local notation "hgram" => hgram α
-
 inductive payload_base : Type where
   | pld_bool : Bool → payload_base
   | pld_nat : ℕ → payload_base
 
 inductive payload : Type where
-  | pld_one : payload_base → payload
+  | pld_nil : payload
   | pld_cons : payload_base → payload → payload
 
-def wtrm (α : Type) := α -> trm /- α is payload later-/
+def hwtrm (α : Type) := α -> trm /- α is payload later-/
 
-local notation "wtrm" => wtrm α
+local notation "hwtrm" => hwtrm α
 
-/- Eval -/
-def weval_nonrel (s : Set α) (hh : hheap) (ht : htrm) (hQ : α -> val -> hProp) : Prop :=
-  ∀ a ∈ s, eval (hh a) (ht a) (hQ a)
+def payload_to_list (p : payload) : List val :=
+  match p with
+  | payload.pld_nil => []
+  | payload.pld_cons b p' =>
+    match b with
+    | payload_base.pld_bool b => [val.val_bool b] ++ payload_to_list p'
+    | payload_base.pld_nat n => [val.val_int n] ++ payload_to_list p'
 
-/- TODO: insert grammar, cannot add it into htrm -/
-def weval (s : Set α) (hh : hheap) (wt : wtrm) (hg : hgram) (hQ : hval -> hhProp) : Prop :=
-  ∃ (hQ' : α -> val -> hProp),
-    heval_nonrel s hh wt hQ' ∧
-    ∀ hv, bighstarDef s (fun a => hQ' a (hv a)) hh ==> ∃ʰ hv', hQ (hv ∪_s hv')
+abbrev payload_map := Finmap ( λ _ : var ↦ val)
 
-/- Triple -/
-abbrev wtriple (t : htrm) (hg : hgram) (H : hhProp) (Q : hval → hhProp): Prop :=
-  ∀ hh, H hh → weval s hh t hg Q
+def lgtm_match (l : trm) (L : cfg) : Prop :=
+  match_cfg l L
 
+def check_payload (α : Syntax) (v : List var): Bool :=
+  match α with
+  | `(Bool) =>
+    match v with
+    | s::_ => true
+    | _ => false
+  | `(ℕ) =>
+    match v with
+    | s::_ => true
+    | _ => false
+  | `(Bool × $β) =>
+    match v with
+    | s::xs => check_payload β xs
+    | _ => false
+  | `(ℕ × $β) =>
+    match v with
+    | s::xs => check_payload β xs
+    | _ => false
+  | _ => false
 
-def epimorphism {A B : Type} (f : A → B) : Prop :=
-  ∀ b : B, ∃ a : A, f a = b ∧ ∀ b' : B, (f a = b' → b = b') ∧ ∀ a : A, ∃ b : B, f a = b
+/- do substitube now, add choose in while later -/
+def render_C (C : trm) (p : payload_map ) (v : List var): trm :=
+  v.foldl ( λ C svar =>
+    let sval := p.lookup svar |>.getD (val.val_int 0)
+    subst svar (trm.trm_val sval) C
+  ) C
 
+def render_C' (C : trm) (p : List ℕ ) (v : List var): trm :=
+  let ppairs := p.zip v
+  ppairs.foldl (
+    λ C svar =>
+    subst svar.2 (trm.trm_val (val.val_int svar.1)) C
+  ) C
 
-def epimorphism_wm (epi: htrm → hgram) : Prop :=
-  epimorphism epi
+/- Following is test examples -/
+def S2 : T := [lang| x := x + 1]
+def S1 : N := "S1"
 
-/- Structural Rules -/
-/- Can reuse them from LGTM directly? -/
-lemma wtriple_conseq_frame:
-  wtriple s t hg H₁ Q₁ →
-  H ==> H₁ ∗ H₂ →
-  Q₁ ∗ H₂ ===> Q →
-  wtriple s t hg H Q := by
-  sorry
+def prod1 : production :=
+  Finmap.singleton S1 [symbol.terminal S2]
 
-/- symbol for surjection ↠ -/
+def L : cfg :=
+  { nonterminals := {S1},
+    prods := prod1,
+    start := symbol.nonterminal S1 }
+
+#check lgtm_match [lang| x := x + 1] L
 
 end WTriple

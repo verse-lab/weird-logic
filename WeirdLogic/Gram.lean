@@ -13,9 +13,14 @@ open Lean Elab Tactic Meta
 -- import WeirdLogic.Heap
 
 -- open Classical
+open trm var
+
+/- =========================== Vulnerable Program Language ==================== -/
+inductive wtrm : Type where
+  | wtrm_basic : trm -> wtrm
+  | wtrm_choose : var -> wtrm
 
 /- =========================== Context-Free Grammar =========================== -/
-open trm var
 
 abbrev T := trm
 abbrev N := var
@@ -27,25 +32,19 @@ inductive symbol : Type where
   | seq : symbol → symbol → symbol
 
 
--- def eval_symbol : symbol → trm
---   | symbol.terminal t => t
---   | symbol.nonterminal n => trm_var n -- not true
---   -- | symbol.eps => none
---   | symbol.seq s1 s2 => trm_seq (eval_symbol s1) (eval_symbol s2)
-
 abbrev production := Finmap ( λ _ : N ↦ List symbol)
 
 -- structure production where
 --   l : symbol
 --   r : List symbol
 
-structure ctx_grammar where
+structure cfg where
   nonterminals : Finset N
   -- terminals : Finset T
   prods : production
   start : symbol
 
-partial def expandSymbol (g : ctx_grammar) (depth : ℕ ) (s : symbol) : List trm :=
+partial def expand_cfg (g : cfg) (depth : ℕ ) (s : symbol) : List trm :=
   if decide (depth <= 0) then []
   else
     match s with
@@ -54,16 +53,35 @@ partial def expandSymbol (g : ctx_grammar) (depth : ℕ ) (s : symbol) : List tr
       -- if decide (n ∈ g.nonterminals) then
         match g.prods.lookup n with
         | some p =>
-          p.flatMap fun re => expandSymbol g (depth - 1) re
+          p.flatMap fun re => expand_cfg g (depth - 1) re
         | none => []
       -- else []
     | symbol.eps => []
     | symbol.seq s1 s2 =>
-      (expandSymbol g (depth-1) s1).flatMap fun x => (expandSymbol g (depth-1) s2).map (fun y => trm_seq x y)
+      (expand_cfg g (depth-1) s1).flatMap fun x => (expand_cfg g (depth-1) s2).map (fun y => trm_seq x y)
 -- termination_by depth
 
-def check_cfg (g : ctx_grammar) (depth : ℕ ) (prog : trm) : Prop :=
-  ∃ p ∈ (expandSymbol g depth g.start), eval_like p prog
+def check_cfg (g : cfg) (depth : ℕ ) (prog : trm) : Prop :=
+  ∃ p ∈ (expand_cfg g depth g.start), eval_like p prog
+
+set_option maxRecDepth 2000
+set_option maxHeartbeats 2500000
+partial def match_cfg (p : trm) (g : cfg) : Prop :=
+  match g.start with
+  | symbol.terminal t => p = t
+  | symbol.nonterminal n =>
+    match g.prods.lookup n with
+    | some r =>
+      ∃ re ∈ r, match_cfg p { g with start := re }
+    | none => False
+  | symbol.seq s1 s2 =>
+    match p with
+    | trm_seq x y =>
+      let g1 := { g with start := s1 }
+      let g2 := { g with start := s2 }
+      match_cfg x g1 ∧ match_cfg y g2
+    | _ => False
+  | symbol.eps => True
 
 
 /- **TODO** Macros. Too many bugs, solve later -/

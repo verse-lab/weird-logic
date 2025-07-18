@@ -1,3 +1,7 @@
--- This module serves as the root of the `WeirdLogic` library.
--- Import modules here that should be built as part of the library.
-import «WeirdLogic».Main
+import WeirdLogic.Gram
+import WeirdLogic.Heap
+import WeirdLogic.HoareLogic
+import WeirdLogic.Main
+import WeirdLogic.Util
+import WeirdLogic.WLogic
+import WeirdLogic.WP

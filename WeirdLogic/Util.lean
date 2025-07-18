@@ -457,4 +457,22 @@ def delabNoNotations :=
 def getGoalStxAll : Lean.Elab.Tactic.TacticM Syntax := do
   delabAll $ <- getMainTarget
 
+def epimorphism {A B : Type} (f : A → B) : Prop :=
+  ∀ b : B, ∃ a : A, f a = b ∧ ∀ b' : B, (f a = b' → b = b') ∧ ∀ a : A, ∃ b : B, f a = b
+
+
+-- def epimorphism_wm (epi: htrm → hgram) : Prop :=
+--   epimorphism epi
+
+def Sum.getLeft! {α β: Type} [Inhabited α] (ab : α ⊕ β) : α :=
+  match ab with
+  | Sum.inl a => a
+  | Sum.inr _ => default
+
+def Sum.getRight! {α β: Type} [Inhabited β] (ab : α ⊕ β) : β :=
+  match ab with
+  | Sum.inl _ => default
+  | Sum.inr b => b
+
+
 end WeirdLogic
