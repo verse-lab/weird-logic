@@ -4,14 +4,18 @@ import Lgtm.Hyper.HProp
 import Lgtm.Hyper.YSimp
 import Lgtm.Hyper.YChange
 import Lgtm.Hyper.SepLog
+import Lgtm.Hyper.WP
+import Lgtm.Hyper.ProofMode
 
 import WeirdLogic.Gram
 
 open Lean Lean.Expr Lean.Meta Qq
 open Lean Elab Command Term Meta Tactic
 
+
 section WTriple
 
+local macro "LabType" : term => `(ℕ)
 variable {α : Type} (s : Set α)
 
 def hgram (α : Type) := α -> trm
@@ -41,26 +45,6 @@ abbrev payload_map := Finmap ( λ _ : var ↦ val)
 def lgtm_match (l : trm) (L : cfg) : Prop :=
   match_cfg l L
 
-def check_payload (α : Syntax) (v : List var): Bool :=
-  match α with
-  | `(Bool) =>
-    match v with
-    | s::_ => true
-    | _ => false
-  | `(ℕ) =>
-    match v with
-    | s::_ => true
-    | _ => false
-  | `(Bool × $β) =>
-    match v with
-    | s::xs => check_payload β xs
-    | _ => false
-  | `(ℕ × $β) =>
-    match v with
-    | s::xs => check_payload β xs
-    | _ => false
-  | _ => false
-
 /- do substitube now, add choose in while later -/
 def render_C (C : trm) (p : payload_map ) (v : List var): trm :=
   v.foldl ( λ C svar =>
@@ -68,6 +52,7 @@ def render_C (C : trm) (p : payload_map ) (v : List var): trm :=
     subst svar (trm.trm_val sval) C
   ) C
 
+#check Unary.isubst
 def render_C' (C : trm) (p : List ℕ ) (v : List var): trm :=
   let ppairs := p.zip v
   ppairs.foldl (
@@ -88,5 +73,51 @@ def L : cfg :=
     start := symbol.nonterminal S1 }
 
 #check lgtm_match [lang| x := x + 1] L
+
+/- Rules -/
+-- lemma wtriple_grmdisj (α : Type) (t : hwtrm) (Q : hval → hhProp) :
+--   Disjoint t t' →
+--   LGTM.wp t Q ==> LGTM.wp t' Q:= by sorry
+
+#check LGTM.wp
+#check FindLabel
+#check yfocus_set_lemma
+
+/- s' is the part want to keep -/
+lemma weird_weaken_lemma (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) {pi : idx < shts.length}
+  [FindLabel l shts idx pi] :
+  shts[idx].s = ⟪l, s⟫ ->
+  shts.length = 2 ∧ l=1 ->
+  (shts.Pairwise (Disjoint ·.s ·.s)) ->
+  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪l, s ∩ s'⟫,shts[idx].ht⟩) Q ->
+  H ==> LGTM.wp shts Q := by
+  move=> *; apply hhimpl_trans_r;
+  dsimp=> //
+  dsimp [LGTM.wp]
+  sorry
+
+lemma weird_grmdisj_lemma (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) {pi : idx < shts.length}
+  [FindLabel l shts idx pi] :
+  shts[idx].s = ⟪l, s⟫ ->
+  shts.length = 2 ∧ l=2 ->
+  (shts.Pairwise (Disjoint ·.s ·.s)) ->
+  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪ l, s'⟫, shts[idx].ht⟩ ) Q ->
+  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪ l, s \ s'⟫, shts[idx].ht⟩) Q ->
+  H ==> LGTM.wp shts Q := by
+  move=> *; apply hhimpl_trans_r; apply yfocus_set_lemma_aux=> //;
+  simp [Disjoint]; move => *; sorry
+  sorry
+
+-- lemma weird_lang_lemma ( s : Set α) (shts : LGTM.SHTs (Labeled α)):
+--   shts.length =2 ->
+--   shts[1].s = ⟪l, s⟫ ->
+
+-- lemma weird_payload_lemma ( s : Set α) (shts : LGTM.SHTs (Labeled α)):
+--   shts.length =2 ->
+
+-- lemma weird_if_true_lemma (shts : LGTM.SHTs (Labeled α)):
+--   shts.length = 2 ->
+--   shts.
+
 
 end WTriple

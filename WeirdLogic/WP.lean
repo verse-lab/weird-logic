@@ -12,6 +12,8 @@ section WWeakestPrecondition
 
 open Classical trm val prim
 
-
+-- structure SWT where
+--   s :
+--   ht : htrm
 
 end WWeakestPrecondition

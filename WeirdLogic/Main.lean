@@ -56,6 +56,7 @@ def L1 : cfg :=
 #check lgtm_match [lang| x := x + 1] L1
 
 def svar_list : List var := ["a"]
+-- abbr payload
 
 abbrev c1_index := trm ⊕ List ℕ
 def lang_index : Set (trm ⊕ List ℕ ):=
@@ -91,17 +92,20 @@ def origin_c1_set := [lang|
   fun ⸨p:Val⸩ =>
     p
 ]
-
+#check bighstar
 #check lang_c1_set
 
-lemma example1_spec (f : ℤ -> val):
-  { ⊤ }
-  [1| l in lang_index  => ⟦origin_render l.val ⟧]
+#check LGTM.triple
+
+lemma example1_spec (H : hProp ):
+  { [∗ in ⟪1,lang_index⟫ ∪ ⟪1,pay_index⟫ | H ] }
   [1| p in pay_index => ⟦lang_render p.val lang_c1 svar_list⟧]
+  [2| l in lang_index  => ⟦origin_render l.val ⟧]
   { v,
-    fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, l⟩ = h ⟨1, p⟩
+    (fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, p⟩ = h ⟨2, l⟩ )
   } := by
   unfold lang_render origin_render render_C' Sum.getLeft!
+  hsimp
   intros h hh
   simp_all
   move=> >
@@ -138,10 +142,10 @@ lemma example2_spec (f : ℤ -> val):
   {
     arr⟨⋆⟩(xptr , i in 1 =>f i)
   }
-  [1| l in lang_index2  => ⟦origin_render l.val⟧]
   [1| p in pay_index => ⟦lang_render (p.val ) lang_c2 svar_list⟧]
+  [2| l in lang_index2  => ⟦origin_render l.val⟧]
   { v,
-    fun h => ∀ l ∈ lang_index2, ∃ p ∈ pay_index , h ⟨1, l⟩ = h ⟨1, p⟩
+    fun h => ∀ l ∈ lang_index2, ∃ p ∈ pay_index , h ⟨1, l⟩ = h ⟨2, p⟩
     -- arr⟨⋆⟩(xptr , i in 1 => f i)
   } := by
   unfold lang_render
