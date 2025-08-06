@@ -25,9 +25,9 @@ lang_def C :=
       x := x +2
 -/
 
-/- Exampel 1 -/
+/- Exampel 1: single if-else branch -/
 def lang_c1 := [lang|
-  fun ⸨x:Val⸩ ⸨a:Val⸩ =>
+  fun ⸨a:Val⸩ =>
     /- need to define choose a-/
     if a > 0 then
       x := x + 1
@@ -55,36 +55,32 @@ def L1 : cfg :=
 
 #check lgtm_match [lang| x := x + 1] L1
 
-def svar_list : List var := ["a"]
+def pvar_list : List var := ["a"]
 -- abbr payload
 
-abbrev c1_index := trm ⊕ List ℕ
-def lang_index : Set (trm ⊕ List ℕ ):=
-  {l:trm ⊕ List ℕ |
+abbrev payload := ℕ
+
+def pay_index : Set (trm ⊕ payload) :=
+  {p:trm ⊕ payload |
+  match p with
+    | Sum.inl _ => False
+    | Sum.inr _ => True
+  }
+#check pay_index
+def lang_index : Set (trm ⊕ payload ):=
+  {l:trm ⊕ payload |
     match l with
     | Sum.inl t => lgtm_match t L1
     | Sum.inr _ => False}
 
 #check lang_index
 
-def pay_index : Set (trm ⊕ List ℕ) :=
-  {p:trm ⊕ List ℕ |
-  match p with
-    | Sum.inl _ => False
-    | Sum.inr _ => True
-  }
-
-def lang_c1_set := [lang|
-  fun ⸨x:Val⸩ ⸨i:Val⸩ =>
-    i
-]
-
 variable (N: ℕ)
 
-def lang_render (p : trm ⊕ List ℕ) (l : trm) (svar : List var): trm :=
-  render_C' l (Sum.getRight! p) svar
+-- def payload_render (p : trm ⊕ List ℕ) (l : trm) (svar : List var): trm :=
+--   render_C l (Sum.getRight! p) svar
 
-def origin_render (l : trm ⊕ List ℕ ) : trm :=
+def lang_render (l : trm ⊕ payload ) : trm :=
   Sum.getLeft! l
 
 -- def origin_render ()
@@ -93,27 +89,26 @@ def origin_c1_set := [lang|
     p
 ]
 #check bighstar
-#check lang_c1_set
 
 #check LGTM.triple
 
+-- [1| p in pay_index => ⟦payload_render p.val lang_c1 pvar_list⟧]
+
 lemma example1_spec (H : hProp ):
-  { [∗ in ⟪1,lang_index⟫ ∪ ⟪1,pay_index⟫ | H ] }
-  [1| p in pay_index => ⟦lang_render p.val lang_c1 svar_list⟧]
-  [2| l in lang_index  => ⟦origin_render l.val ⟧]
+  { [∗ in ⟪1,pay_index⟫ ∪ ⟪2,lang_index⟫ | H ] }
+  [1| p in pay_index => lang_c1(⟨ val_int (Sum.getRight! p.val)⟩ )]
+  [2| l in lang_index  => ⟦lang_render l.val ⟧]
   { v,
     (fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, p⟩ = h ⟨2, l⟩ )
   } := by
-  unfold lang_render origin_render render_C' Sum.getLeft!
-  hsimp
+  unfold lang_render Sum.getRight! Sum.getLeft!
   intros h hh
-  simp_all
   move=> >
   simp
   sorry
 
 
-/- Example 2 -/
+/- Example 2: single for loop -/
 def lang_c2 := [lang|
   fun ⸨x:Val⸩ ⸨a:Val⸩ =>
     for i in [1:a] {
@@ -132,33 +127,40 @@ def L2 : cfg :=
     prods := prod2,
     start := symbol.nonterminal S1 }
 
-def lang_index2 : Set (trm ⊕ List ℕ ):=
-  {l:trm ⊕ List ℕ |
+def lang_index2 : Set (trm ⊕ payload):=
+  {l:trm ⊕ payload |
     match l with
     | Sum.inl t => lgtm_match t L2
     | Sum.inr _ => False}
 
 lemma example2_spec (f : ℤ -> val):
   {
-    arr⟨⋆⟩(xptr , i in 1 =>f i)
+    [∗ in ⟪1,pay_index⟫ ∪ ⟪2,lang_index⟫ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
   }
-  [1| p in pay_index => ⟦lang_render (p.val ) lang_c2 svar_list⟧]
-  [2| l in lang_index2  => ⟦origin_render l.val⟧]
+  [1| p in pay_index => lang_c2(⟨ val_int (Sum.getRight! p.val)⟩)]
+  [2| l in lang_index2  => ⟦lang_render l.val⟧]
   { v,
     fun h => ∀ l ∈ lang_index2, ∃ p ∈ pay_index , h ⟨1, l⟩ = h ⟨2, p⟩
     -- arr⟨⋆⟩(xptr , i in 1 => f i)
   } := by
-  unfold lang_render
-  unfold render_C'
+  unfold lang_render Sum.getLeft!
+  simp
+  intros h hh
   sorry
 
-/- Exampel 3 -/
+/- Exampel 3: two variables in the payload -/
 def lang_c3 := [lang|
-  fun ⸨x:Val⸩ ⸨a:Val⸩ =>
-    while a
-    { x := x + 1 }
+  fun ⸨a:Val⸩ ⸨b:Val⸩ =>
+    if a > 0 then
+      x := x + 1
+    else
+      x := x + 2;
+    if b > 0 then
+      x := x + 3
+    else
+      x := x + 4
 ]
-#print lang_c2
+#print lang_c3
 
 
 -- def prod2 : production :=

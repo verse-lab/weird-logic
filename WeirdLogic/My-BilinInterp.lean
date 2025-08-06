@@ -168,7 +168,6 @@ lemma bilinearInterp_spec_entire  :
     ⌜Grid ⟨1,r₁,r₂⟩ = ∫ (i : ℝ) (j : ℝ), (Grid ⟨2,i,j⟩).toReal⌝ ∗ ⊤ } := by
     apply yfocus_set_lemma 2 ((⋃ i ∈ ⟦0, N⟧, Set.Ico (x_left i) (x_right i)) ×ˢ ⋆) =>/=;
     try simp [disjE]; try simp [disjE]; skip
-    -- yfocus 2, (⋃ i ∈ ⟦0, N⟧, Set.Ico (x_left i) (x_right i)) ×ˢ ⋆
     yapp <;> try exact Set.disjoint_sdiff_left
     simp [fun_insert, OfNat.ofNat]; simp [Zero.zero]
     yin 1: yyref ans; ystep; simp [OfNat.ofNat]; simp [Zero.zero, One.one]

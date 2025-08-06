@@ -74,10 +74,7 @@ def L : cfg :=
 
 #check lgtm_match [lang| x := x + 1] L
 
-/- Rules -/
--- lemma wtriple_grmdisj (α : Type) (t : hwtrm) (Q : hval → hhProp) :
---   Disjoint t t' →
---   LGTM.wp t Q ==> LGTM.wp t' Q:= by sorry
+/- ********************************** Rules ************************************** -/
 
 #check LGTM.wp
 #check FindLabel
@@ -108,6 +105,20 @@ lemma weird_grmdisj_lemma (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Label
   simp [Disjoint]; move => *; sorry
   sorry
 
+#check if_pos
+
+lemma weird_if_lemma (s : Set α) (p1 : Set α) (p2 : Set α) (branch: α → Bool) H F1 F2 Q :
+  Disjoint p1 p2 ->
+  s = p1 ∪ p2 ->
+  ( ∀ pp1 ∈ p1, branch pp1 = true -> H ==> F1 Q) →
+  (∀ pp2 ∈ p2, branch pp2 = false  -> H ==> F2 Q) →
+  H ==> hwpgen_if s (fun (p : α) => branch p) F1 F2 Q :=
+by
+  move=> disj union h1 h2
+  move=> /== h
+  -- sby all_goals ychange h ; unfold hwpgen_if ; ysimp
+  sorry
+
 -- lemma weird_lang_lemma ( s : Set α) (shts : LGTM.SHTs (Labeled α)):
 --   shts.length =2 ->
 --   shts[1].s = ⟪l, s⟫ ->
@@ -115,9 +126,7 @@ lemma weird_grmdisj_lemma (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Label
 -- lemma weird_payload_lemma ( s : Set α) (shts : LGTM.SHTs (Labeled α)):
 --   shts.length =2 ->
 
--- lemma weird_if_true_lemma (shts : LGTM.SHTs (Labeled α)):
---   shts.length = 2 ->
---   shts.
+
 
 
 end WTriple
