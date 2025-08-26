@@ -1,5 +1,6 @@
 import Mathlib.Data.Finmap
 import Mathlib.Data.Real.Basic
+import Mathlib.Computability.ContextFreeGrammar
 
 import Lgtm.Unary.Lang
 import Lgtm.Common.Util
@@ -31,12 +32,7 @@ inductive symbol : Type where
   | eps : symbol
   | seq : symbol → symbol → symbol
 
-
 abbrev production := Finmap ( λ _ : N ↦ List symbol)
-
--- structure production where
---   l : symbol
---   r : List symbol
 
 structure cfg where
   nonterminals : Finset N
@@ -83,8 +79,14 @@ partial def match_cfg (p : trm) (g : cfg) : Prop :=
     | _ => False
   | symbol.eps => True
 
+/- =========================== Context-Free Grammar from Mathlib=========================== -/
+def expand_trm (t : trm) : List (Symbol T N) :=
+  match t with
+  | trm_seq t1 t2 => (expand_trm t1) ++ (expand_trm t2)
+  | _ => [Symbol.terminal t]
 
-/- **TODO** Macros. Too many bugs, solve later -/
+/- =========================== Macros ============================== -/
+/- **TODO** Too many bugs, solve later -/
 declare_syntax_cat gram
 declare_syntax_cat sym
 declare_syntax_cat prod

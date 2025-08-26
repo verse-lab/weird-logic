@@ -1,3 +1,5 @@
+import Mathlib.Computability.ContextFreeGrammar
+
 import Lgtm.Hyper.ProofMode
 import Lgtm.Hyper.ArraysFun
 import Lgtm.Unary.Lang
@@ -9,6 +11,7 @@ import WeirdLogic.WLogic
 import WeirdLogic.Util
 
 open Unary prim val trm
+open ContextFreeGrammar
 
 namespace WeirdLogic
 
@@ -67,6 +70,7 @@ def pay_index : Set (trm ⊕ payload) :=
     | Sum.inr _ => True
   }
 #check pay_index
+
 def lang_index : Set (trm ⊕ payload ):=
   {l:trm ⊕ payload |
     match l with
@@ -104,7 +108,7 @@ lemma example1_spec (H : hProp ):
   unfold lang_render Sum.getRight! Sum.getLeft!
   intros h hh
   move=> >
-  simp
+  simp [lang_c1]
   sorry
 
 
@@ -146,6 +150,8 @@ lemma example2_spec (f : ℤ -> val):
   unfold lang_render Sum.getLeft!
   simp
   intros h hh
+  move=> >
+  simp [lang_c2]
   sorry
 
 /- Exampel 3: two variables in the payload -/
@@ -162,10 +168,99 @@ def lang_c3 := [lang|
 ]
 #print lang_c3
 
+/- ============ Example 4: new cfg & if-else ============ -/
+-- Example 4
+def trm1 : trm := [lang| x := x + 1]
+def trm2 : trm := [lang| x := x + 2]
+def trm3 : trm := [lang| x := x + 3]
+def r1 : ContextFreeRule trm String :=
+  {
+    input := "S1",
+    output := [Symbol.terminal trm1, Symbol.nonterminal "S2"],
+  }
+def r2 : ContextFreeRule trm String :=
+  {
+    input := "S1",
+    output := [Symbol.terminal trm2, Symbol.nonterminal "S2"],
+  }
+def r3 : ContextFreeRule trm String :=
+  {
+    input := "S2",
+    output := [Symbol.terminal trm3],
+  }
+def cfg4 : ContextFreeGrammar trm :=
+  {
+    NT := String,
+    initial := "S1",
+    rules := Finset.mk {r1, r2, r3} (by unfold r1 r2 r3 trm1 trm2; simp)
+  }
 
--- def prod2 : production :=
---   (Finmap.singleton S1 [(symbol.terminal S2), symbol.seq (symbol.terminal S2) (symbol.terminal S1)]).insert
---   L [symbol.nonterminal S1]
+def l4 : Language trm := cfg4.language
+
+#check cfg4.Derives [Symbol.terminal trm1] [Symbol.terminal trm1, Symbol.terminal trm3]
+#check Derives.trans
+
+example : cfg4.Generates [Symbol.terminal trm2, Symbol.terminal trm3]:= by
+  unfold ContextFreeGrammar.Generates
+  let tm := [Symbol.terminal trm2, Symbol.nonterminal "S2"]
+  apply ContextFreeGrammar.Derives.trans (v := tm)
+  . unfold ContextFreeGrammar.Derives
+    unfold ContextFreeGrammar.Produces
+    constructor
+    { rfl}
+    {
+      use r2
+      constructor
+      { exact Finset.mem_mk.mpr (by simp)}
+      { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := ∅ ) }
+    }
+  . unfold ContextFreeGrammar.Derives
+    unfold ContextFreeGrammar.Produces
+    constructor
+    { rfl}
+    {
+      use r3
+      constructor
+      { exact Finset.mem_mk.mpr (by simp)}
+      { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := [Symbol.terminal trm2] ) }
+    }
+
+def lang_c4 := [lang|
+  fun ⸨a:Val⸩ ⸨b:Val⸩ =>
+    if a > 0 then
+      x := x + 1
+    else
+      x := x + 2;
+    x := x + 3
+]
+#print lang_c4
+
+def pay_index4 : Set (trm ⊕ payload) :=
+  {p:trm ⊕ payload |
+  match p with
+    | Sum.inl _ => False
+    | Sum.inr _ => True
+  }
+def lang_index4 : Set (trm ⊕ payload ):=
+  {l:trm ⊕ payload |
+    match l with
+    | Sum.inl t => cfg4.Generates (expand_trm t)
+    | Sum.inr _ => False}
+
+
+lemma example4_spec (f : ℤ -> val):
+  {
+    [∗ in ⟪1,pay_index4⟫ ∪ ⟪2,lang_index4⟫ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
+  }
+  [1| p in pay_index4 => lang_c4(⟨ val_int (Sum.getRight! p.val)⟩)]
+  [2| l in lang_index4  => ⟦lang_render l.val⟧]
+  { v,
+    fun h => ∀ l ∈ lang_index4, ∃ p ∈ pay_index4 , h ⟨1, l⟩ = h ⟨2, p⟩
+    -- arr⟨⋆⟩(xptr , i in 1 => f i)
+  } := by
+  unfold lang_render Sum.getLeft!
+  sorry
+
 
 
 end WeirdLogic
