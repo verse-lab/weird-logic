@@ -21,6 +21,9 @@ inductive wtrm : Type where
   | wtrm_basic : trm -> wtrm
   | wtrm_choose : var -> wtrm
 
+syntax "⟦" term "⟧" : lang
+macro_rules
+  | `([lang| ⟦$t⟧]) => `($t)
 /- =========================== Context-Free Grammar =========================== -/
 
 abbrev T := trm

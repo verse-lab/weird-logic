@@ -151,6 +151,8 @@ lemma get2_spec_out (s : Set (ℝ × ℝ)) :
 
 attribute [-simp] Finset.mem_Ico Set.singleton_prod
 
+#check yfor_lemma
+
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
 lemma bilinearInterp_spec_entire  :
@@ -166,15 +168,16 @@ lemma bilinearInterp_spec_entire  :
   [2| ij in @Set.univ (ℝ × ℝ) => Lang.get2(⸨xleft:Loc⸩, ⸨xright:Loc⸩, ⸨yprt:Loc⸩, ⸨yleft:Loc⸩, ⸨yright:Loc⸩, ⸨yval:Loc⸩, ⟨ij.val.1⟩ , ⟨ij.val.2⟩)]
   {Grid,
     ⌜Grid ⟨1,r₁,r₂⟩ = ∫ (i : ℝ) (j : ℝ), (Grid ⟨2,i,j⟩).toReal⌝ ∗ ⊤ } := by
-    apply yfocus_set_lemma 2 ((⋃ i ∈ ⟦0, N⟧, Set.Ico (x_left i) (x_right i)) ×ˢ ⋆) =>/=;
+    apply yfocus_set_lemma 2 ((⋃ i ∈ ⟦0, N⟧, Set.Ico (x_left i) (x_right i)) ×ˢ ⋆) =>/=; -- focus, x is y in paper
     try simp [disjE]; try simp [disjE]; skip
-    yapp <;> try exact Set.disjoint_sdiff_left
-    simp [fun_insert, OfNat.ofNat]; simp [Zero.zero]
-    yin 1: yyref ans; ystep; simp [OfNat.ofNat]; simp [Zero.zero, One.one]
+    yapp get2_spec_out <;> try exact Set.disjoint_sdiff_left -- remove 0s, use get2_spec_out, second part: side goal
+    simp [fun_insert, OfNat.ofNat]; simp [Zero.zero] -- before yin: (9)
+    yin 1: yyref ans -- yyref: SEQU1
+    yin 1: ystep; simp [OfNat.ofNat]; simp [Zero.zero, One.one] -- ystep: SEQU1; after this: (9)
     srw biUnion_prod_const
     let op := fun (hv : hval (ℝ×ℝ)ˡ) i => ∫ i in Set.Ico (x_left i) (x_right i), ∫ j, (hv ⟨2,i,j⟩).toReal
     let P := fun (hv : hval (ℝ×ℝ)ˡ) i => IntegrableOn (fun i => ∫ j, (hv ⟨2,i,j⟩).toReal) (Set.Ico (x_left i) (x_right i))
-    yfor+. with
+    yfor+. with -- longest goal: the one before (13)
       (Q := fun i hv => ans ~⟪1, {(r₁, r₂)}⟫~> op hv i ∗ ⌜P hv i⌝)
       (H₀ := ans ~⟪1,{(r₁, r₂)}⟫~> val_real 0)<;> try simp [op, P]
     { move=> j > /== ?? eq; congr! 2; ext
@@ -187,11 +190,11 @@ lemma bilinearInterp_spec_entire  :
       yin 2: ystep
              ystep @searchSRLE_hspec (i := i); rotate_left
              { move=> ? /x_lr /le_of_lt //' }
-             ystep; yyifF; sdo 3 ystep=> //'
+             ystep; yyifF; sdo 3 ystep=> //' -- (13)
       ymerge 2 with (μ := fun x => ⟨x_left i, x.2⟩)=> //'
-      erw [(img_sep (f := fun _ => x_left i) (g := id)), Set.Nonempty.image_const]=> /== //'
+      erw [(img_sep (f := fun _ => x_left i) (g := id)), Set.Nonempty.image_const]=> /== //' -- outmost integral
       ysubst with (σ := Prod.snd)
-      zapp linearInterp_spec=> //'
+      zapp linearInterp_spec=> //' -- use (14), (15) --> (16)
       { apply y_ptr_mon=> /== //' }
       { srw -y_ptr_0 StrictMonoOn.le_iff_le=> // /== //' }
       { srw /== -y_ptr_N StrictMonoOn.le_iff_le=> // /== //' }

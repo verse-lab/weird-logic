@@ -204,26 +204,20 @@ example : cfg4.Generates [Symbol.terminal trm2, Symbol.terminal trm3]:= by
   unfold ContextFreeGrammar.Generates
   let tm := [Symbol.terminal trm2, Symbol.nonterminal "S2"]
   apply ContextFreeGrammar.Derives.trans (v := tm)
-  . unfold ContextFreeGrammar.Derives
+  all_goals
+    unfold ContextFreeGrammar.Derives
     unfold ContextFreeGrammar.Produces
     constructor
-    { rfl}
-    {
-      use r2
-      constructor
-      { exact Finset.mem_mk.mpr (by simp)}
-      { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := ∅ ) }
-    }
-  . unfold ContextFreeGrammar.Derives
-    unfold ContextFreeGrammar.Produces
+    rfl
+  . use r2
     constructor
-    { rfl}
-    {
-      use r3
-      constructor
-      { exact Finset.mem_mk.mpr (by simp)}
-      { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := [Symbol.terminal trm2] ) }
-    }
+    { exact Finset.mem_mk.mpr (by simp)}
+    { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := ∅ ) }
+  . use r3
+    constructor
+    { exact Finset.mem_mk.mpr (by simp)}
+    { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := [Symbol.terminal trm2] ) }
+
 
 def lang_c4 := [lang|
   fun ⸨a:Val⸩ ⸨b:Val⸩ =>
