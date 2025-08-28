@@ -24,8 +24,7 @@ require ssreflect from
     git "https://github.com/verse-lab/lean-ssr.git" @ "v4.17.0"
 
 require lgtm from
-    git "https://github.com/verse-lab/lean-lgtm.git" @ "ctx"
-    -- git "https://github.com/YuxiLing/lean-lgtm-weird.git" @ "yuxi"
+    git "https://github.com/verse-lab/lean-lgtm.git" @ "popl26-submission"
 
 -- @[default_target]
 -- lean_lib «WeirdLogic» where
