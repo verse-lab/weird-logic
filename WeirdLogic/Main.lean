@@ -10,6 +10,8 @@ import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.Util
 
+import WeirdLogic.Hete
+
 open Unary prim val trm
 open ContextFreeGrammar
 
@@ -241,20 +243,23 @@ def lang_index4 : Set (trm ⊕ payload ):=
     | Sum.inl t => cfg4.Generates (expand_trm t)
     | Sum.inr _ => False}
 
+def lang_index4' : Set trm := (cfg4.Generates <| expand_trm ·)
 
 lemma example4_spec (f : ℤ -> val):
   {
-    [∗ in ⟪1,pay_index4⟫ ∪ ⟪2,lang_index4⟫ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
+    -- [∗ in ⟪1,pay_index4⟫ ∪ ⟪2,lang_index4⟫ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
+    [∗ in Set.univ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
   }
-  [1| p in pay_index4 => lang_c4(⟨ val_int (Sum.getRight! p.val)⟩)]
-  [2| l in lang_index4  => ⟦lang_render l.val⟧]
+  [1| Sum.inr| p in Set.univ => lang_c4(⟨ val_int (Int.ofNat p.val) ⟩)]
+  [2| Sum.inl| l in lang_index4' => ⟦l.val⟧]
   { v,
-    fun h => ∀ l ∈ lang_index4, ∃ p ∈ pay_index4 , h ⟨1, l⟩ = h ⟨2, p⟩
+    fun h => ∀ l ∈ lang_index4', ∃ p , h ⟨1, Sum.inl l⟩ = h ⟨2, Sum.inr p⟩
     -- arr⟨⋆⟩(xptr , i in 1 => f i)
   } := by
   unfold lang_render Sum.getLeft!
+  -- TODO need better user experience
+  let shts' := [[sht| [1 | p in pay_index4 => $t] ], [sht| [2 | $i in $s => $t] ]]
+  rw [LGTM.triple_sht_eq]
   sorry
-
-
 
 end WeirdLogic
