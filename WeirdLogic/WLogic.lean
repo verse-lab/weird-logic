@@ -3,20 +3,25 @@ import Lgtm.Unary.Lang
 import Lgtm.Hyper.HProp
 import Lgtm.Hyper.YSimp
 import Lgtm.Hyper.YChange
-import Lgtm.Hyper.SepLog
 import Lgtm.Hyper.WP
 import Lgtm.Hyper.ProofMode
+import Lgtm.Hyper.SepLog
 
 import WeirdLogic.Gram
 
 open Lean Lean.Expr Lean.Meta Qq
-open Lean Elab Command Term Meta Tactic
+open Elab Command Term Meta Tactic
+open Classical trm val prim
 
+variable {α : Type} (s : Set α)
+
+-- local notation "htrm" => htrm α
+-- local notation "hval" => hval α
+-- local notation "hhProp" => hhProp α
 
 section WTriple
 
 local macro "LabType" : term => `(ℕ)
-variable {α : Type} (s : Set α)
 
 def hgram (α : Type) := α -> trm
 
@@ -60,72 +65,62 @@ def render_C' (C : trm) (p : List ℕ ) (v : List var): trm :=
     subst svar.2 (trm.trm_val (val.val_int svar.1)) C
   ) C
 
-/- Following is test examples -/
-def S2 : T := [lang| x := x + 1]
-def S1 : N := "S1"
-
-def prod1 : production :=
-  Finmap.singleton S1 [symbol.terminal S2]
-
-def L : cfg :=
-  { nonterminals := {S1},
-    prods := prod1,
-    start := symbol.nonterminal S1 }
-
-#check lgtm_match [lang| x := x + 1] L
-
 /- ********************************** Rules ************************************** -/
 
 #check LGTM.wp
 #check FindLabel
 #check yfocus_set_lemma
 
-/- s' is the part want to keep -/
-lemma weird_weaken_lemma (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) {pi : idx < shts.length}
+
+/- s' is the part to keep (P' in weaken rule) -/
+lemma weird_weaken_lemma  (s' s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2) {pi : idx < shts.length}
   [FindLabel l shts idx pi] :
-  shts[idx].s = ⟪l, s⟫ ->
-  shts.length = 2 ∧ l=1 ->
+  shts[idx].s = ⟪1, s⟫ ->
+  idx = 0 ∧ shts[1].s = ⟪ 2, s''⟫ ->
   (shts.Pairwise (Disjoint ·.s ·.s)) ->
-  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪l, s ∩ s'⟫,shts[idx].ht⟩) Q ->
-  H ==> LGTM.wp shts Q := by
-  move=> *; apply hhimpl_trans_r;
-  dsimp=> //
-  dsimp [LGTM.wp]
+  LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪1, s ∩ s'⟫,shts[idx].ht⟩) (fun _ h => ∀ ll , ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨2, Sum.inr pp⟩)
+  ==> LGTM.wp shts (fun _ h => ∀ ll , ∃ pp, Sum.inr pp ∈ s ∧ h ⟨1, Sum.inl ll ⟩= h ⟨2, Sum.inr pp⟩) := by
+  move=> label h1 h2;
+  move=> *;
+  apply hhimpl_trans_r=>//
+  apply yfocus_set_lemma_aux=> //;
+  move =>*;
+  {sorry}
   sorry
 
-lemma weird_grmdisj_lemma (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) {pi : idx < shts.length}
+lemma weird_grmdisj_lemma (s' s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2) {pi : idx < shts.length}
   [FindLabel l shts idx pi] :
-  shts[idx].s = ⟪l, s⟫ ->
-  shts.length = 2 ∧ l=2 ->
+  shts[idx].s = ⟪2, s⟫ ->
+  idx = 1 ∧ shts[0].s = ⟪ 1, s''⟫ ->
   (shts.Pairwise (Disjoint ·.s ·.s)) ->
-  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪ l, s'⟫, shts[idx].ht⟩ ) Q ->
-  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪ l, s \ s'⟫, shts[idx].ht⟩) Q ->
+  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪ l, s'⟫, shts[idx].ht⟩ ) (fun _ h => ∀ ll, ∃ pp, Sum.inl ll ∈ s' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨2, Sum.inr pp⟩) ->
+  H ==> LGTM.wp ((shts.eraseIdx idx).insertIdx idx ⟨⟪ l, s \ s'⟫, shts[idx].ht⟩) (fun _ h => ∀ ll, ∃ pp, Sum.inl ll ∈ s \ s' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨2, Sum.inr pp⟩) ->
   H ==> LGTM.wp shts Q := by
   move=> *; apply hhimpl_trans_r; apply yfocus_set_lemma_aux=> //;
   simp [Disjoint]; move => *; sorry
   sorry
 
+#check hhimpl_trans_r
 #check if_pos
 
-lemma weird_if_lemma (s : Set α) (p1 : Set α) (p2 : Set α) (branch: α → Bool) H F1 F2 Q :
-  Disjoint p1 p2 ->
-  s = p1 ∪ p2 ->
-  ( ∀ pp1 ∈ p1, branch pp1 = true -> H ==> F1 Q) →
-  (∀ pp2 ∈ p2, branch pp2 = false  -> H ==> F2 Q) →
-  H ==> hwpgen_if s (fun (p : α) => branch p) F1 F2 Q :=
-by
-  move=> disj union h1 h2
-  move=> /== h
-  -- sby all_goals ychange h ; unfold hwpgen_if ; ysimp
+lemma weird_lang_lemma ( s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2) (tl : α) {pi : idx < shts.length}
+  [FindLabel l shts idx pi] :
+  shts[idx].s = ⟪1, s⟫ ->
+  idx = 0 ∧ shts[1].s = ⟪ 2, s'⟫ ->
+  {⟨1, (Sum.inl tl)⟩} = shts[0].s ->
+  LGTM.wp shts (fun _ h => ∃ pp, h ⟨1, Sum.inl tl ⟩= h ⟨2, Sum.inr pp⟩)
+  ==> LGTM.wp shts (fun _ h => ∀ ll , ∃ pp, h ⟨1, Sum.inl ll ⟩= h ⟨2, Sum.inr pp⟩) := by
   sorry
 
--- lemma weird_lang_lemma ( s : Set α) (shts : LGTM.SHTs (Labeled α)):
---   shts.length =2 ->
---   shts[1].s = ⟪l, s⟫ ->
+lemma weird_payload_lemma ( s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2) (tp : β) (tl : α) :
+  ⟨2, (Sum.inr pp)⟩ ∈ shts.set ->
+  LGTM.wp shts (fun _ h => h ⟨1, Sum.inl tl ⟩= h ⟨2, Sum.inr tp⟩)
+  ==> LGTM.wp shts (fun _ h => ∃ pp, h ⟨1, Sum.inl tl ⟩= h ⟨2, Sum.inr pp⟩) := by
+  sorry
 
--- lemma weird_payload_lemma ( s : Set α) (shts : LGTM.SHTs (Labeled α)):
---   shts.length =2 ->
-
+lemma weird_seqleft_lemma ( s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2):
+  True := by
+  simp
 
 
 

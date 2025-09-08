@@ -33,6 +33,7 @@ variable (x_rl : ∀ i ∈ ⟦z, n-1⟧, x_right i <= x_left (i + 1))
 variable (zLn : z < n) (oLz : 0 <= z) (nLN : n <= N)
 include x_lr x_rl zLn oLz nLN
 
+#check LGTM.triple
 lemma searchSRLE_hspec : i ∈ ⟦z, n⟧ -> f '' s ⊆ Set.Ico (x_left i) (x_right i) ->
   arr⟨⟪l,s⟫⟩(left, x in N => x_left x) ∗ arr⟨⟪l,s⟫⟩(right, x in N => x_right x) ==>
     hwp ⟪l, s⟫ (fun i ↦ [lang| searchSRLE(⸨left:Loc⸩, ⸨right:Loc⸩, ⟨f i.val⟩ , z, n)])

@@ -220,6 +220,8 @@ example : cfg4.Generates [Symbol.terminal trm2, Symbol.terminal trm3]:= by
     { exact Finset.mem_mk.mpr (by simp)}
     { unfold tm; apply ContextFreeRule.rewrites_of_exists_parts (p := [Symbol.terminal trm2] ) }
 
+#check Language.instMembershipList
+#check l4
 
 def lang_c4 := [lang|
   fun ⸨a:Val⸩ ⸨b:Val⸩ =>
@@ -256,10 +258,11 @@ lemma example4_spec (f : ℤ -> val):
     fun h => ∀ l ∈ lang_index4', ∃ p , h ⟨1, Sum.inl l⟩ = h ⟨2, Sum.inr p⟩
     -- arr⟨⋆⟩(xptr , i in 1 => f i)
   } := by
-  unfold lang_render Sum.getLeft!
+  unfold lang_c4
+  try simp [disjE]
   -- TODO need better user experience
-  let shts' := [[sht| [1 | p in pay_index4 => $t] ], [sht| [2 | $i in $s => $t] ]]
-  rw [LGTM.triple_sht_eq]
+  -- let shts' := [[sht| [1 | p in pay_index4 => $t] ], [sht| [2 | $i in $s => $t] ]]
+  -- rw [LGTM.triple_sht_eq]
   sorry
 
 end WeirdLogic
