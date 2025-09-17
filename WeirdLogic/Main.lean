@@ -247,22 +247,72 @@ def lang_index4 : Set (trm ⊕ payload ):=
 
 def lang_index4' : Set trm := (cfg4.Generates <| expand_trm ·)
 
+def cfg4_left : ContextFreeGrammar trm :=
+  {
+    NT := String,
+    initial := "S1",
+    rules := Finset.mk {r1, r3} (by unfold r1 r3 trm1; simp)
+  }
+def cfg4_right : ContextFreeGrammar trm :=
+  {
+    NT := String,
+    initial := "S1",
+    rules := Finset.mk {r2, r3} (by unfold r2 r3 trm2; simp)
+  }
+
+def lang_index4_left : Set trm := (cfg4_left.Generates <| expand_trm ·)
+def lang_index4_right : Set trm := (cfg4_right.Generates <| expand_trm ·)
+
+lemma lang_union_eq :
+  lang_index4' = lang_index4_left ∪ lang_index4_right := by
+  unfold lang_index4' lang_index4_left lang_index4_right Generates Derives expand_trm
+  sorry
+
+lemma sum_left_eq ( α : Type) (β : Type) (s : Set α) :
+  { x : α ⊕ β | ∃ a ∈ s, x = Sum.inl a } = Sum.inl '' s := by
+  ext x
+  simp [Set.mem_image, Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨a, ha, rfl⟩ ; use a, ha
+  · rintro ⟨a, ha, rfl⟩ ; use a, ha
+
+lemma sum_left_eq_rev ( α : Type) (β : Type) (a : α )(s : Set (α ⊕ β)) :
+  Sum.inl a ∈ s ↔ ∃ x : α ⊕ β, x ∈ s ∧ x = Sum.inl a := by
+  constructor
+  intro h ; use Sum.inl a ;
+  intro h'; aesop
+
 lemma example4_spec (f : ℤ -> val):
   {
     -- [∗ in ⟪1,pay_index4⟫ ∪ ⟪2,lang_index4⟫ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
     [∗ in Set.univ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
   }
-  [1| Sum.inr| p in Set.univ => lang_c4(⟨ val_int (Int.ofNat p.val) ⟩)]
-  [2| Sum.inl| l in lang_index4' => ⟦l.val⟧]
+  [1| Sum.inl| l in lang_index4' => ⟦l.val⟧]
+  [2| Sum.inr| p in Set.univ => lang_c4(⟨ val_int (Int.ofNat p.val) ⟩)]
   { v,
     fun h => ∀ l ∈ lang_index4', ∃ p , h ⟨1, Sum.inl l⟩ = h ⟨2, Sum.inr p⟩
     -- arr⟨⋆⟩(xptr , i in 1 => f i)
   } := by
-  unfold lang_c4
+  unfold lang_c4 LGTM.triple
   try simp [disjE]
+  move=> h pre
+  apply weird_grmdisj_lemma ( {(Sum.inl [lang| x := x + 1; x := x + 2])}) =>/=;
+  { dsimp [LGTM.HSHT.mkSHT, Set.mem_image, LGTM.Labeled.map]; sorry}
+  { sorry
+  }
+  { simp; sorry}
+  { move=> *; sorry }
+  { move=> *
+    simp; sorry}
+  { rfl}
+  { exact lang_index4}
+  { sorry
+  }
+  { exact xptr}
+  { exact lang_index4}
   -- TODO need better user experience
   -- let shts' := [[sht| [1 | p in pay_index4 => $t] ], [sht| [2 | $i in $s => $t] ]]
   -- rw [LGTM.triple_sht_eq]
-  sorry
+
 
 end WeirdLogic
