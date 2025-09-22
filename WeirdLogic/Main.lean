@@ -8,6 +8,7 @@ import Lgtm.Experiments.HyperCommon
 
 import WeirdLogic.Gram
 import WeirdLogic.WLogic
+import WeirdLogic.WTriple
 import WeirdLogic.Util
 
 import WeirdLogic.Hete
@@ -62,8 +63,6 @@ def L1 : cfg :=
 
 def pvar_list : List var := ["a"]
 -- abbr payload
-
-abbrev payload := ℕ
 
 def pay_index : Set (trm ⊕ payload) :=
   {p:trm ⊕ payload |
@@ -287,29 +286,32 @@ lemma example4_spec (f : ℤ -> val):
     -- [∗ in ⟪1,pay_index4⟫ ∪ ⟪2,lang_index4⟫ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
     [∗ in Set.univ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
   }
+  [0| Sum.inr| p in Set.univ => lang_c4(⟨ val_int (Int.ofNat p.val) ⟩)]
   [1| Sum.inl| l in lang_index4' => ⟦l.val⟧]
-  [2| Sum.inr| p in Set.univ => lang_c4(⟨ val_int (Int.ofNat p.val) ⟩)]
+
   { v,
-    fun h => ∀ l ∈ lang_index4', ∃ p , h ⟨1, Sum.inl l⟩ = h ⟨2, Sum.inr p⟩
+    fun h => ∀ l ∈ lang_index4', ∃ p , h ⟨1, Sum.inl l⟩ = h ⟨0, Sum.inr p⟩
     -- arr⟨⋆⟩(xptr , i in 1 => f i)
   } := by
+  unfold LGTM.HSHT.mkSHT
   unfold lang_c4 LGTM.triple
   try simp [disjE]
   move=> h pre
-  apply weird_grmdisj_lemma ( {(Sum.inl [lang| x := x + 1; x := x + 2])}) =>/=;
-  { dsimp [LGTM.HSHT.mkSHT, Set.mem_image, LGTM.Labeled.map]; sorry}
-  { sorry
-  }
-  { simp; sorry}
-  { move=> *; sorry }
-  { move=> *
-    simp; sorry}
-  { rfl}
-  { exact lang_index4}
-  { sorry
-  }
-  { exact xptr}
-  { exact lang_index4}
+  sorry
+  -- apply weird_grmdisj_lemma 1 ({(Sum.inl [lang| x := x + 1; x := x + 2])}) =>/=;
+  -- { dsimp [LGTM.HSHT.mkSHT, Set.mem_image, LGTM.Labeled.map]; sorry}
+  -- { sorry
+  -- }
+  -- { simp; sorry}
+  -- { move=> *; sorry }
+  -- { move=> *
+  --   simp; sorry}
+  -- { rfl}
+  -- { exact lang_index4}
+  -- { sorry
+  -- }
+  -- { exact xptr}
+  -- { exact lang_index4}
   -- TODO need better user experience
   -- let shts' := [[sht| [1 | p in pay_index4 => $t] ], [sht| [2 | $i in $s => $t] ]]
   -- rw [LGTM.triple_sht_eq]

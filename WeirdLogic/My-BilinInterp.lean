@@ -169,7 +169,9 @@ lemma bilinearInterp_spec_entire  :
   [2| ij in @Set.univ (ℝ × ℝ) => Lang.get2(⸨xleft:Loc⸩, ⸨xright:Loc⸩, ⸨yprt:Loc⸩, ⸨yleft:Loc⸩, ⸨yright:Loc⸩, ⸨yval:Loc⸩, ⟨ij.val.1⟩ , ⟨ij.val.2⟩)]
   {Grid,
     ⌜Grid ⟨1,r₁,r₂⟩ = ∫ (i : ℝ) (j : ℝ), (Grid ⟨2,i,j⟩).toReal⌝ ∗ ⊤ } := by
-    apply yfocus_set_lemma 2 ((⋃ i ∈ ⟦0, N⟧, Set.Ico (x_left i) (x_right i)) ×ˢ ⋆) =>/=; -- focus, x is y in paper
+    unfold LGTM.triple
+    apply yfocus_set_lemma 2 ((⋃ i ∈ ⟦0, N⟧, Set.Ico (x_left i) (x_right i)) ×ˢ ⋆)
+    =>/=; -- focus, x is y in paper
     try simp [disjE]; try simp [disjE]; skip
     yapp get2_spec_out <;> try exact Set.disjoint_sdiff_left -- remove 0s, use get2_spec_out, second part: side goal
     simp [fun_insert, OfNat.ofNat]; simp [Zero.zero] -- before yin: (9)

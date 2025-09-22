@@ -70,7 +70,8 @@ macro_rules
 
 -- open Unary prim val trm in
 #check [sht| [1 | (@Sum.inl Nat Nat) | p in (@Set.univ Nat) => ()]]
-#check [sht| [1 | Sum.inl | p in (@Set.univ Nat) => ()]]
+#check [sht| [1 | Sum.inl | p in (@Set.univ Nat) => ()]].s
+#check [[sht| [1 | Sum.inl | p in (@Set.univ Nat) => ()]], [sht| [0 | Sum.inr | l in (@Set.univ ℤ) => ()]]].set
 
 -- macro_rules
 --   | `({ $H } $sht* { $v, $Q }) => `(
