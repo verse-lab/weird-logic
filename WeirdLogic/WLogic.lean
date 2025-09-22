@@ -25,11 +25,10 @@ lemma hheap_weaken (α β: Type) (i j : ℕ) (h : hheap (Labeled (α ⊕ β))) (
   (∃ p, Sum.inr p ∈ P₁ ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr p⟩) → ∃ p, Sum.inr p ∈ P ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr p⟩ := by
   aesop
 
-lemma hheap_weaken_forall (α β: Type) (i j : ℕ) (h : hheap (Labeled (α ⊕ β))) (P P₁ L: Set (α ⊕ β)) (hsub : P₁ ⊆ P):
-  (∀ ll, Sum.inl ll ∈ L ∧ ∃ p, Sum.inr p ∈ P₁ ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr p⟩) → ∀ ll, Sum.inl ll ∈ L ∧ ∃ p, Sum.inr p ∈ P ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr p⟩ := by
+lemma hheap_weaken_forall (α β: Type) (i j : ℕ) (h : hheap (Labeled (α ⊕ β))) (P P₁ : Set (α ⊕ β)) (l : Set α) (hsub : P₁ ⊆ P):
+  (∀ ll ∈ l, ∃ p, Sum.inr p ∈ P₁ ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr p⟩) → ∀ ll ∈ l, ∃ p, Sum.inr p ∈ P ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr p⟩ := by
   intro hle l
-  constructor
-  · aesop
+  move=> hl
   apply hheap_weaken
   exact hsub
   simp_all only
@@ -47,8 +46,8 @@ lemma weird_weaken_mid_post_lemma (i j : ℕ) (s' s s'': Set (α ⊕ β)) (sht_p
   sht_prog.s = ⟪i, s⟫ ->
   sht_lang.s = ⟪ j, s''⟫ ->
   s' ⊆ s -> Disjoint sht_prog.s sht_lang.s ->
-  LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll , Sum.inl ll ∈ s'' ∧ ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr pp⟩)
-  ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll, Sum.inl ll ∈ s'' ∧ ∃ pp, Sum.inr pp ∈ s ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr pp⟩) := by
+  LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr pp⟩)
+  ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp, Sum.inr pp ∈ s ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr pp⟩) := by
   move=> _ _ subst *
   apply weird_wp_conseq
   intro x h
@@ -95,10 +94,10 @@ lemma weird_heap_sub_left (i j : ℕ) (Q : hhProp (α ⊕ β)ˡ) (s s' s'': Set 
 lemma weird_heap_sub_right (i j : ℕ) (Q : hhProp (α ⊕ β)ˡ) (s s' s'': Set (α ⊕ β)) :
   i ≠ j ->
   hhlocal (⟪i, s⟫ \ ⟪i, s'⟫ ) Q ->
-  hhstar (fun h => ∀ ll, Sum.inl ll ∈ s'' ∧ ∃ pp,
+  hhstar (fun h => ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp,
     Sum.inr pp ∈ s' ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr pp⟩) Q
   ==>
-  (fun h => ∀ ll, Sum.inl ll ∈ s'' ∧ ∃ pp,
+  (fun h => ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp,
     Sum.inr pp ∈ s' ∧ h ⟨j, Sum.inl ll ⟩= h ⟨i, Sum.inr pp⟩)  := by
   unfold hhstar hhlocal hlocal
   intro ij hl
@@ -107,12 +106,11 @@ lemma weird_heap_sub_right (i j : ℕ) (Q : hhProp (α ⊕ β)ˡ) (s s' s'': Set
   subst hh
   simp
   specialize hl _ hs2
-  intro ll
+  intro ll lin
   rw [hl]
-  · constructor
-    · aesop
-    specialize hs1 ll
-    rcases hs1 with ⟨hsl, pp, hs11, hs12⟩
+  · simp at hs1
+    specialize hs1 ll lin
+    rcases hs1 with ⟨pp, hs11, hs12⟩
     exists pp
     rw [hl]
     simp_all
@@ -257,14 +255,14 @@ lemma weird_weaken_lemma  (s' s s'': Set (α ⊕ β)) (sht_prog sht_lang : LGTM.
   s' ⊆ s -> Disjoint sht_prog.s sht_lang.s ->
   H₁ ==> LGTM.wp [⟨⟪0, s \ s'⟫, sht_prog.ht⟩] (fun _ => fun h ↦ ∀ a, a ∈ ⟪0, s \ s'⟫ ∧ h a ≠ ∅ ) ->
   H₂ ==> LGTM.wp [⟨⟪0, s'⟫, sht_prog.ht⟩, sht_lang]
-    (fun _ h => ∀ ll, Sum.inl ll ∈ s''∧ ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) ->
+    (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) ->
   H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
-  (fun _ h => ∀ ll , Sum.inl ll ∈ s'' ∧ ∃ pp, Sum.inr pp ∈ s ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) := by
+  (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp, Sum.inr pp ∈ s ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) := by
   move=> prog lang subs disj part1 part2
   intro h12
   move=> H12
   apply weird_weaken_mid_post_lemma=>//
-  set Qp1 : hval (α ⊕ β)ˡ → hhProp (α ⊕ β)ˡ:= fun _ => (fun h ↦ ∀ ll, Sum.inl ll ∈ s'' ∧ ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨1, Sum.inl ll⟩ = h ⟨0, Sum.inr pp⟩)
+  set Qp1 : hval (α ⊕ β)ˡ → hhProp (α ⊕ β)ˡ:= fun _ => (fun h ↦ ∀ ll ∈ {l | Sum.inl l ∈ s''}, ∃ pp, Sum.inr pp ∈ s' ∧ h ⟨1, Sum.inl ll⟩ = h ⟨0, Sum.inr pp⟩)
   set B : hhProp (α ⊕ β)ˡ:= fun h ↦ ∀ a, a ∈ ⟪0, s \ s'⟫ ∧ h a ≠ ∅
   set B' : hval (α ⊕ β)ˡ → hhProp (α ⊕ β)ˡ:= fun _ => B
   apply weird_wp_conseq (Q1 := whqstar Qp1 B)
@@ -360,9 +358,9 @@ lemma weird_grmdisj_lemma (s' s : Set (α ⊕ β)) (sht_prog sht_lang : LGTM.SHT
   sht_lang.s = ⟪ 1, s⟫ ->
   s' ⊆ s -> Disjoint sht_prog.s sht_lang.s ->
   -- H = H₁ ∗ H₂ ->
-  H ==> LGTM.wp [sht_prog, ⟨⟪ 1, s \ s'⟫, sht_lang.ht ⟩ ] (fun _ h => ∀ ll, Sum.inl ll ∈ s \ s' ∧ ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) ->
-  H ==> LGTM.wp [sht_prog, ⟨⟪ 1, s'⟫, sht_lang.ht ⟩ ] (fun _ h => ∀ ll, Sum.inl ll ∈ s' ∧ ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) ->
-  H ==> LGTM.wp [sht_prog, sht_lang]  (fun v h => ∀ ll, Sum.inl ll ∈ s ∧ ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) := by
+  H ==> LGTM.wp [sht_prog, ⟨⟪ 1, s \ s'⟫, sht_lang.ht ⟩ ] (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s \ s'}, ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) ->
+  H ==> LGTM.wp [sht_prog, ⟨⟪ 1, s'⟫, sht_lang.ht ⟩ ] (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s'}, ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) ->
+  H ==> LGTM.wp [sht_prog, sht_lang]  (fun v h => ∀ ll ∈ {l | Sum.inl l ∈ s}, ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩) := by
   move=> prog lang subs disj up1 up2
   -- rw [conj]
   -- simp_all
@@ -398,22 +396,46 @@ lemma weird_grmdisj_lemma (s' s : Set (α ⊕ β)) (sht_prog sht_lang : LGTM.SHT
 #check hhimpl_trans_r
 #check if_pos
 
-lemma weird_lang_lemma ( s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2) (tl : α) {pi : idx < shts.length}
-  [FindLabel l shts idx pi] :
-  shts[idx].s = ⟪1, s⟫ ->
-  idx = 0 ∧ shts[1].s = ⟪ 2, s'⟫ ->
-  {⟨1, (Sum.inl tl)⟩} = shts[0].s ->
-  LGTM.wp shts (fun _ h => ∃ pp, h ⟨1, Sum.inl tl ⟩= h ⟨1, Sum.inr pp⟩)
-  ==> LGTM.wp shts (fun _ h => ∀ ll , ∃ pp, h ⟨2, Sum.inl ll ⟩= h ⟨1, Sum.inr pp⟩) := by
-  sorry
+/- ********************************** Lang and Payload Rule ************************************** -/
 
-lemma weird_payload_lemma ( s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2) (tp : β) (tl : α) :
-  ⟨2, (Sum.inr pp)⟩ ∈ shts.set ->
-  LGTM.wp shts (fun _ h => h ⟨1, Sum.inl tl ⟩= h ⟨2, Sum.inr tp⟩)
-  ==> LGTM.wp shts (fun _ h => ∃ pp, h ⟨1, Sum.inl tl ⟩= h ⟨1, Sum.inr pp⟩) := by
-  sorry
+lemma weird_post_conseq (t : LGTM.SHTs (Labeled α)) (Q1 Q2 : hval (Labeled α) → hhProp (Labeled α)) :
+  Q1 ===> Q2 →
+  H ==> LGTM.wp t Q1 ->
+  H ==> LGTM.wp t Q2 := by
+  move=> qq up
+  apply hhimpl_trans=>//
+  apply weird_wp_conseq (Q1 := Q1) (Q2 := Q2)=>//
 
-lemma weird_seqleft_lemma ( s : Set (α ⊕ β)) (shts : LGTM.SHTs (Labeled (α ⊕ β))) (h: shts.length = 2):
+lemma weird_lang_lemma (s₁ s₂ : Set (α ⊕ β)) (pl : α) (sht_prog sht_lang : LGTM.SHT) :
+  sht_prog.s = ⟪0, s₁⟫ ->
+  sht_lang.s = ⟪ 1, s₂⟫ ->
+  Disjoint sht_prog.s sht_lang.s ->
+  s₂ = {(Sum.inl pl)} ->
+  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp, Sum.inr pp ∈ s₁ ∧ h ⟨1, Sum.inl pl ⟩ = h ⟨0, Sum.inr pp⟩) ->
+  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s₂}, ∃ pp, Sum.inr pp ∈ s₁ ∧  h ⟨1, Sum.inl ll ⟩ = h ⟨0, Sum.inr pp⟩) := by
+  move=> prog lang disj set_eq
+  apply weird_post_conseq
+  unfold hqimpl hhimpl
+  intro hv hh
+  simp_all
+
+
+lemma weird_payload_lemma (s₁ s₂ : Set (α ⊕ β)) (pr : β) (sht_prog sht_lang : LGTM.SHT) :
+  sht_prog.s = ⟪0, s₁⟫ ->
+  sht_lang.s = ⟪ 1, s₂⟫ ->
+  Disjoint sht_prog.s sht_lang.s ->
+  Sum.inr pr ∈ s₁ ->
+  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => h ⟨1, Sum.inl pl ⟩= h ⟨0, Sum.inr pr⟩) ->
+  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp, Sum.inr pp ∈ s₁ ∧ h ⟨1, Sum.inl pl ⟩ = h ⟨0, Sum.inr pp⟩):= by
+  move=> prog lang disj set_in
+  apply weird_post_conseq
+  unfold hqimpl hhimpl
+  intro hv hh
+  move=> up
+  simp_all
+  use pr
+
+lemma weird_seqleft_lemma (s₁ s₂ : Set (α ⊕ β)):
   True := by
   simp
 

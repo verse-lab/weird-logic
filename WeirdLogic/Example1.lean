@@ -168,7 +168,7 @@ lemma example4_spec_hete (f : ℤ -> val):
     · simp_all
       srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
       aesop
-    /- left part:-/
+    /- left part: solvable using ystep and yif if can do case analysis inside ht -/
     · simp_all
       sorry
     /- right part: shrink payload to p<=0 -/
@@ -193,8 +193,8 @@ lemma example4_spec_hete (f : ℤ -> val):
     · simp_all
       srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
       aesop
-    /- left part-/
-    · unfold H₁ LGTM.wp
+    /- left part: solvable using ystep and yif if can do case analysis inside ht-/
+    · unfold H₁ LGTM.wp prog_c1
       simp_all
       -- cases hpi : Function.partialInv (fun x : payloadˡ => ⟨x.lab, Sum.inr x.val⟩) a
       sorry
