@@ -28,13 +28,21 @@ def hgram (α : Type) := α -> trm
 
 abbrev payload := ℤ
 
--- inductive payload_base : Type where
---   | pld_bool : Bool → payload_base
---   | pld_nat : ℕ → payload_base
+inductive payload_base : Type where
+  | pld_bool : Bool → payload_base
+  | pld_nat : ℕ → payload_base
 
--- inductive payload : Type where
---   | pld_nil : payload
---   | pld_cons : payload_base → payload → payload
+inductive payload' : Type where
+  | pld_nil : payload'
+  | pld_cons : payload_base → payload' → payload'
+
+abbrev index' := trm ⊕ payload'
+abbrev index_set := @Set.univ (trm ⊕ payload')ˡ
+
+example : payload' :=
+  payload'.pld_cons (payload_base.pld_nat 3) (payload'.pld_cons (payload_base.pld_bool true) payload'.pld_nil)
+
+
 
 -- def hwtrm (α : Type) := α -> trm /- α is payload later-/
 

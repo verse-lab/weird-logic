@@ -52,7 +52,7 @@ def cfg1 : ContextFreeGrammar trm :=
 def l1 : Language trm := cfg1.language
 
 lang_def prog_c1 :=
-  fun ⸨a:Val⸩ =>
+  fun ⸨x: Val⸩ ⸨a:Val⸩ =>
     if a > 0 then
       x := x + 1
     else
@@ -119,6 +119,47 @@ lemma example4_spec (f : ℤ -> val):
   unfold prog_c1
   sorry
 
+abbrev default_payload : payload:= 0
+abbrev default_trm : trm := [lang|()]
+
+def pay_idx_prod : Set (trm × payload) :=
+  {
+    ([lang|()],p) | p ∈ @Set.univ payload
+  }
+def lang_set : Set trm :=
+  {l | cfg1.Generates (expand_trm l)}
+
+def lang_set1 : Set trm :=
+  {[lang| x := x + 1]}
+def lang_set2 : Set trm :=
+  {[lang| x := x + 2]}
+def lang_idx_prod : Set (trm × payload ):=
+  { (l, 0) | l ∈ lang_set}
+
+lemma example4_spec' (f : ℤ -> val):
+  {
+    -- [∗ in Set.univ | H ] ∗
+    arr⟨⋆⟩(xptr , i in 1 =>f i)
+  }
+  [0| p in pay_idx_prod => prog_c1(⸨xptr: Loc⸩, ⟨p.val.2⟩)]
+  [1| l in lang_idx_prod => ⟦l.val.1⟧]
+  { v,
+    fun h => ∀ l ∈ lang_idx_prod, ∃ p ∈ pay_idx_prod , h ⟨1, l⟩ = h ⟨0, p⟩
+  }
+  := by
+  unfold LGTM.triple
+  apply weird_grmdisj_lemma' (s' := {([lang| x := x + 1],0)}) (s'' := pay_idx_prod) (s := lang_idx_prod)
+    (HH := arr⟨{⟨0,p⟩ | p ∈ pay_idx_prod}⟩(xptr , i in 1 =>f i))
+    (H₂ := arr⟨{⟨ 1,(l,default_payload)⟩ | l ∈ lang_set2}⟩(xptr , i in 1 =>f i))
+    (H₁ := arr⟨{⟨ 1, (l,default_payload)⟩ | l ∈ lang_set1}⟩(xptr , i in 1 =>f i))=>//
+  · unfold lang_idx_prod lang_set expand_trm; simp; sorry
+  · simp; apply disjoint_label_set.mpr; aesop
+  · sorry
+  /- left part -/
+  · sorry
+  /- right part -/
+  · sorry
+
 #check Function.partialInv_left
 #print bighstar_hhstar_disj
 -- #check ystep
@@ -127,28 +168,45 @@ lemma hharray_disj (s₁ s₂ : Set α) (f : ℤ → val):
   arr⟨s₁⟩(p , x in n =>f x) ∗ arr⟨⋆ \ s₁⟩(p , x in n =>f x) = arr⟨⋆⟩(p , x in n =>f x) :=by
   sorry
 
+def left_lang_index : Set (trm ⊕ payload):= {l:trm ⊕ payload |
+      match l with
+      | Sum.inl t => t = [lang| x := x + 1] ∧ cfg1.Generates (expand_trm t)
+      | Sum.inr _ => False}
+
+def right_lang_index : Set (trm ⊕ payload):= {l:trm ⊕ payload |
+      match l with
+      | Sum.inl t => t = [lang| x := x + 2] ∧ cfg1.Generates (expand_trm t)
+      | Sum.inr _ => False}
+
 lemma example4_spec_hete (f : ℤ -> val):
   {
     -- ⊤
     -- [∗ in Set.univ | H ] ∗
     arr⟨⋆⟩(xptr , i in 1 =>f i)
   }
-  [0| Sum.inr| p in pay_index' => prog_c1(⟨val_int p.val⟩)]
+  [0| Sum.inr| p in pay_index' => prog_c1(⟨f 1⟩, ⟨p.val⟩)]
   [1| Sum.inl| l in lang_index' => ⟦l.val⟧]
 
   { v,
-    -- fun h => ∀ ll , ∃ pp , Sum.inl ll ∈ lang_index ∧ Sum.inr pp ∈ pay_index ∧ h ⟨1, Sum.inl ll⟩ = h ⟨0, Sum.inr pp⟩
-    fun h => ∀ ll , ll ∈ lang_index' ∧ ∃ pp , pp ∈ pay_index' ∧ h ⟨1, Sum.inl ll⟩ = h ⟨0, Sum.inr pp⟩
+    fun h => ∀ ll ∈ lang_index', ∃ pp , pp ∈ pay_index' ∧ h ⟨1, Sum.inl ll⟩ = h ⟨0, Sum.inr pp⟩
   } := by
   unfold LGTM.triple
   unfold LGTM.HSHT.mkSHT LGTM.Labeled.map Set.image
   dsimp
-  apply weird_grmdisj_lemma (s' := {(Sum.inl [lang| x := x + 1])}) (s'' := pay_index) (s := lang_index)=>//
+  apply weird_grmdisj_lemma
+    (s' := left_lang_index) (s := lang_index) (s'' := pay_index)
+    (H := arr⟨⟪0,⋆ ⟫⟩(xptr , i in 1 =>f i))
+    (H₁ := arr⟨⟪1,left_lang_index⟫⟩(xptr , i in 1 =>f i))
+    (H₂ := arr⟨⟪1,right_lang_index⟫⟩(xptr , i in 1 =>f i))
+    (HH := arr⟨⋆⟩(xptr , i in 1 =>f i))
+    =>//
   · unfold labSet pay_index; simp_all
   · unfold labSet lang_index lang_index'; simp_all
-  · simp_all
-    srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
-    aesop
+  · unfold left_lang_index lang_index
+    simp_all
+  · sorry
+  · sorry
+  · sorry
   /- left part: goes to false branch-/
   · set pay_s := { p | p<=0 ∧ p ∈ pay_index'}
     set pay_s' : Set (trm ⊕ payload) := (fun p => Sum.inr p) '' pay_s
@@ -166,10 +224,11 @@ lemma example4_spec_hete (f : ℤ -> val):
     · unfold pay_index pay_s'
       aesop
     · simp_all
-      srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
+      apply Set.disjoint_iff_inter_eq_empty.mpr
       aesop
     /- left part: solvable using ystep and yif if can do case analysis inside ht -/
-    · simp_all
+    · simp_all; unfold H₁ hsub_sum
+      apply ysubst_lemma («σ» := Sum.getRight!)=>//
       sorry
     /- right part: shrink payload to p<=0 -/
     · simp
@@ -191,16 +250,16 @@ lemma example4_spec_hete (f : ℤ -> val):
     · unfold pay_index pay_s'
       simp_all
     · simp_all
-      srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
+      apply Set.disjoint_iff_inter_eq_empty.mpr
       aesop
     /- left part: solvable using ystep and yif if can do case analysis inside ht-/
     · unfold H₁ LGTM.wp prog_c1
       simp_all
       -- cases hpi : Function.partialInv (fun x : payloadˡ => ⟨x.lab, Sum.inr x.val⟩) a
+      apply weird_index_subst_left
       sorry
     /- right part: shrink p to p>0-/
     · unfold H₂
       sorry
-
 
 end WeirdLogic
