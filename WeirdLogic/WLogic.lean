@@ -259,7 +259,9 @@ lemma hqimpl_trans {h₁ h₂ h₃ : hval α → hhProp α} : h₁ ===> h₂ -> 
 --   move=> a b c//==
 --   apply heval_conseq''=>//
 
-
+/- From yfocus_set_lemma_aux
+ - Prove the focus lemma in both directions
+-/
 set_option maxHeartbeats 1600000 in
 lemma yfocus_set_lemma_eq (idx : ℕ) (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α))
   {pi : idx < shts.length} :
@@ -475,6 +477,9 @@ lemma weird_strengthen_lang' (s : Set (α ⊕ β)) (sht_prog sht_lang sht_lang':
 #check yfocus_set_lemma_eq
 #check yunfocus_lemma
 
+/- Lang Strengthen Rule
+Intuition: If the triple holds in a larger set L (<1,s>), then it must hold in a smaller set L' (<1,s'>).
+-/
 lemma weird_strengthen_lang (s : Set (α ⊕ β)) (sht_prog sht_lang sht_lang': LGTM.SHT) :
   sht_prog.s = ⟪0, s''⟫ ->
   sht_lang'.s = ⟪1, s'⟫ ->
@@ -592,7 +597,8 @@ lemma weird_strengthen_lang (s : Set (α ⊕ β)) (sht_prog sht_lang sht_lang': 
   --   exact lb
 
 /- ********************************** GrmDisj Rule ************************************** -/
-/- product type-/
+
+/- Another format of Grmdisj rule using product type-/
 open AddPCM
 lemma weird_grmdisj_lemma' (s' s : Set (α × β)) (H₃ HH H₁ H₂ : hhProp (α × β)ˡ) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s''⟫ ->
@@ -606,7 +612,7 @@ lemma weird_grmdisj_lemma' (s' s : Set (α × β)) (H₃ HH H₁ H₂ : hhProp (
 
 #check hhand
 
-/- sum type -/
+/- Another format of Grmdisj rule -/
 lemma weird_grmdisj_lemma_aux (s' s : Set (α ⊕ β)) (sht_prog sht_lang1 sht_lang2 : LGTM.SHT) (Q : hval (α ⊕ β)ˡ → hhProp (α ⊕ β)ˡ) :
   sht_prog.s = ⟪0, s''⟫ ->
   sht_lang1.s = ⟪ 1, s \ s'⟫ ->
@@ -617,7 +623,9 @@ lemma weird_grmdisj_lemma_aux (s' s : Set (α ⊕ β)) (sht_prog sht_lang1 sht_l
   LGTM.wp [sht_prog] (fun hv1 => LGTM.wp [sht_lang1] fun hv2 => LGTM.wp [sht_lang2] fun hv3 => Q (hv3 ∪_⟪1, s'⟫ (hv2 ∪_⟪1, s \ s'⟫ hv1)) ) := by
   sorry
 
-/- separate the grammar into s' and s \ s' -/
+/- separate the grammar into s' and s \ s'
+ linking to Grmdisj rule in the note
+-/
 lemma weird_grmdisj_lemma (s' s : Set (α ⊕ β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s''⟫ ->
   sht_lang.s = ⟪ 1, s⟫ ->
