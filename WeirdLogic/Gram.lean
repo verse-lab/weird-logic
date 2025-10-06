@@ -88,6 +88,24 @@ def expand_trm (t : trm) : List (Symbol T N) :=
   | trm_seq t1 t2 => (expand_trm t1) ++ (expand_trm t2)
   | _ => [Symbol.terminal t]
 
+def squeeze_trm (tlist : List trm) : trm :=
+  match tlist with
+  | x1::x2::xs => trm_seq x1 (squeeze_trm (x2::xs))
+  | [x] => x
+  | [] => trm.trm_val 0
+
+
+def trm_to_symbol_list (tlist : List trm) : List (Symbol T N) :=
+  match tlist with
+  | [] => []
+  | x::xs => [Symbol.terminal x] ++ trm_to_symbol_list xs
+
+def symbol_to_trm_list (slist : List (Symbol T N)) : List trm :=
+  match slist with
+  | [] => []
+  | (Symbol.terminal x)::xs => [x] ++ symbol_to_trm_list xs
+  | (Symbol.nonterminal _)::xs => symbol_to_trm_list xs
+
 /- =========================== Macros ============================== -/
 /- **TODO** Too many bugs, solve later -/
 declare_syntax_cat gram
