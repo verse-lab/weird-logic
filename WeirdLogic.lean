@@ -6,3 +6,4 @@ import WeirdLogic.Util
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
 import WeirdLogic.WP
+-- import WeirdLogic.Wlgtm.lean

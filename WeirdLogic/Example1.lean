@@ -14,9 +14,9 @@ import WeirdLogic.Hete
 open Unary prim val trm
 open ContextFreeGrammar
 
-
 namespace WeirdLogic
 
+/- L -> trm1 | trm 2 -/
 def trm1 : trm := [lang| x := x + 1]
 def trm2 : trm := [lang| x := x + 2]
 def r1 : ContextFreeRule trm String :=
@@ -57,6 +57,8 @@ def cfg_expand : Set ( List (Symbol T N)) :=
   -- {
   --   c | cfg1.Generates c
   -- }
+
+-- cfg_expand \ {x=x+1}
 
 def pay_index1 : Set payload :=
   {
@@ -166,19 +168,23 @@ lemma arr_union_eq (f : ℤ -> val):
   apply eq_comm.mpr
   apply bighstar_hhstar_disj=>//
 
-lemma example4_spec (f : ℤ -> val):
+#check heap
+
+lemma example4_spec (xv : val):
   {
     -- [∗ in Set.univ | H ] ∗
-    arr⟨{⟨0,p⟩ | p ∈ pay_index}⟩(xptr , i in 1 =>f i) ∗
-    arr⟨{⟨1,l⟩ | l ∈ lang_index}⟩(xptr , i in 1 =>f i)
+    x ~⟨i in {⟨0,p⟩ | p ∈ pay_index} ∪ {⟨1,l⟩ | l ∈ lang_index}⟩~> xv
+    -- arr⟨{⟨0,p⟩ | p ∈ pay_index}⟩(xptr , i in 1 =>f i) ∗
+    -- arr⟨{⟨1,l⟩ | l ∈ lang_index}⟩(xptr , i in 1 =>f i)
   }
-  [0| p in pay_index => prog_c1(⸨xptr: Loc⸩, ⟨p.val.2⟩)]
+  [0| p in pay_index => prog_c1(⸨x: Loc⸩, ⟨p.val.2⟩)]
   [1| l in lang_index => ⟦l.val.1⟧]
   { v,
-    fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, l⟩ = h ⟨0, p⟩
+    fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, l⟩= h ⟨0, p⟩
   }
   := by
-  unfold LGTM.triple
+  unfold LGTM.triple hhsingle
+  stop
   rw [hhstar_comm]
   rw [arr_union_eq (s₁ := {⟨ 1,(l,default_payload)⟩ | l ∈ lang_set1}) (s₂ := {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set2}) ]
   rotate_left
@@ -246,6 +252,7 @@ lemma example4_spec (f : ℤ -> val):
     · /- part 1: sht_prog only -/
       unfold pay_index1 pay_index' pay_index pay_index'
       simp
+      -- ystep
       sorry
     · /- part 2: if-true case -/
       have simp_lang : lang_index \ {([lang| x := x + 2],0)} = {([lang| x:=x+1],0)} := by
@@ -258,9 +265,10 @@ lemma example4_spec (f : ℤ -> val):
       apply weird_payload_lemma' (pr := (default_trm, 10))=>//
       { simp; apply disjoint_label_set.mpr; aesop }
       simp
-      -- rw [← weird_fix_lang]
+      rw [← weird_fix_lang]
+      -- yin 1: ystep
       sorry
-  /- right part -/
+  /- right part: symmetric for if-false case -/
   · sorry
 
 #check Function.partialInv_left
@@ -293,7 +301,7 @@ lemma example4_spec_hete (f : ℤ -> val):
   {
     -- ⊤
     -- [∗ in Set.univ | H ] ∗
-    arr⟨⋆⟩(xptr , i in 1 =>f i)
+    arr⟨⋆⟩(xptr , i in 1 =>f i) -- replace it
   }
   [0| Sum.inr| p in pay_index' => prog_c1(⟨f 1⟩, ⟨p.val⟩)]
   [1| Sum.inl| l in lang_index' => ⟦l.val⟧]

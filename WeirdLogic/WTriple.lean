@@ -20,7 +20,7 @@ variable {α : Type} (s : Set α)
 -- local notation "hval" => hval α
 -- local notation "hhProp" => hhProp α
 
-macro "LabType" : term => `(ℕ)
+local macro "LabType" : term => `(ℕ)
 
 def hgram (α : Type) := α -> trm
 
