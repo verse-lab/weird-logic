@@ -108,6 +108,51 @@ def well_formed_focus_lemma (idx : ℕ) (l : LabType) (s' s : Set α) (shts : LG
   simp
   apply hhimpl_trans=>//
 
+#check hwp_union
+
+/- WpNEst lemma from LGTM. A generalized version of unfocus lemma (see fig 18) -/
+def wp_nest_focus_lemma (shts1 shts2: LGTM.SHTs (Labeled α)) :
+  Disjoint shts1.set shts2.set ->
+  (List.Pairwise (Disjoint ·.s ·.s) shts1) ->
+  (List.Pairwise (Disjoint ·.s ·.s) shts2) ->
+  LGTM.wp (shts1 ++ shts2) Q = LGTM.wp shts1 (fun x => LGTM.wp shts2 (fun hv' => Q (x ∪_(shts1.set) hv'))) := by
+  move=> sh dj1 dj2
+  unfold LGTM.wp
+  simp
+  srw (hwp_union)=>//
+  rw [← hwp_ht_eq (ht₁:= shts1.htrm) (ht₂:= (shts1.htrm ∪_shts1.set shts2.htrm))]
+  on_goal 2=>
+    unfold Set.EqOn
+    intro xl
+    simp
+    move=>xh1
+    split_ifs=>//
+  apply hwp_Q_eq
+  intro hv
+  rw [← hwp_ht_eq (ht₁:= shts2.htrm) (ht₂:= (shts1.htrm ∪_shts1.set shts2.htrm))]
+  unfold Set.EqOn
+  intro xl xlh
+  simp
+  have xl2 : xl ∉ shts1.set := by exact Disjoint.not_mem_of_mem_left (id (Disjoint.symm sh)) xlh
+  split_ifs=>//
+
+
+/- SeqU lemma from LGTM. (see fig 18)-/
+def well_formed_sequ_lemma (shts1 shts2 : LGTM.SHTs (Labeled α)) (H Q: hval αˡ → hhProp αˡ) :
+  (shts1.Pairwise (Disjoint ·.s ·.s)) ->
+  (shts2.Pairwise (Disjoint ·.s ·.s)) ->
+  Disjoint shts1.set shts2.set ->
+  R ==> LGTM.wp shts1 H ->
+  (∀ x : hval αˡ, (H x) ==> LGTM.wp shts2
+  fun hv' ↦ Q (x ∪_(shts1.set) hv') ) ->
+  R ==> LGTM.wp (shts1++shts2) Q:= by
+  move=> disj1 disj2 disj3 up1 up2
+  apply hhimpl_trans=>//
+  srw (wp_nest_focus_lemma)=>//
+  apply weird_wp_conseq
+  intro x
+  specialize up2 x
+  exact up2
 
 lemma hhprop_antisymm (H₁ H₂ : @hhProp α ) :
     H₁ ==> H₂ ∧ H₂ ==> H₁ ->
@@ -197,24 +242,33 @@ lemma congr_hhimpl_right ( H Q₁ Q₂ : hhProp α ) :
   move=> h
   subst h; rfl
 
--- lemma nesthwp_wp (idx : ℕ)  (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) (H Q: hval αˡ → hhProp αˡ) {pi : idx < shts.length} :
---   shts[idx].s = ⟪l, s⟫ ->
---   (R ==> LGTM.wp [⟨⟪l, s \ s'⟫, shts[idx].ht⟩]
---   (fun x : hval αˡ => LGTM.wp ((shts.eraseIdx (idx)).insertIdx idx ⟨⟪l, s ∩ s'⟫, shts[idx].ht⟩)
---   fun hv' ↦ Q (x ∪_⟪l, s \ s'⟫ hv')) ) =
---   (
---     R ==> LGTM.wp [⟨⟪l, s \ s'⟫, shts[idx].ht⟩] H ∧
---     ∀ x: hval αˡ, H x ==> LGTM.wp ((shts.eraseIdx (idx)).insertIdx idx ⟨⟪l, s ∩ s'⟫, shts[idx].ht⟩) (fun hv' ↦ Q (x ∪_⟪l, s ∩ s'⟫ hv'))
---   ) := by
---   move=> sh
---   apply propext; apply Iff.intro
---   · move=> up
---     constructor
---     · apply hhimpl_trans=>//
---       apply weird_wp_conseq
---       sorry
---     · sorry
---   sorry
+/- need to know the H, unless cannot be proved -/
+lemma nesthwp_wp (idx : ℕ)  (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) (H Q: hval αˡ → hhProp αˡ) {pi : idx < shts.length} :
+  shts[idx].s = ⟪l, s⟫ ->
+  H = (fun x => LGTM.wp ((shts.eraseIdx (idx)).insertIdx idx ⟨⟪l, s ∩ s'⟫, shts[idx].ht⟩) (fun hv' ↦ Q (x ∪_⟪l, s \ s'⟫ hv'))) ->
+  (R ==> LGTM.wp [⟨⟪l, s \ s'⟫, shts[idx].ht⟩]
+  (fun x : hval αˡ => LGTM.wp ((shts.eraseIdx (idx)).insertIdx idx ⟨⟪l, s ∩ s'⟫, shts[idx].ht⟩)
+  fun hv' ↦ Q (x ∪_⟪l, s \ s'⟫ hv')) ) =
+  (
+    R ==> LGTM.wp [⟨⟪l, s \ s'⟫, shts[idx].ht⟩] H ∧
+    ∀ x: hval αˡ, H x ==> LGTM.wp ((shts.eraseIdx (idx)).insertIdx idx ⟨⟪l, s ∩ s'⟫, shts[idx].ht⟩) (fun hv' ↦ Q (x ∪_⟪l, s \ s'⟫ hv'))
+  ) := by
+  move=> sh hh
+  apply propext; apply Iff.intro
+  · move=> up
+    constructor
+    · rw [hh]
+      exact up
+    · rw [hh]
+      simp
+  · move=> up
+    rcases up with ⟨up1,up2⟩
+    apply hhimpl_trans=>//
+    apply weird_wp_conseq
+    intro x
+    specialize up2 x
+    exact up2
+
 
 def well_formed_focus_inverse_lemma (idx : ℕ) (l : LabType) (s' s : Set α) (shts : LGTM.SHTs (Labeled α)) (Q: hval αˡ → hhProp αˡ) {pi : idx < shts.length} :
   shts[idx].s = ⟪l, s⟫ ->
