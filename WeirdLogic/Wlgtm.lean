@@ -22,7 +22,6 @@ lemma weird_wp_conseq (t : LGTM.SHTs (Labeled α)) (Q1 Q2 : hval (Labeled α) �
   srw []LGTM.wp => ?
   sby apply heval_conseq
 
-
 def whqstar {A} (q : A → @hhProp α) (h : @hhProp α) : A → @hhProp α :=
   fun x => hhstar (q x) h
 
