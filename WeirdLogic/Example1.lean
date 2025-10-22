@@ -41,7 +41,7 @@ def cfg1 : ContextFreeGrammar trm :=
 def l1 : Language trm := cfg1.language
 
 lang_def prog_c1 :=
-  fun ⸨x: Val⸩ ⸨a:Val⸩ =>
+  fun ⸨x: Loc⸩ ⸨a:Val⸩ =>
     if a > 0 then
       x := x + 1
     else
@@ -158,24 +158,24 @@ def lang_set1 : Set trm :=
 def lang_set2 : Set trm :=
   {[lang| x := x + 2]}
 
-lemma arr_union_eq (f : ℤ -> val):
-  s = s₁ ∪ s₂ ->
-  Disjoint s₁ s₂ ->
-  arr⟨s⟩(xptr , i in 1 =>f i) = arr⟨s₁⟩(xptr , i in 1 =>f i) ∗ arr⟨s₂⟩(xptr , i in 1 =>f i) := by
-  move=> unio disj
-  unfold hharrayFun
-  rw [unio]
-  apply eq_comm.mpr
-  apply bighstar_hhstar_disj=>//
+lemma pay_index_union_univ :
+  pay_index1 ∪ pay_index2 = pay_index'
+  := by
+  unfold pay_index1 pay_index2 pay_index'
+  simp
+  ext x
+  simp
+  exact Int.lt_or_le 0 x
 
-#check heap
+lemma lang_index_union_univ :
+  lang_set2 ∪ lang_set1 = lang_index'
+  := by
+  unfold lang_set1 lang_set2 lang_index'
+  sorry
 
-lemma example4_spec (xv : val):
+lemma example4_spec (xv : ℤ):
   {
-    -- [∗ in Set.univ | H ] ∗
     x ~⟨i in {⟨0,p⟩ | p ∈ pay_index} ∪ {⟨1,l⟩ | l ∈ lang_index}⟩~> xv
-    -- arr⟨{⟨0,p⟩ | p ∈ pay_index}⟩(xptr , i in 1 =>f i) ∗
-    -- arr⟨{⟨1,l⟩ | l ∈ lang_index}⟩(xptr , i in 1 =>f i)
   }
   [0| p in pay_index => prog_c1(⸨x: Loc⸩, ⟨p.val.2⟩)]
   [1| l in lang_index => ⟦l.val.1⟧]
@@ -184,90 +184,121 @@ lemma example4_spec (xv : val):
   }
   := by
   unfold LGTM.triple hhsingle
-  stop
-  rw [hhstar_comm]
-  rw [arr_union_eq (s₁ := {⟨ 1,(l,default_payload)⟩ | l ∈ lang_set1}) (s₂ := {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set2}) ]
+  rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1} ∪ {⟨ 1,(l,default_payload)⟩ | l ∈ lang_set1}) (s₂ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index2} ∪ {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set2} )]
   rotate_left
-  {
-    unfold lang_index default_payload lang_set1 lang_set2
-    rw [lang_index'_unfold]
-    aesop
-  }
   { apply disjoint_iff.mpr
     unfold lang_set1 lang_set2
-    aesop
-   }
-  rw [hhstar_comm]
-  apply weird_grmdisj_lemma' (s' := {([lang| x := x + 2],0)}) (s'' := pay_index) (s := lang_index)
-    (HH := arr⟨{⟨0,p⟩ | p ∈ pay_index}⟩(xptr , i in 1 =>f i))
-    (H₂ := arr⟨{⟨ 1,(l,default_payload)⟩ | l ∈ lang_set2}⟩(xptr , i in 1 =>f i))
-    (H₁ := arr⟨{⟨ 1, (l,default_payload)⟩ | l ∈ lang_set1}⟩(xptr , i in 1 =>f i))=>//
+    simp
+    apply pair_insert_disjoin=>//
+    apply disjoint_iff.mpr; simp
+    apply pair_set_union_index_right
+    unfold pay_index1 pay_index2; aesop
+  }
+  {
+    conv_rhs =>  rw [Set.union_right_comm, ←Set.union_assoc]
+    conv_rhs =>  rw [pair_set_union_index_eq_left pay_index1 pay_index2 pay_index' _ pay_index_union_univ]; rw [Set.union_assoc, Set.union_comm]
+    conv_rhs =>  rw [pair_set_union_index_eq_right lang_set2 lang_set1 lang_index' _ lang_index_union_univ]; rw [Set.union_comm]
+    rw [pair_wrap_eq_right _ default_trm pay_index' pay_index ]
+    rw [pair_wrap_eq_left _ default_payload lang_index' lang_index]
+    · unfold lang_index default_payload; simp
+    · unfold lang_index; aesop
+    · unfold pay_index default_trm; aesop
+    · unfold pay_index; aesop
+  }
+  /- Step 1: GrmDisj-/
+  apply weird_grmdisj_lemma_safe
+    (s1 := {x | ∃ l ∈ lang_set1, (l, default_payload) = x})
+    (s2 := {x | ∃ l ∈ lang_set2, (l, default_payload) = x})
+    (s'1 := {x | ∃ p ∈ pay_index1, (default_trm, p) = x})
+    (s'2 := {x | ∃ p ∈ pay_index2, (default_trm, p) = x})=>//
+  · simp; apply disjoint_label_set.mpr; simp
+  · apply pair_set_union_left
+    unfold lang_set1 lang_set2
+    simp
   · unfold lang_index
     rw [lang_index'_unfold]
-    aesop
-  · simp; apply disjoint_label_set.mpr; aesop
+    apply pair_set_union_eq_right
+    unfold lang_set1 lang_set2; aesop
+  · apply pair_set_union_right
+    unfold pay_index1 pay_index2; aesop
+  · apply pair_set_union_eq_left
+    apply pay_index_union_univ
   /- left part -/
-  · rw [arr_union_eq (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1}) (s₂ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index2})]
-    rotate_left
-    { unfold pay_index pay_index' pay_index1 pay_index2 default_trm pay_index'
-      simp
-      ext x
-      constructor
-      · intro ⟨a, ha⟩
-        by_cases h : 0 < a
-        · left
-          use a
-        · right
-          use a
-          exact ⟨le_of_not_gt h, ha⟩
-      · intro hx
-        cases hx with
-        | inl h₁ => aesop
-        | inr h₂ => aesop
-        }
-    {
-      apply disjoint_iff.mpr
-      simp
-      unfold pay_index1 pay_index2 pay_index'
-      ext x
-      constructor
-      · intro ⟨⟨p₁, hp₁_mem, hx₁⟩, ⟨p₂, hp₂_mem, hx₂⟩⟩
-        have : p₁ = p₂ := by
-          injection (hx₁.trans hx₂.symm)
-          aesop
-        subst this
-        have hcontr : ¬ (p₁ > 0 ∧ p₁ ≤ 0) := by
-          intro h
-          exact not_lt_of_ge h.2 h.1
-        exact hcontr ⟨hp₁_mem.1, hp₂_mem.1⟩
-      · intro h
-        cases h
+  · unfold lang_set1
+    apply weird_lang_lemma=>//
+    { apply disjoint_label_set.mpr; aesop}
+    apply weird_payload_index_lemma (pr := (default_trm, 10))=>//
+    { apply disjoint_label_set.mpr; aesop}
+    { ysimp
+      sorry
     }
-    rw [hhstar_assoc]
-    apply weird_weaken_lemma' (s' := {(default_trm,p) | p ∈ pay_index1}) (s := pay_index)
-      (H₁ := arr⟨{⟨0,(default_trm,p)⟩ | p ∈ pay_index1}⟩(xptr , i in 1 =>f i))=>//
-    · unfold pay_index1 pay_index' pay_index pay_index'
-      simp
-    · apply disjoint_label_set.mpr; simp
-    · /- part 1: sht_prog only -/
-      unfold pay_index1 pay_index' pay_index pay_index'
-      simp
-      -- ystep
+    { rw [unsimp_singleton_set]
+      rw [← weird_fix_lang (p := default_payload)]
+      ysimp
+      rw [← weird_fix_payload1 (pv := 10)]
       sorry
-    · /- part 2: if-true case -/
-      have simp_lang : lang_index \ {([lang| x := x + 2],0)} = {([lang| x:=x+1],0)} := by
-        unfold lang_index
-        rw [lang_index'_unfold]
-        aesop
-      rw [simp_lang]
-      apply weird_lang_lemma'=>//
-      { simp; apply disjoint_label_set.mpr; aesop }
-      apply weird_payload_lemma' (pr := (default_trm, 10))=>//
-      { simp; apply disjoint_label_set.mpr; aesop }
-      simp
-      rw [← weird_fix_lang]
-      -- yin 1: ystep
-      sorry
+    }
+    -- rw [arr_union_eq (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1}) (s₂ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index2})]
+    -- rotate_left
+    -- { unfold pay_index pay_index' pay_index1 pay_index2 default_trm pay_index'
+    --   simp
+    --   ext x
+    --   constructor
+    --   · intro ⟨a, ha⟩
+    --     by_cases h : 0 < a
+    --     · left
+    --       use a
+    --     · right
+    --       use a
+    --       exact ⟨le_of_not_gt h, ha⟩
+    --   · intro hx
+    --     cases hx with
+    --     | inl h₁ => aesop
+    --     | inr h₂ => aesop
+    --     }
+    -- {
+    --   apply disjoint_iff.mpr
+    --   simp
+    --   unfold pay_index1 pay_index2 pay_index'
+    --   ext x
+    --   constructor
+    --   · intro ⟨⟨p₁, hp₁_mem, hx₁⟩, ⟨p₂, hp₂_mem, hx₂⟩⟩
+    --     have : p₁ = p₂ := by
+    --       injection (hx₁.trans hx₂.symm)
+    --       aesop
+    --     subst this
+    --     have hcontr : ¬ (p₁ > 0 ∧ p₁ ≤ 0) := by
+    --       intro h
+    --       exact not_lt_of_ge h.2 h.1
+    --     exact hcontr ⟨hp₁_mem.1, hp₂_mem.1⟩
+    --   · intro h
+    --     cases h
+    -- }
+    -- rw [hhstar_assoc]
+    -- apply weird_weaken_lemma' (s' := {(default_trm,p) | p ∈ pay_index1}) (s := pay_index)
+    --   (H₁ := arr⟨{⟨0,(default_trm,p)⟩ | p ∈ pay_index1}⟩(xptr , i in 1 =>f i))=>//
+    -- · unfold pay_index1 pay_index' pay_index pay_index'
+    --   simp
+    -- · apply disjoint_label_set.mpr; simp
+    -- · /- part 1: sht_prog only -/
+    --   unfold pay_index1 pay_index' pay_index pay_index'
+    --   simp
+    --   -- ystep
+    --   sorry
+    -- · /- part 2: if-true case -/
+    --   have simp_lang : lang_index \ {([lang| x := x + 2],0)} = {([lang| x:=x+1],0)} := by
+    --     unfold lang_index
+    --     rw [lang_index'_unfold]
+    --     aesop
+    --   rw [simp_lang]
+    --   apply weird_lang_lemma'=>//
+    --   { simp; apply disjoint_label_set.mpr; aesop }
+    --   apply weird_payload_lemma' (pr := (default_trm, 10))=>//
+    --   { simp; apply disjoint_label_set.mpr; aesop }
+    --   simp
+    --   rw [← weird_fix_lang]
+    --   -- yin 1: ystep
+    --   sorry
   /- right part: symmetric for if-false case -/
   · sorry
 

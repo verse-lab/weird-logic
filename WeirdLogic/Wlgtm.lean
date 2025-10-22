@@ -3,6 +3,8 @@ import Lgtm.Hyper.HProp
 import Lgtm.Hyper.YSimp
 import Lgtm.Hyper.YChange
 import Lgtm.Hyper.WP
+import Lgtm.Hyper.WPUtil
+import Lgtm.Hyper.Merge
 import Lgtm.Hyper.ProofMode
 import Lgtm.Hyper.SepLog
 import Lgtm.Common.LabType

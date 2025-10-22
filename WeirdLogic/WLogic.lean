@@ -1,6 +1,6 @@
 import WeirdLogic.Gram
 import WeirdLogic.WTriple
-import WeirdLogic.Wlgtm
+import WeirdLogic.WUtil
 -- import WeirdLogic.Util
 
 open Lean Lean.Expr Lean.Meta Qq
@@ -879,36 +879,8 @@ lemma weird_post_conseq (t : LGTM.SHTs (Labeled α)) (Q1 Q2 : hval (Labeled α) 
   apply hhimpl_trans=>//
   apply weird_wp_conseq (Q1 := Q1) (Q2 := Q2)=>//
 
-lemma weird_lang_lemma (s₁ s₂ : Set (α ⊕ β)) (pl : α) (sht_prog sht_lang : LGTM.SHT) :
-  sht_prog.s = ⟪0, s₁⟫ ->
-  sht_lang.s = ⟪ 1, s₂⟫ ->
-  Disjoint sht_prog.s sht_lang.s ->
-  s₂ = {(Sum.inl pl)} ->
-  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp, Sum.inr pp ∈ s₁ ∧ h ⟨1, Sum.inl pl ⟩ = h ⟨0, Sum.inr pp⟩) ->
-  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s₂}, ∃ pp, Sum.inr pp ∈ s₁ ∧  h ⟨1, Sum.inl ll ⟩ = h ⟨0, Sum.inr pp⟩) := by
-  move=> prog lang disj set_eq
-  apply weird_post_conseq
-  unfold hqimpl hhimpl
-  intro hv hh
-  simp_all
 
-
-lemma weird_payload_lemma (s₁ s₂ : Set (α ⊕ β)) (pr : β) (sht_prog sht_lang : LGTM.SHT) :
-  sht_prog.s = ⟪0, s₁⟫ ->
-  sht_lang.s = ⟪ 1, s₂⟫ ->
-  Disjoint sht_prog.s sht_lang.s ->
-  Sum.inr pr ∈ s₁ ->
-  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => h ⟨1, Sum.inl pl ⟩= h ⟨0, Sum.inr pr⟩) ->
-  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp, Sum.inr pp ∈ s₁ ∧ h ⟨1, Sum.inl pl ⟩ = h ⟨0, Sum.inr pp⟩):= by
-  move=> prog lang disj set_in
-  apply weird_post_conseq
-  unfold hqimpl hhimpl
-  intro hv hh
-  move=> up
-  simp_all
-  use pr
-
-lemma weird_lang_lemma' (s₁ s₂ : Set (trm × β)) (sht_prog sht_lang : LGTM.SHT) :
+lemma weird_lang_lemma (s₁ s₂ : Set (trm × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s₁⟫ ->
   sht_lang.s = ⟪ 1, s₂⟫ ->
   Disjoint sht_prog.s sht_lang.s ->
@@ -922,7 +894,8 @@ lemma weird_lang_lemma' (s₁ s₂ : Set (trm × β)) (sht_prog sht_lang : LGTM.
   simp_all
 
 
-lemma weird_payload_lemma' (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
+/- remove all quantifiers from the post-condition, prepare for prod rule -/
+lemma weird_payload_lemma (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s₁⟫ ->
   sht_lang.s = ⟪ 1, s₂⟫ ->
   Disjoint sht_prog.s sht_lang.s ->
@@ -936,7 +909,8 @@ lemma weird_payload_lemma' (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGT
   move=> up
   use pr
 
-lemma weird_payload_lemma2' (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
+/- as long as the payload is fixed, Prod or InfProd rule is applicable -/
+lemma weird_payload_lemma2 (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s₁⟫ ->
   sht_lang.s = ⟪ 1, s₂⟫ ->
   Disjoint sht_prog.s sht_lang.s ->
@@ -948,32 +922,31 @@ lemma weird_payload_lemma2' (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LG
   unfold hqimpl hhimpl
   aesop
 
-lemma weird_fix_lang (t : trm):
-  H ==> LGTM.wp [sht_prog, { s := ⟪l, {(t, p)}⟫, ht := fun _ => t }] Q =
-  H ==> LGTM.wp [sht_prog, { s := ⟪l, {(t, p)}⟫, ht := fun lang => lang.val.1 }] Q := by
+/- fix the payload index set -/
+lemma weird_payload_index_lemma (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
+  sht_prog.s = ⟪0, s₁⟫ ->
+  sht_lang.s = ⟪ 1, s₂⟫ ->
+  Disjoint sht_prog.s sht_lang.s ->
+  pr ∈ s₁ ->
+  H ==> LGTM.wp [⟨⟪0,s₁ \ {pr}⟫, sht_prog.ht⟩] (fun _ _ => True) ->
+  H ==> LGTM.wp [⟨⟪0,{pr}⟫, sht_prog.ht⟩, sht_lang] (fun _ h =>  h ⟨1, pl ⟩= h ⟨0, pr⟩) ->
+  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp ∈ s₁, h ⟨1, pl ⟩ = h ⟨0, pp⟩):= by
+  sorry
+
+lemma weird_fix_lang (t : trm) (p : β) :
+  H ==> LGTM.wp [sht_prog, { s := ⟪idx, {(t, p)}⟫, ht := fun _ => t }] Q =
+  H ==> LGTM.wp [sht_prog, { s := ⟪idx, {(t, p)}⟫, ht := fun lang => lang.val.1 }] Q := by
   congr
   apply LGTM.wp_sht_eq
   simp_all
 
-
+lemma weird_fix_payload1 (dt : trm) (pv : ℤ) (prog : trm) :
+  H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun p : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨pv⟩]]}, sht_lang] Q =
+  H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun p : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨p.val.2⟩]]}, sht_lang] Q := by
+  sorry
 /- ********************************** Sequence Rules ************************************** -/
 
 /- deriables from focus rule and similar to the proof of weaken lemma? -/
-lemma weird_sequ_lemma  (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
-  sht_prog.s = ⟪0, s1⟫ ->
-  sht_lang.s = ⟪1, s2⟫ ->
-  Disjoint sht_prog.s sht_lang.s ->
-  s1' ⊆ s1 ->
-  s2' ⊆ s2 ->
-  H₁ ==> LGTM.wp [⟨⟪0, s1'⟫, sht_prog.ht⟩, ⟨ ⟪1,s2'⟫, sht_lang.ht⟩ ]
-    (fun _ h => ∀ ll ∈ s1', ∃ pp ∈ s2', h ⟨1, ll⟩= h ⟨0, pp⟩ ) ->
-  H₂ ==> LGTM.wp [⟨⟪0, s1 \ s1'⟫, sht_prog.ht⟩, ⟨ ⟪1,s2 \ s2'⟫, sht_lang.ht⟩ ]
-    (fun _ h => ∀ ll ∈ s1 \ s1', ∃ pp ∈ s2 \ s2', h ⟨1, ll⟩= h ⟨0, pp⟩) ->
-  H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
-  (fun _ h => ∀ ll ∈ s1, ∃ pp ∈ s2, h ⟨1, ll ⟩= h ⟨0, pp⟩) := by
-  move=> prog lang disj sub1 sub2 up1 up2
-  apply hhimpl_frame_l (hH₃ := H₂) at up1
-  sorry
 
 lemma weird_seqleft_lemma (s₁ s₂ : Set α):
   True := by

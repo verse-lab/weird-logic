@@ -69,8 +69,7 @@ lang_def prog_c1 :=
   fun ⸨x: Val⸩ ⸨pa:Val⸩ =>
     for i in [0:pa] {
         x := x + 1
-    };
-    x := -x
+    }
 
 abbrev default_payload : payload:= 0
 abbrev default_trm : trm := [lang|()]
