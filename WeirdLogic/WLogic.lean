@@ -174,6 +174,30 @@ lemma weird_heap_sub_right' (i j : ℕ) (Q : hhProp αˡ) (s s' s'': Set α) :
     aesop
   · aesop
 
+lemma weird_heap_sub_right_fix_lang' (i j : ℕ) (Q : hhProp αˡ) (s s': Set α) :
+  i ≠ j ->
+  hhlocal (⟪i, s⟫ \ ⟪i, s'⟫ ) Q ->
+  hhstar (fun h => ∃ pp,
+     pp ∈ s' ∧ h ⟨j, ll ⟩= h ⟨i, pp⟩) Q
+  ==>
+  (fun h => ∃ pp,
+    pp ∈ s' ∧ h ⟨j, ll ⟩= h ⟨i, pp⟩)  := by
+  unfold hhstar hhlocal hlocal
+  intro ij hl
+  move=> hh hs
+  rcases hs with ⟨ hh1, hh2, ⟨ hs1,hs2,hs3, hs4 ⟩ ⟩
+  subst hh
+  simp
+  specialize hl _ hs2
+  rw [hl]
+  · rcases hs1 with ⟨pp, hs11, hs12⟩
+    exists pp
+    rw [hl]
+    simp_all
+    simp
+    aesop
+  · aesop
+
 lemma weird_heap_sub_left' (i j : ℕ) (Q : hhProp αˡ) (s s' s1 s'1: Set α) :
   i ≠ j ->
   hhlocal ((⟪i, s⟫ \ ⟪i, s1⟫ ) ∪ (⟪j, s'⟫ \ ⟪j, s'1⟫ )) Q ->
@@ -922,16 +946,67 @@ lemma weird_payload_lemma2 (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGT
   unfold hqimpl hhimpl
   aesop
 
-/- fix the payload index set -/
+/- fix the payload index set; derivable from weaken lemma -/
+lemma weird_payload_aux_lemma (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
+  sht_prog.s = ⟪0, s⟫ ->
+  sht_lang.s = ⟪1, s''⟫ ->
+  s' ⊆ s -> Disjoint sht_prog.s sht_lang.s ->
+  H₁ ==> LGTM.wp [⟨⟪0, s \ s'⟫, sht_prog.ht⟩] (fun _ => fun h ↦ ∀ a, a ∈ ⟪0, s \ s'⟫ ∧ h a ≠ ∅ ) ->
+  H₂ ==> LGTM.wp [⟨⟪0, s'⟫, sht_prog.ht⟩, sht_lang]
+    (fun _ h =>  ∃ pp ∈ s', h ⟨1,ll⟩= h ⟨0, pp⟩ ) ->
+  H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
+  (fun _ h =>  ∃ pp ∈ s, h ⟨1, ll ⟩= h ⟨0, pp⟩) := by
+  move=> prog lang subs disj part1 part2
+  intro h12
+  move=> H12
+  apply weird_wp_conseq (Q1 := fun _ h =>  ∃ pp ∈ s', h ⟨1,ll⟩= h ⟨0, pp⟩)=>//
+  { intro x h w; aesop }
+  set Qp1 : hval αˡ → hhProp αˡ:= fun _ => (fun h ↦ ∃ pp ∈ s', h ⟨1, ll⟩ = h ⟨0, pp⟩)
+  set B : hhProp αˡ:= fun h ↦ ∀ a, a ∈ ⟪0, s \ s'⟫ ∧ h a ≠ ∅
+  set B' : hval αˡ → hhProp αˡ:= fun _ => B
+  apply weird_wp_conseq (Q1 := whqstar Qp1 B)
+  · unfold whqstar B Qp1
+    intro x
+    simp
+    move=> hc hcon
+    apply weird_heap_sub_right_fix_lang' (s := s) (Q := B)=>//
+    · unfold hhlocal hlocal B
+      intro h
+      dsimp
+      aesop
+    · unfold B
+      simp_all
+  apply well_formed_focus_lemma (idx := 0) (l := 0) (shts := [sht_prog, sht_lang]) (s' := s') (s := s) (H := B' ∗ H₂) (R := H₁ ∗ H₂) (Q := Qp1 ∗ B)=>//
+  · simp_all; apply disjoint_label_set.mpr; aesop
+  · have part11 := (hhimpl_frame_l (hH₃ := H₂) (hH₁ := H₁) (hH₂ := LGTM.wp [{ s := ⟪0, s \ s'⟫, ht := sht_prog.ht }] B'))
+    specialize part11 part1
+    simp
+    apply hhimpl_trans (h₁ := H₁ ∗ H₂ ) ( h₂ := ((LGTM.wp [{ s := ⟪0, s \ s'⟫, ht := sht_prog.ht }] B') ∗ H₂)) (h₃ := LGTM.wp [{ s := ⟪0, s \ s'⟫, ht := sht_prog.ht }] (B' ∗ H₂))
+    · exact part11
+    · have form1 := LGTM.wp_frame (Q := B') (H := H₂) (sht := [{ s := ⟪0, s \ s'⟫, ht := sht_prog.ht }])
+      convert form1
+  intro x
+  have part21 := (hhimpl_frame_l (hH₃ := B) (hH₁ := H₂) (hH₂ := LGTM.wp [{ s := ⟪0, s'⟫, ht := sht_prog.ht }, sht_lang] Qp1))
+  specialize part21 part2
+  simp
+  unfold B'
+  rw [hhstar_comm]
+  apply hhimpl_trans (h₁ := H₂ ∗ B) ( h₂ := LGTM.wp [{ s := ⟪0, s'⟫, ht := sht_prog.ht }, sht_lang] Qp1 ∗ B) (h₃ := LGTM.wp [{ s := ⟪0, s ∩ s'⟫, ht := sht_prog.ht }, sht_lang] (Qp1 ∗ B))
+  · exact part21
+  · have form2 := LGTM.wp_frame ( Q := Qp1) (H := B) (sht := [{ s := ⟪0, s'⟫, ht := sht_prog.ht }, sht_lang])
+    convert form2
+    aesop
+
 lemma weird_payload_index_lemma (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s₁⟫ ->
   sht_lang.s = ⟪ 1, s₂⟫ ->
   Disjoint sht_prog.s sht_lang.s ->
   pr ∈ s₁ ->
-  H ==> LGTM.wp [⟨⟪0,s₁ \ {pr}⟫, sht_prog.ht⟩] (fun _ _ => True) ->
-  H ==> LGTM.wp [⟨⟪0,{pr}⟫, sht_prog.ht⟩, sht_lang] (fun _ h =>  h ⟨1, pl ⟩= h ⟨0, pr⟩) ->
-  H ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp ∈ s₁, h ⟨1, pl ⟩ = h ⟨0, pp⟩):= by
-  sorry
+  H₁ ==> LGTM.wp [⟨⟪0,s₁ \ {pr}⟫, sht_prog.ht⟩] (fun _ => fun h=> ∀ (a : (α × β)ˡ), a ∈ ⟪0, s₁ \ {pr}⟫ ∧ h a ≠ ∅) ->
+  H₂ ==> LGTM.wp [⟨⟪0,{pr}⟫, sht_prog.ht⟩, sht_lang] (fun _ h =>  h ⟨1, pl ⟩= h ⟨0, pr⟩) ->
+  H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∃ pp ∈ s₁, h ⟨1, pl ⟩ = h ⟨0, pp⟩):= by
+  move=> prog lang dsj ele pre1 pre2
+  apply weird_payload_aux_lemma (s' := {pr}) (s := s₁)=>//
 
 lemma weird_fix_lang (t : trm) (p : β) :
   H ==> LGTM.wp [sht_prog, { s := ⟪idx, {(t, p)}⟫, ht := fun _ => t }] Q =
@@ -941,9 +1016,12 @@ lemma weird_fix_lang (t : trm) (p : β) :
   simp_all
 
 lemma weird_fix_payload1 (dt : trm) (pv : ℤ) (prog : trm) :
-  H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun p : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨pv⟩]]}, sht_lang] Q =
+  H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun _ : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨pv⟩]]}, sht_lang] Q =
   H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun p : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨p.val.2⟩]]}, sht_lang] Q := by
-  sorry
+  congr
+  apply LGTM.wp_sht_eq
+  simp_all
+
 /- ********************************** Sequence Rules ************************************** -/
 
 /- deriables from focus rule and similar to the proof of weaken lemma? -/

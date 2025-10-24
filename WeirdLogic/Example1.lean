@@ -40,12 +40,13 @@ def cfg1 : ContextFreeGrammar trm :=
 
 def l1 : Language trm := cfg1.language
 
-lang_def prog_c1 :=
+lang_def' prog_c1 :=
   fun ⸨x: Loc⸩ ⸨a:Val⸩ =>
+    let xx := !x in
     if a > 0 then
-      x := x + 1
+      xx := xx + 1
     else
-      x := x + 2
+      xx := xx + 2
 
 def pay_index' := @Set.univ payload
 abbrev lang := List trm
@@ -205,7 +206,7 @@ lemma example4_spec (xv : ℤ):
     · unfold pay_index default_trm; aesop
     · unfold pay_index; aesop
   }
-  /- Step 1: GrmDisj-/
+  /- Step 1: GrmDisj -/
   apply weird_grmdisj_lemma_safe
     (s1 := {x | ∃ l ∈ lang_set1, (l, default_payload) = x})
     (s2 := {x | ∃ l ∈ lang_set2, (l, default_payload) = x})
@@ -225,17 +226,42 @@ lemma example4_spec (xv : ℤ):
     apply pay_index_union_univ
   /- left part -/
   · unfold lang_set1
+    /- Step 2: Lang -/
     apply weird_lang_lemma=>//
     { apply disjoint_label_set.mpr; aesop}
-    apply weird_payload_index_lemma (pr := (default_trm, 10))=>//
+    /- Step 3: Payload -/
+    rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1 \ {10}}) (s₂ := {⟨0,(default_trm,10)⟩} ∪ {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set1} )]
+    rotate_left
+    { apply disjoint_iff.mpr
+      unfold lang_set1
+      aesop }
+    {
+      unfold pay_index1 pay_index' lang_set1; simp
+      apply congr_arg
+      ext x
+      constructor
+      · rintro ⟨p, hp_pos, rfl⟩
+        by_cases h10 : p = 10=>//
+      · rintro (rfl | ⟨p, ⟨hp_pos, hp_ne⟩, rfl⟩)=>//
+     }
+    apply weird_payload_index_lemma (pr := (default_trm, 10)) =>//
     { apply disjoint_label_set.mpr; aesop}
-    { ysimp
+    { unfold pay_index1 pay_index';
+      -- unfold LGTM.wp; ysimp
+      ystep
       sorry
     }
     { rw [unsimp_singleton_set]
       rw [← weird_fix_lang (p := default_payload)]
-      ysimp
       rw [← weird_fix_payload1 (pv := 10)]
+      unfold lang_set1
+      -- unfold LGTM.wp;
+      -- unfold prog_c1
+      -- ysimp
+      apply hwp_of_hwpgen
+      -- yin 1: ywp;
+      ystep
+
       sorry
     }
     -- rw [arr_union_eq (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1}) (s₂ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index2})]

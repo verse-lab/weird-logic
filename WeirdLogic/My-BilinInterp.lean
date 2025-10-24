@@ -60,7 +60,8 @@ lemma get_spec_out (l : ℕ) (s : Set ℝ) :
     arr⟨⟪l,s⟫⟩(xleft, x in N => x_left x) ∗
     arr⟨⟪l,s⟫⟩(xright, x in N => x_right x) ∗
     arr⟨⟪l,s⟫⟩(xval, x in N => x_val x) } := by
-  simp=> ?; ystep searchSRLE_hspec_out (f := id) (zLn := zLn) (oLz := oLz) (nLN := nLN)=> /== //
+  simp=> ?;
+  ystep searchSRLE_hspec_out (f := id) (zLn := zLn) (oLz := oLz) (nLN := nLN)=> /== //
   ystep; yyifT; yyval; ysimp=> //'
 
 open MeasureTheory
