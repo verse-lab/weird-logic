@@ -17,8 +17,9 @@ open ContextFreeGrammar
 namespace WeirdLogic
 
 /- L -> trm1 | trm 2 -/
-def trm1 : trm := [lang| x := x + 1]
-def trm2 : trm := [lang| x := x + 2]
+def trm0 : trm := [lang| xx := !y]
+def trm1 : trm := [lang| y := xx + 1]
+def trm2 : trm := [lang| y := xx + 2]
 def r1 : ContextFreeRule trm String :=
   {
     input := "L",
@@ -53,7 +54,7 @@ abbrev lang := List trm
 
 def cfg_expand : Set ( List (Symbol T N)) :=
   {
-    [Symbol.terminal [lang| x:=x+1]],[Symbol.terminal [lang| x:=x+2]]
+    [Symbol.terminal trm0, Symbol.terminal trm1],[Symbol.terminal trm0, Symbol.terminal trm2]
   }
   -- {
   --   c | cfg1.Generates c
@@ -86,7 +87,7 @@ def lang_index : Set (trm × payload ):=
   { (l,0) | l ∈ lang_index' }
 
 lemma lang_unfold :
-  lang_list_index' = {[[lang| x:=x+1]],[[lang| x:=x+2]]} := by
+  lang_list_index' = {[trm0, trm1],[trm0, trm2]} := by
   unfold lang_list_index' trm_to_symbol_list cfg_expand -- Generates Derives Produces expand_trm
   ext l
   simp
@@ -98,12 +99,12 @@ lemma lang_unfold :
       left
       cases l with
       | nil => simp at h1
-      | cons x xs => simp at h1; unfold trm_to_symbol_list at h1; aesop
+      | cons x xs => simp at h1; rcases h1 with ⟨h10,h11⟩ ; sorry
     | inr h2 =>
       right
       cases l with
       | nil => aesop
-      | cons x xs => simp at h2; unfold trm_to_symbol_list at h2; aesop
+      | cons x xs => simp at h2; unfold trm_to_symbol_list at h2; sorry
   }
   {
     intro h
@@ -113,7 +114,7 @@ lemma lang_unfold :
   }
 
 lemma lang_index'_unfold :
-  lang_index' = {[lang| x:=x+1],[lang| x:=x+2]} := by
+  lang_index' = {trm_seq trm0 trm1,trm_seq trm0 trm2} := by
   unfold lang_index' squeeze_trm
   rw [lang_unfold]
   aesop
@@ -155,9 +156,9 @@ abbrev default_payload : payload:= 0
 abbrev default_trm : trm := [lang|()]
 
 def lang_set1 : Set trm :=
-  {[lang| x := x + 1]}
+  {trm_seq trm0 trm1}
 def lang_set2 : Set trm :=
-  {[lang| x := x + 2]}
+  {trm_seq trm0 trm2}
 
 lemma pay_index_union_univ :
   pay_index1 ∪ pay_index2 = pay_index'
@@ -168,12 +169,17 @@ lemma pay_index_union_univ :
   simp
   exact Int.lt_or_le 0 x
 
+
 lemma lang_index_union_univ :
   lang_set2 ∪ lang_set1 = lang_index'
   := by
   unfold lang_set1 lang_set2 lang_index'
+  unfold lang_list_index' cfg_expand squeeze_trm
+  simp
   sorry
 
+set_option maxRecDepth 2000 in
+set_option maxHeartbeats 6400000 in
 lemma example4_spec (xv : ℤ):
   {
     xl ~⟨i in {⟨0,p⟩ | p ∈ pay_index} ∪ {⟨1,l⟩ | l ∈ lang_index}⟩~> xv
@@ -194,6 +200,7 @@ lemma example4_spec (xv : ℤ):
     apply disjoint_iff.mpr; simp
     apply pair_set_union_index_right
     unfold pay_index1 pay_index2; aesop
+    unfold trm1 trm2; aesop
   }
   {
     conv_rhs =>  rw [Set.union_right_comm, ←Set.union_assoc]
@@ -215,7 +222,7 @@ lemma example4_spec (xv : ℤ):
   · simp; apply disjoint_label_set.mpr; simp
   · apply pair_set_union_left
     unfold lang_set1 lang_set2
-    simp
+    unfold trm1 trm2; simp
   · unfold lang_index
     rw [lang_index'_unfold]
     apply pair_set_union_eq_right
@@ -249,7 +256,7 @@ lemma example4_spec (xv : ℤ):
     { unfold pay_index1 pay_index';
       simp
       dsimp [LGTM.wp, LGTM.SHTs.htrm]
-      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))]
+      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))] --remove union set
       on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; intro a b ; simp only [b, reduceIte]
       unfold prog_c1 --; yapp
       apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, [lang| ⟨p.val.2⟩]])
@@ -309,10 +316,37 @@ lemma example4_spec (xv : ℤ):
       rw [← weird_fix_lang (p := default_payload)]
       rw [← weird_fix_payload1 (pv := 10)]
       unfold lang_set1
-      -- have eq : ({⟨0, (default_trm, 10)⟩} : Set (trm × payload)ˡ ∪ {x | ∃ l ∈ {[lang| x := x + 1]}, ⟨1, (l, default_payload)⟩ = x}  ) = {⟨0, (default_trm, 10)⟩,⟨1, ([lang| x := x + 1], 0)⟩} : Set (trm × payload)ˡ := by
-      --   sorry
-      dsimp [LGTM.wp, LGTM.SHTs.htrm]
-      unfold default_payload;
+      -- unfold bighstar bighstarDef
+      -- have qframe : (fun (x : hval (trm × payload)ˡ) ( h : hheap (trm × payload)ˡ) => h ⟨1, (trm0.trm_seq trm1, default_payload)⟩ = h ⟨0, (default_trm, 10)⟩) ===>
+      --   fun v: hval  (trm × payload)ˡ =>
+      --   (fun h =>
+      --     ∀ (a : (trm × payload)ˡ),
+      --       if a ∈ {⟨0, (default_trm, 10)⟩} then
+      --         h ⟨1, (trm0.trm_seq trm1, default_payload)⟩ = h ⟨0, (default_trm, 10)⟩
+      --       else h a = hEmpty a)
+      --  := by sorry
+      -- dsimp [LGTM.wp, LGTM.SHTs.htrm]
+      unfold default_payload; simp
+      -- have eq : [∗i in ({⟨1, (trm0.trm_seq trm1, 0)⟩, ⟨0, (default_trm, 10)⟩} : Set (trm × payload)ˡ) | xl ~~> xv] = [∗i in {⟨1, (trm0.trm_seq trm1, 0)⟩}| xl ~~> xv] ∗ [∗i in {⟨0, (default_trm, 10)⟩}| xl ~~> xv] := by
+      --   unfold bighstar bighstarDef HStar.hStar instHStarHhProp hhstar
+      --     sorry
+      -- rw [eq]
+      -- have eq : {⟨0, (default_trm, 10)⟩, ⟨1, (trm0.trm_seq trm1, 0)⟩} = (⟪0, {(default_trm, 10)}⟫ ∪ ⟪1, {(trm0.trm_seq trm1, 0)}⟫) := by
+      --   unfold labSet; simp; aesop
+      -- have eq : xl ~⟨x in ⟪0, ({(default_trm, 10)} : Set (trm × payload)) ⟫⟩~> xv ∗ xl ~⟨x in ⟪1, ({(trm0.trm_seq trm1, 0)} : Set (trm × payload))⟫⟩~> xv =
+      --   xl ~⟨x in ⟪0, ({(default_trm, 10), (trm0.trm_seq trm1, 0)} : Set (trm × payload)) ⟫⟩~> xv := by
+      --   unfold hhsingle
+      yin 0: ywp; ylet; simp [subst, subst.go];
+      apply htriple_conseq; apply htriple_get (v := fun _ => xv) ; -- wrong
+      stop
+      apply htriple_get (v := fun _ => xv);
+      apply htriple_frame
+
+      erw [yfocus_lemma 0]
+      on_goal 2=> simp; apply disjoint_label_set.mpr; simp
+      dsimp
+      ystep; ysimp
+
       stop
       apply ywp_lemma_funs=>//
       intro _; simp;
