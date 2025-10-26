@@ -298,3 +298,20 @@ def well_formed_focus_inverse_lemma (idx : ℕ) (l : LabType) (s' s : Set α) (s
     · rfl
     · simp_all
   exact up1
+
+lemma hhstar_symbol_replace {hH₁ hH₂ : hhProp α} : hhstar hH₁ hH₂ = hH₁ ∗ hH₂ := by
+  unfold HStar.hStar instHStarHhProp
+  simp
+
+lemma hqstar_symbol_replace {hH₁ : hval α → hhProp α} (hH₂ : hhProp α) : hqstar hH₁ hH₂ = hH₁ ∗ hH₂ := by
+  unfold HStar.hStar instHStarForallHhProp
+  simp
+
+lemma hhstar_comm_special1 {hH₁ hH₂ : hhProp α} : hhstar hH₁ ((hH₂ ∗ hH₃) ∗ hH₄) = hH₂ ∗ (hH₃ ∗ hH₄ ∗ hH₁) := by
+  rw [hhstar_comm]
+  rw [hhstar_symbol_replace]
+  rw [hhstar_comm (hH₁ := hH₁) (hH₂ := (hH₄ ∗ hH₂ ∗ hH₃))]
+  rw [hhstar_comm_assoc (H1 := hH₄)]
+  rw [hhstar_assoc]
+  rw [hhstar_comm (hH₁ := hH₄)]
+  rw [hhstar_assoc]
