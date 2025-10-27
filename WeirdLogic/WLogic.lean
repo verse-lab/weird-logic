@@ -999,37 +999,43 @@ lemma weird_payload_aux_lemma (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
     convert form2
     aesop
 
-lemma weird_payload_aux_lemma2 (s' s s'' s2' s3: Set α) (sht_prog sht_lang : LGTM.SHT):
+lemma weird_payload_aux_lemma2 (s' s s'' s2' sp: Set α) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s⟫ ->
   sht_lang.s = ⟪1, s''⟫ ->
   s' ⊆ s ->
-  s ⊆ s3 ->
+  s ⊆ sp ->
   Disjoint sht_prog.s sht_lang.s ->
   H₁ ==> LGTM.wp [⟨⟪0, s \ s'⟫, sht_prog.ht⟩] (fun _ => fun h ↦ ∀ a ∉ ⟪0, s \ s'⟫, h a = ∅ ) ->
   H₂ ==> LGTM.wp [⟨⟪0, s'⟫, sht_prog.ht⟩, sht_lang]
-    (fun _ h =>  ∀ ll ∈ s2', ∃ pp ∈ s', h ⟨1,ll⟩= h ⟨0, pp⟩ ) ->
+    (fun _ h =>  ∀ ll ∈ s2', ∃ pp ∈ sp \ ( s \ s'), h ⟨1,ll⟩= h ⟨0, pp⟩ ) ->
   H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
-  (fun _ h => ∀ ll ∈ s2', ∃ pp ∈ s3, h ⟨1, ll ⟩= h ⟨0, pp⟩) := by
+  (fun _ h => ∀ ll ∈ s2', ∃ pp ∈ sp, h ⟨1, ll ⟩= h ⟨0, pp⟩) := by
   move=> prog lang subs disj dj2 part1 part2
   intro h12
   move=> H12
-  apply weird_wp_conseq (Q1 := fun _ h =>  ∀ ll ∈ s2', ∃ pp ∈ s', h ⟨1,ll⟩= h ⟨0, pp⟩)=>//
+  apply weird_wp_conseq (Q1 := fun _ h =>  ∀ ll ∈ s2', ∃ pp ∈ sp \ ( s \ s'), h ⟨1,ll⟩= h ⟨0, pp⟩)=>//
   { intro x h w ll hl; specialize w ll hl; aesop }
-  set Qp1 : hval αˡ → hhProp αˡ:= fun _ => (fun h ↦ ∀ ll ∈ s2', ∃ pp ∈ s', h ⟨1, ll⟩ = h ⟨0, pp⟩)
+  set Qp1 : hval αˡ → hhProp αˡ:= fun _ => (fun h ↦ ∀ ll ∈ s2', ∃ pp ∈ sp \ ( s \ s'), h ⟨1, ll⟩ = h ⟨0, pp⟩)
   set B : hhProp αˡ:= fun h ↦ ∀ a ∉ ⟪0, s \ s'⟫, h a = ∅
   set B' : hval αˡ → hhProp αˡ:= fun _ => B
   apply weird_wp_conseq (Q1 := whqstar Qp1 B)
-  · unfold whqstar B Qp1
+  · unfold whqstar Qp1
     intro x
     simp
     move=> hc hcon
+    -- set tmp := ((pp: α )∈ sp ∧ (pp ∈ s → pp ∈ s')) with htmp
     apply weird_heap_sub_right' (s := s) (Q := B)=>//
     · unfold hhlocal hlocal B
       intro h
       dsimp
       simp
-    · unfold B
-      simp_all
+      intro ha a pre
+      specialize ha a
+      have hcond : a.lab = 0 → a.val ∈ s → a.val ∈ s' := by
+        intro hl hs
+        have ⟨hsp, hss'⟩ := pre hl hs
+        exact hss' hs
+      exact ha hcond
   apply well_formed_focus_lemma (idx := 0) (l := 0) (shts := [sht_prog, sht_lang]) (s' := s') (s := s) (H := B' ∗ H₂) (R := H₁ ∗ H₂) (Q := Qp1 ∗ B)=>//
   · simp_all; apply disjoint_label_set.mpr; aesop
   · have part11 := (hhimpl_frame_l (hH₃ := H₂) (hH₁ := H₁) (hH₂ := LGTM.wp [{ s := ⟪0, s \ s'⟫, ht := sht_prog.ht }] B'))
@@ -1069,7 +1075,7 @@ lemma weird_payload_index_lemma2 (s₁ s₂ s₃ s₄: Set (α × β)) (sht_prog
   pr ∈ s₁ ->
   s₁ ⊆ s₃ ->
   H₁ ==> LGTM.wp [⟨⟪0,s₁ \ {pr}⟫, sht_prog.ht⟩] (fun _ => fun h=> ∀ a ∉ ⟪0, s₁ \ {pr}⟫ , h a = ∅) ->
-  H₂ ==> LGTM.wp [⟨⟪0,{pr}⟫, sht_prog.ht⟩, sht_lang] (fun _ h =>  ∀ ll ∈ s₄, h ⟨1, ll ⟩= h ⟨0, pr⟩) ->
+  H₂ ==> LGTM.wp [⟨⟪0,{pr}⟫, sht_prog.ht⟩, sht_lang] (fun _ h =>  ∀ ll ∈ s₄, ∃ pp ∈ s₃ \ (s₁ \ {pr}), h ⟨1, ll ⟩= h ⟨0, pp⟩) ->
   H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll ∈ s₄, ∃ pp ∈ s₃, h ⟨1, ll ⟩ = h ⟨0, pp⟩):= by
   move=> prog lang dsj ele sub pre1 pre2
   apply weird_payload_aux_lemma2 (s' := {pr}) (s := s₁)=>//
