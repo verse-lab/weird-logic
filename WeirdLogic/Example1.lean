@@ -406,39 +406,60 @@ lemma example4_spec (xv : ℤ):
         ∃ pp ∈ {x | ∃ p ∈ pay_index1, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩) with hH3
     set H₄ := [∗i in ({x | ∃ p ∈ pay_index2, ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ) ∪ ({x | ∃ l ∈ ({trm2}: Set trm), ⟨1, (l, default_payload)⟩ = x} : Set (trm × payload)ˡ)| (fun i ↦ xl) i ~~> (fun i ↦ xv) i] with hH4
     dsimp
-    have weakenH3 : H₃ ==> fun (h : (hheap (trm × payload)ˡ))=> ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩ := by
-      rw [hH3]
-      intro hh
-      apply hheap_weaken_forall'
-      unfold pay_index pay_index' pay_index1 pay_index' default_trm
-      simp
-    rw [hhstar_symbol_replace]
-    have reH3 := hhimpl_frame_l H₃ (fun (h : (hheap (trm × payload)ˡ))=> ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩) H₄ weakenH3
-    rw [← hhstar_symbol_replace]
-    rw [← hhstar_symbol_replace] at reH3
-    apply hhimpl_trans=>//
-
-    rw [hqstar_disjoint_lang_index_eq (lang_set1 := lang_set1) (lang_set2:=lang_set2) (lang_index := lang_index) (pay_index := pay_index) (default_payload := default_payload)]
-    rotate_left
-    { unfold lang_index
-      rw [←lang_index_union_univ]
-      unfold lang_set1 lang_set2 default_payload
-      aesop
-    }
-    {
-      unfold lang_set1 lang_set2
-      unfold trm1 trm2 trm_funs
-      simp
-    }
-    rw [hqstar_symbol_replace]
-    have wpfram := LGTM.wp_frame (sht := [{ s := ⟪0, {x | ∃ p ∈ pay_index2, (default_trm, p) = x}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] },
-      { s := ⟪1, {x | ∃ l ∈ ({trm2}:Set trm), (l, default_payload) = x}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }]) ((fun hv' (h:hheap (trm × payload)ˡ) => ∀ ll ∈ {x | ∃ l ∈ lang_set2, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩))
-      (fun h ↦ ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+    -- have weakenH3 : H₃ ==> fun (h : (hheap (trm × payload)ˡ))=> ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩ := by
+    --   rw [hH3]
+    --   intro hh
+    --   apply hheap_weaken_forall'
+    --   unfold pay_index pay_index' pay_index1 pay_index' default_trm
+    --   simp
+    -- rw [hhstar_symbol_replace]
+    -- have reH3 := hhimpl_frame_l H₃ (fun (h : (hheap (trm × payload)ˡ))=> ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩) H₄ weakenH3
+    -- rw [← hhstar_symbol_replace]
+    -- rw [← hhstar_symbol_replace] at reH3
+    -- apply hhimpl_trans=>//
+    have pre1 : {x | ∃ l ∈ lang_set2, (l, default_payload) = x} ∪ {x | ∃ l ∈ lang_set1, (l, default_payload) = x} = lang_index := by sorry
+    have pre2 : {x | ∃ p ∈ pay_index2, (default_trm, p) = x} ∪ {x | ∃ p ∈ pay_index1, (default_trm, p) = x} = pay_index := by sorry
+    have pre3 : Disjoint {x | ∃ l ∈ lang_set2, (l, default_payload) = x} {x | ∃ l ∈ lang_set1, (l, default_payload) = x} := by sorry
+    have pre4 : Disjoint {x | ∃ p ∈ pay_index2, (default_trm, p) = x} {x | ∃ p ∈ pay_index1, (default_trm, p) = x} := by sorry
+    have strongQ := hqstar_disjoint_lang_index_eq lang_index pay_index
+      {x | ∃ l ∈ lang_set2, (l, default_payload) = x} {x | ∃ l ∈ lang_set1, (l, default_payload) = x}
+      {x | ∃ p ∈ pay_index2, (default_trm, p) = x} {x | ∃ p ∈ pay_index1, (default_trm, p) = x}
+      pre1 pre2 pre3 pre4
+    have strongwp := weird_wp_conseq [{ s := ⟪0, {x | ∃ p ∈ pay_index2, (default_trm, p) = x}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] }, { s := ⟪1, {x | ∃ l ∈ ({trm2} : Set trm), (l, default_payload) = x}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }]
+      (hqstar
+        (fun hv' h ↦
+          ∀ ll ∈ {x | ∃ l ∈ lang_set2, (l, default_payload) = x},
+            ∃ pp ∈ {x | ∃ p ∈ pay_index2, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+        fun h ↦
+        ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x},
+          ∃ pp ∈ {x | ∃ p ∈ pay_index1, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+      (fun hv' h ↦ ∀ ll ∈ lang_index, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+      strongQ
     apply hhimpl_trans_r=>//
-    rw [hhstar_comm (hH₂ := H₄)]
+    clear strongwp strongQ pre1 pre2 pre3 pre4
+
+    -- rotate_left
+    -- { unfold lang_index
+    --   rw [←lang_index_union_univ]
+    --   unfold lang_set1 lang_set2 default_payload
+    --   aesop
+    -- }
+    -- {
+    --   unfold lang_set1 lang_set2
+    --   unfold trm1 trm2 trm_funs
+    --   simp
+    -- }
+    rw [hqstar_symbol_replace]
+    have wpfram := LGTM.wp_frame
+      (sht := [{ s := ⟪0, {x | ∃ p ∈ pay_index2, (default_trm, p) = x}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] }, { s := ⟪1, {x | ∃ l ∈ ({trm2} : Set trm), (l, default_payload) = x}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }] )
+      ((fun hv' (h:hheap (trm × payload)ˡ) => ∀ ll ∈ {x | ∃ l ∈ lang_set2, (l, default_payload) = x}, ∃ pp ∈ {x | ∃ p ∈ pay_index2, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩))
+      (fun h ↦ ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ {x | ∃ p ∈ pay_index1, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+    apply hhimpl_trans_r=>//
+    rw [hhstar_symbol_replace]
+    rw [hhstar_comm (hH₂ := H₄) (hH₁ := H₃)]
     apply hhimpl_frame_l
     rw [hH4]
-    clear wpfram reH3 hH4 weakenH3 hH3 H₃ H₄
+    clear wpfram hH4 hH3 H₃ H₄
 
     rw [unsimp_singleton_set]
     rw [← weird_fix_lang (p := default_payload)]
@@ -455,7 +476,6 @@ lemma example4_spec (xv : ℤ):
       (s₁ := {x | ∃ p ∈ pay_index2, (default_trm, p) = x})
       (H₁ := [∗i in {x | ∃ p ∈ pay_index2 \ {-10}, ⟨0, (default_trm, p)⟩ = x}| xl ~~> xv])=>//
     { apply disjoint_label_set.mpr; simp}
-    { unfold pay_index; simp; unfold pay_index2; simp }
     /- Third 1/4 -/
     { unfold pay_index2 pay_index';
       simp

@@ -3,6 +3,8 @@ import WeirdLogic.WTriple
 import WeirdLogic.WUtil
 -- import WeirdLogic.Util
 
+import Lgtm.Common.Util
+
 open Lean Lean.Expr Lean.Meta Qq
 open Elab Command Term Meta Tactic
 open Classical trm val prim
@@ -1086,23 +1088,120 @@ lemma weird_fix_payload1 (dt : trm) (pv : ℤ) (prog : trm) :
   apply LGTM.wp_sht_eq
   simp_all
 
+#check bighstar_hhstar_disj
+#check bighstarDef_hhstar
+
 open EmptyPCM
-lemma hqstar_disjoint_lang_index_eq ( lang_index pay_index: Set (trm × payload)) (lang_set1 lang_set2 : Set trm):
-  {x | ∃ l ∈ lang_set1, (l, default_payload) = x} ∪ {x | ∃ l ∈ lang_set2, (l, default_payload) = x} = lang_index ->
-  Disjoint {x | ∃ l ∈ lang_set1, (l, default_payload) = x} {x | ∃ l ∈ lang_set2, (l, default_payload) = x} ->
-  (fun hv' h => ∀ ll ∈ lang_index, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩) =
-  hqstar
-    (fun (hv': hval (trm × payload)ˡ) (h : (hheap (trm × payload)ˡ))=> ∀ ll ∈ {x | ∃ l ∈ lang_set2, (l, default_payload) = x},  ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩)
-    (fun (h : (hheap (trm × payload)ˡ))=> ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x}, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩) := by
-  -- rw [hqstar_symbol_replace]
-  move=> un disj
+lemma hqstar_disjoint_lang_index_eq ( lang_index pay_index lang_index1 lang_index2 pay_index1 pay_index2: Set α):
+  lang_index1 ∪ lang_index2 = lang_index ->
+  pay_index1 ∪ pay_index2 = pay_index ->
+  Disjoint lang_index1 lang_index2 ->
+  Disjoint pay_index1 pay_index2 ->
+  (hqstar
+    (fun (hv': hval αˡ) (h : (hheap αˡ))=> ∀ ll ∈ lang_index1,  ∃ pp ∈ pay_index1, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+    (fun (h : (hheap αˡ)) => ∀ ll ∈ lang_index2, ∃ pp ∈ pay_index2, h ⟨1, ll⟩ = h ⟨0, pp⟩)) ===>
+  (fun hv' h => ∀ ll ∈ lang_index, ∃ pp ∈ pay_index, h ⟨1, ll⟩ = h ⟨0, pp⟩)
+    := by
+  move=> un1 un2 disj1 disj2
   unfold hqstar HStar.hStar instHStarHhProp
   dsimp
   rw [hhstar_symbol_replace]
   rw [←hhprop_disjoint_hhadd_eq]
-  on_goal 2=> sorry
-  ext hv hh
-  sorry
+  on_goal 2=>
+    unfold hhProp.disjoint
+    intro h1 h2
+    simp
+    intro pre1 pre2
+    intro a
+    sorry
+  intro hv hh
+  intro pre
+  obtain ⟨ hh1,hh2, h1, h2, h3, h4⟩ := pre
+  simp [h3]
+  intro ll hl
+  by_cases hl1 : ll ∈ lang_index1
+  · have ⟨pp, hpp, heq⟩ := h1 ll hl1
+    use pp
+    have hpin : pp ∈ pay_index := by aesop
+    use hpin
+    sorry
+  · sorry
+
+
+  -- use hh₁, hh₂
+  --   (repeat' constructor)
+  --   { unfold hh₁
+  --     dsimp
+  --     intro a ha
+  --     have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
+  --     use pp, hpp
+  --     by_cases h : ⟨1, (l, default_payload)⟩ ∈ {x | ∃ l ∈ lang_set2, (⟨1, (l, default_payload)⟩ : (trm × payload)ˡ) = x} ∪ {x | ∃ p ∈ pay_index, ⟨0, p⟩ = x}
+  --     · simp [h]
+  --       sorry
+  --     · simp [h]
+  --       sorry
+  --   }
+  --   { unfold hh₂
+  --     dsimp
+  --     intro a ha
+  --     obtain ⟨l, hl1, rfl⟩ := ha
+  --     have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
+  --     use pp, hpp
+  --     by_cases h : ⟨1, (l, default_payload)⟩ ∈ {x | ∃ l ∈ lang_set1, (⟨1, (l, default_payload)⟩ : (trm × payload)ˡ) = x} ∪ {x | ∃ p ∈ pay_index, ⟨0, p⟩ = x}
+  --     · simp [h]
+  --       sorry
+  --     · simp [h]
+  --       sorry
+  --   }
+  --   {
+  --     move=> !a/=; scase_if
+  --     sorry
+  --     sorry
+  --   }
+  --   {
+  --     sorry
+  --   }
+    -- · intro ll hll
+    --   obtain ⟨l, hl1, rfl⟩ := hll
+    --   have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
+    --   use pp; simp [hpp, hh₁, hl1, heq]
+    --   have pneg : ¬⟨0, pp⟩ ∈ ({x | ∃ l ∈ lang_set2, ⟨1, (l, default_payload)⟩ = x}: Set (trm × payload)ˡ ):= by
+    --     intro h
+    --     rcases h with ⟨l', hl', h_eq⟩
+    --     cases h_eq
+    --   rw [hun]
+    --   simp
+
+    --   sorry
+    -- · constructor
+    --   · intro ll hll
+    --     obtain ⟨l, hl1, rfl⟩ := hll
+    --     have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
+    --     use pp; simp [hpp, hh₂, hl1, heq]
+    --     sorry
+    --   · constructor
+    --     exact hun
+    --     intro a
+    --     unfold hh₁ hh₂
+    --     simp
+    --     sorry
+        -- scase_if
+        -- move=> up
+        -- rcases up with ⟨ hhl, uph⟩
+  -- · intro pre
+  --   rcases pre with ⟨ hh1, hh2, ⟨ up1,up2,up3⟩⟩
+  --   have h_union := up3.1
+  --   have h_disj := up3.2
+  --   rw [←un]
+  --   intro ll hll
+  --   simp at hll
+  --   sorry
+
+  -- rw [hhstar_symbol_replace]
+  -- rw [←hhprop_disjoint_hhadd_eq]
+  -- on_goal 2=> sorry
+  -- ext hv hh
+  -- sorry
 /- ********************************** Sequence Rules ************************************** -/
 
 /- deriables from focus rule and similar to the proof of weaken lemma? -/
