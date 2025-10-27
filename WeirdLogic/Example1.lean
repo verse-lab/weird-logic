@@ -102,12 +102,12 @@ lemma lang_unfold :
       left
       cases l with
       | nil => simp at h1
-      | cons x xs => simp at h1; rcases h1 with ⟨h10,h11⟩ ; sorry
+      | cons x xs => simp at h1; rcases h1 with ⟨h10,h11⟩ ; subst x ; rcases xs with _ | _ <;> simp [trm_to_symbol_list] at *
     | inr h2 =>
       right
       cases l with
       | nil => aesop
-      | cons x xs => simp at h2; unfold trm_to_symbol_list at h2; sorry
+      | cons x xs => simp at h2; unfold trm_to_symbol_list at h2; rcases h2 with ⟨h10,h11⟩ ; subst x ; rcases xs with _ | _ <;> simp [trm_to_symbol_list] at *
   }
   {
     intro h
@@ -240,6 +240,7 @@ lemma example4_spec (xv : ℤ):
     · unfold pay_index default_trm; aesop
     · unfold pay_index; aesop
   }
+  dsimp only
   /- Step 1: GrmDisj -/
   apply weird_grmdisj_lemma_safe
     (s1 := {x | ∃ l ∈ lang_set1, (l, default_payload) = x})
@@ -258,6 +259,7 @@ lemma example4_spec (xv : ℤ):
     unfold pay_index1 pay_index2; aesop
   · apply pair_set_union_eq_left
     apply pay_index_union_univ
+  · simp [hhlocalE, labSet]
   /- left part -/
   · unfold lang_set1
     /- Step 2: Lang -/
@@ -403,6 +405,7 @@ lemma example4_spec (xv : ℤ):
   ·
     unfold lang_set2
     set H₃ := (fun h : hheap (trm × payload)ˡ =>
+        hlocal (⟪0, {x | ∃ p ∈ pay_index1, (default_trm, p) = x}⟫ ∪ ⟪1, {x | ∃ l ∈ lang_set1, (l, default_payload) = x}⟫) h ∧
         ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x},
         ∃ pp ∈ {x | ∃ p ∈ pay_index1, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩) with hH3
     set H₄ := [∗i in ({x | ∃ p ∈ pay_index2, ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ) ∪ ({x | ∃ l ∈ ({trm2}: Set trm), ⟨1, (l, default_payload)⟩ = x} : Set (trm × payload)ˡ)| (fun i ↦ xl) i ~~> (fun i ↦ xv) i] with hH4
@@ -638,16 +641,43 @@ lemma example4_spec (xv : ℤ):
     unfold lang_set1 lang_set2; simp
     unfold default_payload
 
-
-    stop
-    unfold hhimpl HStar.hStar instHStarHhProp
-    simp
-    unfold hhstar bighstar bighstarDef
-    simp;
-    intro hh hh1 pp hp hhp1 hh2 hl1 hun disj
-    rw [hun]
-    simp
+    simp [labSet, insert, Set.insert, pay_index1, hlocal]
+    rw [Set.setOf_or, ← bighstar_hhstar_disj]
+    on_goal 2=> simp
+    simp only [Set.setOf_eq_eq_singleton]
+    dsimp [hhimpl, HStar.hStar, instHStarHhProp, hhstar, bighstar, bighstarDef]
+    rintro h ⟨hh1, hh_, ⟨hlo, ⟨a, ha, hk⟩⟩, ⟨hh2, hh3, hs1, hs2, heq, hdj1⟩, ⟨heq_, hdj2⟩⟩
+    subst h hh_
+    open Classical in simp [Set.mem_singleton_iff] at hs1 hs2
     constructor
+    · exists default_trm, a
+      constructor ; aesop
+      simp [hk] ; congr! 1
+      have hs1' := hs1 ⟨1, (trm1, 0)⟩
+      have hs1'' := hs1 ⟨0, (default_trm, a)⟩
+      have hs2' := hs2 ⟨1, (trm1, 0)⟩
+      have hs2'' := hs2 ⟨0, (default_trm, a)⟩
+      rcases ha with ⟨ha1, ha2⟩
+      simp at hs1' hs1'' hs2' hs2''
+      split at hs1'' ; linarith
+      split at hs2'
+      next h => simp [trm1, trm2, trm_funs] at h
+      rw [hs1', hs1'', hs2', hs2'']
+    · exists default_trm, -10
+      constructor ; aesop
+      simp [hk] ; congr! 1
+      repeat rw [hlo]
+      · simp
+      · simp ; intros ; linarith
+      · intro h ; simp [trm1, trm2, trm_funs] at h
+      · simp
+      · have hs1' := hs1 ⟨1, (trm2, 0)⟩
+        have hs1'' := hs1 ⟨0, (default_trm, -10)⟩
+        have hs2' := hs2 ⟨1, (trm2, 0)⟩
+        have hs2'' := hs2 ⟨0, (default_trm, -10)⟩
+        simp at hs1' hs1'' hs2' hs2''
+        rw [hs1', hs1'', hs2', hs2'']
+        simp
 
 
 

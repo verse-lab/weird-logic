@@ -681,6 +681,27 @@ lemma weird_grmdisj_lemma_wrong (s' s : Set (α × β)) (sht_prog sht_lang : LGT
     --   · apply union_heap_eq (h := hh) (h1 := hv1) (h2 := hv2)=>//
 
 
+theorem tmp1 :
+  hhlocal shts.set H₁ ->
+  H₁ ==> LGTM.wp shts Q ->
+  H₁ ==> LGTM.wp shts (fun hv hh => hlocal shts.set hh ∧ Q hv hh) := by
+  intro h1 h2 h hh ; specialize h2 _ hh ; specialize h1 _ hh
+  unfold hlocal at h1
+  unfold LGTM.wp hwp at *
+  rcases h2 with ⟨hQ', h2a, h2b⟩
+  unfold heval
+  -- exists (fun a v h => if a ∈ shts.set then hQ' a v h ∧  else hQ' a v)
+  exists hQ'
+  constructor
+  · assumption
+  · intro hv ; specialize h2b hv
+    unfold bighstarDef at *
+    intro h_ hh_ ; specialize h2b h_ hh_
+    rcases h2b with ⟨hv1, h2b⟩
+    dsimp
+    exists hv1 ; dsimp ; constructor <;> try assumption
+    intro a hnotin ; specialize hh_ a ; simp [hnotin] at hh_ ; rw [hh_] ; apply h1 ; assumption
+
 /- remove hlocal in the postcondition -/
 /- Q = fun s1 s2 => ∀ ... -/
 set_option maxHeartbeats 1600000 in
@@ -690,15 +711,18 @@ lemma weird_grmdisj_lemma_safe (s' s : Set (α × β))  (sht_prog sht_lang : LGT
   Disjoint sht_prog.s sht_lang.s ->
   s1 ∩ s2 = ∅ -> s1 ∪ s2 = s ->
   s'1 ∩ s'2 = ∅ -> s'1 ∪ s'2 = s' ->
+  hhlocal (⟪ 0, s'1⟫ ∪ ⟪ 1, s1⟫) H₁ ->
   H₁ ==> LGTM.wp [⟨⟪ 0, s'1⟫, sht_prog.ht ⟩, ⟨⟪ 1, s1⟫, sht_lang.ht ⟩ ]
    (fun _ h => (∀ ll ∈ s1, ∃ pp, pp ∈ s'1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) ->
   ∀ x : hval (α × β)ˡ,
-  ( hhstar (fun h => (∀ ll ∈ s1, ∃ pp, pp ∈ s'1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) H₂) ==>
+  ( hhstar (fun h => (hlocal (⟪ 0, s'1⟫ ∪ ⟪ 1, s1⟫) h) ∧ (∀ ll ∈ s1, ∃ pp, pp ∈ s'1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) H₂) ==>
   LGTM.wp [⟨⟪ 0, s'2⟫, sht_prog.ht ⟩, ⟨⟪ 1, s2⟫, sht_lang.ht ⟩ ]
     (fun hv' ↦ (fun _ h => ∀ ll ∈ s, ∃ pp, pp ∈ s' ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) (x ∪_(⟪ 0, s'1⟫ ∪ ⟪ 1, s1⟫) hv') ) ->
   H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
     (fun _ h => ∀ ll ∈ s, ∃ pp, pp ∈ s' ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) := by
-  move=> prog lang subs sp1 sp2 sp3 sp4 up1 hva up2
+  move=> prog lang subs sp1 sp2 sp3 sp4 hlo up1 hva up2
+  apply tmp1 at up1 ; dsimp [LGTM.SHTs.set] at up1 ; simp only [Set.union_empty] at up1
+  on_goal 2=> dsimp [LGTM.SHTs.set] ; simp only [Set.union_empty] ; assumption
   have subsht : LGTM.wp [sht_prog, sht_lang] (fun _ h => ∀ ll ∈ s, ∃ pp, pp ∈ s' ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) = LGTM.wp ([⟨⟪ 0, s'1⟫, sht_prog.ht ⟩, ⟨⟪ 1, s1⟫, sht_lang.ht ⟩ ] ++ [⟨⟪ 0, s'2⟫, sht_prog.ht ⟩, ⟨⟪ 1, s2⟫, sht_lang.ht ⟩]) (fun v h => ∀ ll ∈ s, ∃ pp, pp ∈ s' ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩):= by
     unfold LGTM.wp
     simp
@@ -743,7 +767,7 @@ lemma weird_grmdisj_lemma_safe (s' s : Set (α × β))  (sht_prog sht_lang : LGT
   rw [subsht]
   intro hv
   move=> pre
-  apply well_formed_sequ_lemma (R := H₁ ∗ H₂ ) (H := fun x => (hhstar (fun h => (∀ ll ∈ s1, ∃ pp, pp ∈ s'1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) H₂))
+  apply well_formed_sequ_lemma (R := H₁ ∗ H₂ ) (H := fun x => (hhstar (fun h => (hlocal (⟪ 0, s'1⟫ ∪ ⟪ 1, s1⟫) h) ∧ (∀ ll ∈ s1, ∃ pp, pp ∈ s'1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) H₂))
   { simp; apply disjoint_label_set.mpr; simp }
   { simp; apply disjoint_label_set.mpr; simp }
   { simp
@@ -764,7 +788,7 @@ lemma weird_grmdisj_lemma_safe (s' s : Set (α × β))  (sht_prog sht_lang : LGT
   { exact pre}
 
 #check Finmap.Disjoint
-
+/-
 lemma weird_grmdisj_premium_aux (s' s: Set (α × β)) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s'⟫ ->
   sht_lang.s = ⟪ 1, s⟫ ->
@@ -816,7 +840,7 @@ lemma weird_grmdisj_lemma_premium (s' s : Set (α × β))  (sht_prog sht_lang : 
   move=> prog lang subs sp1 sp2 sp3 sp4 up1 up2
   apply weird_grmdisj_premium_aux (s := s) (s' := s') at up2 =>//
   apply weird_grmdisj_lemma_safe (s := s) (s' := s') (s1 := s1 ) (s2 := s2 ) (s'1 := s'1) (s'2 := s'2)=>//
-
+-/
 /- Old format of Grmdisj rule -/
 /- separate the grammar into s' and s \ s'
  linking to Grmdisj rule in the note
