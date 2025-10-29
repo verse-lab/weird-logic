@@ -22,7 +22,7 @@ namespace WeirdLogic
   S2 -> trm 1
   S3 -> trm 2 | trm 3
  -/
-
+/- context free + while rule -/
 def trm1 : trm := [lang| x := -x]
 def trm2 : trm := [lang| x := x + 1]
 def trm3 : trm := [lang| x := x * 2]

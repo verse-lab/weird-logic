@@ -21,9 +21,18 @@ inductive wtrm : Type where
   | wtrm_basic : trm -> wtrm
   | wtrm_choose : var -> wtrm
 
+local notation "%" x => (Lean.quote (toString (Lean.Syntax.getId x)))
 syntax "⟦" term "⟧" : lang
+syntax "fun" var* " => " "{" term "}": lang
 macro_rules
   | `([lang| ⟦$t⟧]) => `($t)
+  | `([lang| fun $xs:var* => { $t }])             => do
+    let xs <- xs.mapM fun x =>
+      match x with
+      | `(var| ⸨ $x : Loc⸩) => `(term| trm_varl $(%x))
+      | `(var| ⸨ $x : Val⸩) => `(term| trm_var $(%x))
+      | _ => Lean.Macro.throwUnsupported
+    `(trm_funs [ $xs,* ] $t)
 /- =========================== Context-Free Grammar =========================== -/
 
 abbrev T := trm
@@ -94,6 +103,8 @@ def squeeze_trm (tlist : List trm) : trm :=
   | [x] => x
   | [] => trm.trm_val 0
 
+def squeeze_trm_to_func (tlist : List trm) (arglist : List trm): trm :=
+  trm_call (squeeze_trm tlist) arglist
 
 def trm_to_symbol_list (tlist : List trm) : List (Symbol T N) :=
   match tlist with

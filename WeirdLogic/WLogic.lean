@@ -1149,89 +1149,9 @@ lemma hqstar_disjoint_lang_index_eq ( lang_index pay_index lang_index1 lang_inde
   obtain ⟨ hh1,hh2, h1, h2, h3, h4⟩ := pre
   simp [h3]
   intro ll hl
-  by_cases hl1 : ll ∈ lang_index1
-  · have ⟨pp, hpp, heq⟩ := h1 ll hl1
-    use pp
-    have hpin : pp ∈ pay_index := by aesop
-    use hpin
-    sorry
-  · sorry
+  sorry
 
 
-  -- use hh₁, hh₂
-  --   (repeat' constructor)
-  --   { unfold hh₁
-  --     dsimp
-  --     intro a ha
-  --     have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
-  --     use pp, hpp
-  --     by_cases h : ⟨1, (l, default_payload)⟩ ∈ {x | ∃ l ∈ lang_set2, (⟨1, (l, default_payload)⟩ : (trm × payload)ˡ) = x} ∪ {x | ∃ p ∈ pay_index, ⟨0, p⟩ = x}
-  --     · simp [h]
-  --       sorry
-  --     · simp [h]
-  --       sorry
-  --   }
-  --   { unfold hh₂
-  --     dsimp
-  --     intro a ha
-  --     obtain ⟨l, hl1, rfl⟩ := ha
-  --     have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
-  --     use pp, hpp
-  --     by_cases h : ⟨1, (l, default_payload)⟩ ∈ {x | ∃ l ∈ lang_set1, (⟨1, (l, default_payload)⟩ : (trm × payload)ˡ) = x} ∪ {x | ∃ p ∈ pay_index, ⟨0, p⟩ = x}
-  --     · simp [h]
-  --       sorry
-  --     · simp [h]
-  --       sorry
-  --   }
-  --   {
-  --     move=> !a/=; scase_if
-  --     sorry
-  --     sorry
-  --   }
-  --   {
-  --     sorry
-  --   }
-    -- · intro ll hll
-    --   obtain ⟨l, hl1, rfl⟩ := hll
-    --   have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
-    --   use pp; simp [hpp, hh₁, hl1, heq]
-    --   have pneg : ¬⟨0, pp⟩ ∈ ({x | ∃ l ∈ lang_set2, ⟨1, (l, default_payload)⟩ = x}: Set (trm × payload)ˡ ):= by
-    --     intro h
-    --     rcases h with ⟨l', hl', h_eq⟩
-    --     cases h_eq
-    --   rw [hun]
-    --   simp
-
-    --   sorry
-    -- · constructor
-    --   · intro ll hll
-    --     obtain ⟨l, hl1, rfl⟩ := hll
-    --     have ⟨pp, hpp, heq⟩ := pre ⟨l, default_payload⟩ (by rw [← un]; simp [hl1])
-    --     use pp; simp [hpp, hh₂, hl1, heq]
-    --     sorry
-    --   · constructor
-    --     exact hun
-    --     intro a
-    --     unfold hh₁ hh₂
-    --     simp
-    --     sorry
-        -- scase_if
-        -- move=> up
-        -- rcases up with ⟨ hhl, uph⟩
-  -- · intro pre
-  --   rcases pre with ⟨ hh1, hh2, ⟨ up1,up2,up3⟩⟩
-  --   have h_union := up3.1
-  --   have h_disj := up3.2
-  --   rw [←un]
-  --   intro ll hll
-  --   simp at hll
-  --   sorry
-
-  -- rw [hhstar_symbol_replace]
-  -- rw [←hhprop_disjoint_hhadd_eq]
-  -- on_goal 2=> sorry
-  -- ext hv hh
-  -- sorry
 /- ********************************** Sequence Rules ************************************** -/
 
 /- deriables from focus rule and similar to the proof of weaken lemma? -/
@@ -1241,10 +1161,12 @@ lemma weird_seqleft_lemma (s₁ s₂ : Set α):
   simp
 
 /- ********************************** For Rules ************************************** -/
-lemma weird_for_lemma {c : htrm (α × β)ˡ} (s1 s2 : Set (α × β)) (sht_prog sht_lang : LGTM.SHT):
+lemma weird_for_lemma {c : htrm (α × β)ˡ} (s1 s2 : Set (α × β)) (Nset : Set ℕ) (trm_repeat : ℕ → α → α) (inside_trm : α ) (depay : β) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s1⟫ ->
   sht_lang.s = ⟪ 1, s2⟫ ->
-  H₂ ==> LGTM.wp [⟨⟪ 0, s1⟫, fun j => trm_for vr z n (c j) ⟩, ⟨⟪ 1, s2⟫, sht_lang.ht ⟩ ]
+  s2 = (⋃ i ∈ Nset , {(trm_repeat i inside_trm, depay)} : Set (α × β)) ->
+  H₁ ==> LGTM.wp
+    [⟨⟪ 0, s1⟫, fun j => trm_for vr z n (c j) ⟩, ⟨⟪ 1, s2⟫, sht_lang.ht ⟩ ]
     (fun _ h => (∀ ll ∈ s2, ∃ pp, pp ∈ s1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) := by
   sorry
 

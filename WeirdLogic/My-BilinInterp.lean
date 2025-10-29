@@ -181,6 +181,7 @@ lemma bilinearInterp_spec_entire  :
     srw biUnion_prod_const
     let op := fun (hv : hval (ℝ×ℝ)ˡ) i => ∫ i in Set.Ico (x_left i) (x_right i), ∫ j, (hv ⟨2,i,j⟩).toReal
     let P := fun (hv : hval (ℝ×ℝ)ˡ) i => IntegrableOn (fun i => ∫ j, (hv ⟨2,i,j⟩).toReal) (Set.Ico (x_left i) (x_right i))
+
     yfor+. with -- longest goal: the one before (13)
       (Q := fun i hv => ans ~⟪1, {(r₁, r₂)}⟫~> op hv i ∗ ⌜P hv i⌝)
       (H₀ := ans ~⟪1,{(r₁, r₂)}⟫~> val_real 0)<;> try simp [op, P]

@@ -21,6 +21,7 @@ namespace WeirdLogic
         | ε
   S2 -> trm 1
  -/
+ /- regular, + langseq rule -/
 def trm1 : trm := [lang| x := -x]
 def trm2 : trm := [lang| x := x + 1]
 def r1 : ContextFreeRule trm String :=

@@ -207,7 +207,7 @@ def inLang2 (a : (trm × payload)ˡ) : Prop :=
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example4_spec (xv : ℤ):
+lemma example1_spec (xv : ℤ):
   {
     xl ~⟨i in {⟨0,p⟩ | p ∈ pay_index} ∪ {⟨1,l⟩ | l ∈ lang_index}⟩~> xv
   }
@@ -695,91 +695,6 @@ lemma example4_spec (xv : ℤ):
 --   symm
 --   apply bighstar_hhstar_disj (s₂ := ⋆ \ s₁)=>//
 --   exact Set.disjoint_sdiff_right
-
--- lemma example4_spec_hete (f : ℤ -> val):
---   {
---     -- ⊤
---     -- [∗ in Set.univ | H ] ∗
---     arr⟨⋆⟩(xptr , i in 1 =>f i) -- replace it
---   }
---   [0| Sum.inr| p in pay_index' => prog_c1(⟨f 1⟩, ⟨p.val⟩)]
---   [1| Sum.inl| l in lang_index' => ⟦l.val⟧]
-
---   { v,
---     fun h => ∀ ll ∈ lang_index', ∃ pp , pp ∈ pay_index' ∧ h ⟨1, Sum.inl ll⟩ = h ⟨0, Sum.inr pp⟩
---   } := by
---   unfold LGTM.triple
---   unfold LGTM.HSHT.mkSHT LGTM.Labeled.map Set.image
---   dsimp
---   stop
---   apply weird_grmdisj_lemma
---     (s' := left_lang_index)
---     (H := arr⟨⟪0,⋆ ⟫⟩(xptr , i in 1 =>f i))
---     (H₁ := arr⟨⟪1,left_lang_index⟫⟩(xptr , i in 1 =>f i))
---     (H₂ := arr⟨⟪1,right_lang_index⟫⟩(xptr , i in 1 =>f i))
---     (HH := arr⟨⋆⟩(xptr , i in 1 =>f i))
---     =>//
---   · unfold labSet pay_index; simp_all
---   · unfold labSet lang_index lang_index'; simp_all
---   · unfold left_lang_index lang_index
---     simp_all
---   · sorry
---   · sorry
---   · sorry
---   /- left part: goes to false branch-/
---   · set pay_s := { p | p<=0 ∧ p ∈ pay_index'}
---     set pay_s' : Set (trm ⊕ payload) := (fun p => Sum.inr p) '' pay_s
---     set hsub := pay_index' \ pay_s
---     set hsub_sum : Set (trm ⊕ payload)ˡ := (fun p => ⟨0, Sum.inr p⟩) '' hsub
---     set H₁ := arr⟨hsub_sum⟩(xptr , i in 1 =>f i)
---     set H₂ := arr⟨⋆ \ hsub_sum⟩(xptr , i in 1 =>f i)
---     have trans_pre : H₁ ∗ H₂ = arr⟨⋆⟩(xptr , i in 1 =>f i) := by
---       unfold H₁ H₂
---       apply hharray_disj (s₁ := hsub_sum)
---       aesop
---     rw [← trans_pre]
---     apply weird_weaken_lemma (s := pay_index) (s'' := lang_index \ {(Sum.inl [lang| x := x + 1])}) (s' := pay_s') (H₁ := H₁) (H₂ := H₂) =>//
---     · unfold labSet pay_index; simp_all
---     · unfold pay_index pay_s'
---       aesop
---     · simp_all
---       apply Set.disjoint_iff_inter_eq_empty.mpr
---       aesop
---     /- left part: solvable using ystep and yif if can do case analysis inside ht -/
---     · simp_all; unfold H₁ hsub_sum
---       apply ysubst_lemma («σ» := Sum.getRight!)=>//
---       sorry
---     /- right part: shrink payload to p<=0 -/
---     · simp
---       sorry
---   /- right part: goes to true branch-/
---   · set pay_s := { p | p>0 ∧ p ∈ pay_index'}
---     set pay_s' : Set (trm ⊕ payload) := (fun p => Sum.inr p) '' pay_s
---     set hsub := pay_index' \ pay_s
---     set hsub_sum : Set (trm ⊕ payload)ˡ := (fun p => ⟨0, Sum.inr p⟩) '' hsub
---     set H₁ := arr⟨hsub_sum⟩(xptr , i in 1 =>f i)
---     set H₂ := arr⟨⋆ \ hsub_sum⟩(xptr , i in 1 =>f i)
---     have trans_pre : H₁ ∗ H₂ = arr⟨⋆⟩(xptr , i in 1 =>f i) := by
---       unfold H₁ H₂
---       apply hharray_disj (s₁ := hsub_sum)
---       aesop
---     rw [← trans_pre]
---     apply weird_weaken_lemma (s := pay_index) (s'' := {(Sum.inl [lang| x := x + 1])}) (s' := pay_s') (H₁ := H₁) (H₂ := H₂) =>//
---     · unfold labSet pay_index; simp_all
---     · unfold pay_index pay_s'
---       simp_all
---     · simp_all
---       apply Set.disjoint_iff_inter_eq_empty.mpr
---       aesop
---     /- left part: solvable using ystep and yif if can do case analysis inside ht-/
---     · unfold H₁ LGTM.wp prog_c1
---       simp_all
---       -- cases hpi : Function.partialInv (fun x : payloadˡ => ⟨x.lab, Sum.inr x.val⟩) a
---       apply weird_index_subst_left
---       sorry
---     /- right part: shrink p to p>0-/
---     · unfold H₂
---       sorry
 
 
 end WeirdLogic
