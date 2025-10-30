@@ -24,7 +24,7 @@ namespace WeirdLogic
 /- for a language instance in type trm, the outermost type must be trm_funs -/
 
 def trm_tmp : trm := [lang| fun ⸨xl: Loc⸩ => () ]
-def trm1 : trm := [lang| let xx := !xl in xl := xx + 1]
+def trm1 : trm := [lang| let xx := !xl in let temp0 := xx + 1 in xl := temp0]
 def r1 : ContextFreeRule trm String :=
   {
     input := "L",
@@ -68,11 +68,11 @@ def cfg_expand : Set ( List (Symbol T N)) :=
 
 lang_def prog_c1 :=
   fun ⸨xl: Loc⸩ ⸨pa: Val⸩ =>
-    let tmp := !xl in
     for k in [0 : pa] {
-      tmp := tmp + 1
-    };
-    xl := tmp
+      let xx := !xl in
+      let temp0 := xx + 1 in
+      xl := temp0
+    }
 
 def pay_index' := @Set.univ payload
 abbrev Lang := List trm
@@ -107,8 +107,92 @@ def pay_index : Set (trm × payload) :=
 def lang_index : Set (trm × payload ):=
   { (l,default_payload) | l ∈ lang_fun_list }
 
+lemma regexp_grammar_isubst (n : ℕ) (t : trm) :
+  isubst Ev El (regexp_grammar n t) = regexp_grammar n (isubst Ev El t) := by
+  fun_induction regexp_grammar n t
+  all_goals simp [regexp_grammar, isubst]
+  assumption
 
-lemma example2_single_iter :
+lemma eval_for_val (v : val) : eval s v Q ↔ Q v s := by
+  constructor
+  · intro h ; cases h ; assumption
+  · intro h ; constructor ; assumption
+
+lemma empty_for_loop (a : Int) :
+  eval s (trm_for i a a t) Q ↔ Q val_unit s := by
+  constructor
+  · intro h ; cases h ; rename_i h ; simp at h ; rw [eval_for_val] at h ; assumption
+  · intro h ; constructor ; simp ; rw [eval_for_val] ; assumption
+
+lemma equiv_1 (a : Int)
+  (h : ∀ (v : val), subst i v t = t)
+  -- (hQ : (∀ v1 v2, Q v1 = Q v2) ∨ (∀ v h, Q v h → v = val_unit))
+  -- (hQt : ∀ Q', eval s t Q' →
+  --   ((∀ v1 v2, Q' v1 = Q' v2) ∨ (∀ v h, Q' v h → v = val_unit)))
+  (hQ : (∀ v1 v2, Q v1 = Q v2))
+  :
+  eval s (regexp_grammar n t) Q ↔ eval s (trm_for i a ((a + n : Int)) t) Q := by
+  fun_induction regexp_grammar n t generalizing s a
+  next t =>
+    simp [regexp_grammar] ; rw [empty_for_loop, eval_for_val]
+  next t =>
+    simp [regexp_grammar]
+    constructor
+    · intro hh ; constructor ; simp ; rw [h]
+      constructor ; assumption
+      intros ; rw [empty_for_loop, hQ] ; assumption
+    · intro hh ; cases hh ; rename_i hh
+      simp at hh ; rw [h] at hh
+      cases hh ; rename_i Q1 hmid h2
+      simp only [empty_for_loop] at h2
+      apply eval_conseq' ; assumption
+      intros ; rw [hQ _ val_unit] ; solve_by_elim
+  next n t not0 ih =>
+    have tmp : a + 1 + ↑n = a + (↑n + 1) := by ac_rfl
+    simp [regexp_grammar]
+    constructor
+    · intro hh ; constructor ; simp ; rw [h]
+      cases hh ; rename_i Q1 hmid h2
+      constructor ; assumption
+      intro v1 s2 h2_ ; specialize h2 _ _ h2_
+      specialize @ih s2 (a + 1) h ; rw [tmp] at ih
+      rw [← ih] ; assumption
+    · intro hh ; cases hh ; rename_i hh
+      simp at hh ; rw [h] at hh
+      cases hh ; rename_i Q1 hmid h2
+      constructor ; assumption
+      intro v1 s2 h2_ ; specialize h2 _ _ h2_
+      specialize @ih s2 (a + 1) h ; rw [tmp] at ih
+      rw [ih] ; assumption
+
+lemma simple_loop_pre (xl : loc) (xv : ℤ) (n : Nat) :
+  let nn : val := val_int n
+  triple
+    [lang|
+      for k in [0 : nn] {
+        let xx := !xl in
+        let temp0 := xx + 1 in
+        xl := temp0
+      }]
+    (xl ~~> xv) (fun _ => xl ~~> ((xv + n) : ℤ)) := by
+  xfor (fun a => xl ~~> ((xv + a) : ℤ))
+  intro i h1 h2 ; xwp ; xlet
+  on_goal 2=> xsimp ; xsimp
+  xapp ; xwp ; xlet ; xstep ; xapp ; xsimp
+
+lemma xwp_lemma_funs' (xs : List trm) (ts : List trm) :
+  t = trm_call tfunc ts ->
+  tfunc = trm_funs xs t1 ->
+  func_call_shape_condition xs (get_vars xs) ts ->
+  func_call_ctx_prepare (List.zip xs ts) = some (Ev, El) ->
+  himpl H (wp (isubst Ev.toAList El.toAList t1) Q) →
+  triple t H Q := by
+  move=> -> -> ?? h
+  srw -wp_equiv ; apply himpl_trans ; apply h
+  apply wp_eval_like
+  apply eval_like_trm_apps_funs_pre <;> try assumption
+
+lemma example2_single_iter (xv : ℤ) :
   ∀ n : ℕ,
   sn = [lang| fun ⸨xl: Loc⸩ => {regexp_grammar n trm1}] →
   {
@@ -120,63 +204,39 @@ lemma example2_single_iter :
     fun h => ∀ l ∈ ({(sn,default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, (Int.ofNat n))} : Set (trm × payload)) , h ⟨1, l⟩= h ⟨0, p⟩
   }
   := by
-  intro n
-  induction n with
-  | zero =>
-    intro hsn
-    unfold LGTM.triple default_payload hhsingle
-    dsimp
-    apply weird_lang_lemma=>//
-    { simp; apply disjoint_label_set.mpr; simp}
-    apply weird_payload_lemma=>//
-    { simp; apply disjoint_label_set.mpr; simp}
-    rw [← weird_fix_lang (p := default_payload)]
-    rw [← weird_fix_payload1 (pv := 0)]
-    -- dsimp [LGTM.wp, LGTM.SHTs.htrm]
-    have sneq : regexp_grammar 0 trm1 = [lang| ()] := by
-      unfold regexp_grammar; simp
-    rw [sneq] at hsn; clear sneq
-    yin 1: apply ywp_lemma_funs (tfunc := fun _ => sn) (ts := fun (l : (trm × payload)ˡ) => [xl])
-    intro _ ; rfl ; intro _ ; rw [hsn]; intro _; rfl ; intros ; simp; simp [get_vars, type_match]
-    simp  [Unary.func_call_ctx_prepare]
-    all_goals
-      try simp [isubstE, Unary.reduce_call_isubst]; --(try simp [Unary.isubst, Unary.isubst.go])--; (srw ?Unary.guard_pos; all_goals try rfl)
-      try simp [wpgen]
-      try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
-    ywp; yval
-    have uneq : ({⟨0, (default_trm, 0)⟩} : Set (trm × payload)ˡ) ∪ {⟨1, (sn, 0)⟩} = {⟨0, (default_trm, 0)⟩, ⟨1, (sn, 0)⟩} := by
-      exact rfl
-    rw [← uneq]; clear uneq
-    rw [←bighstar_hhstar_disj]
-    on_goal 2=> simp
-
-    yin 0: ywp; ylet
-    -- { unfold hhsingle; simp [labSet]}
-    -- yfor+ with
-    --   (Q := fun i _ => (LGTM.wp [] fun x (h: hheap (trm × payload)ˡ) => h ⟨1, (sn, 0)⟩ = h ⟨0, (default_trm, 0)⟩))
-    --   -- (H₀ := (xl ~⟨x in ⟪0, {(default_trm, 0)}⟫⟩~> xv) ∗ [∗i in {⟨1, (sn, 0)⟩}| xl ~~> xv])
-    --   (Inv := fun _ => emp)
-    -- apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, [lang| 0]])
-    -- intro _ ; rfl ; intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
-    -- simp  [Unary.func_call_ctx_prepare]
-    -- all_goals
-    --   try simp [isubstE, Unary.reduce_call_isubst]; --(try simp [Unary.isubst, Unary.isubst.go])--; (srw ?Unary.guard_pos; all_goals try rfl)
-    --   try simp [wpgen]
-    --   try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
-    -- rw [hwp_ht_eq (ht₂ := (fun a ↦
-    --   [lang|
-    --     () ]))]
-    -- on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; rintro ⟨l, ⟨a , b⟩⟩ bb ; congr ; simp
-
-    apply htriple_conseq_frame (H₂ := [∗i in {⟨1, (sn, 0)⟩}| xl ~~> xv]); apply htriple_get (v := fun _ => xv) ;
-    { unfold hhsingle; simp [labSet]}
-    simp [subst, subst.go]
-    -- yfor+ with
-    --   (Q := fun i _ => (LGTM.wp [] fun x (h: hheap (trm × payload)ˡ) => h ⟨1, (sn, 0)⟩ = h ⟨0, (default_trm, 0)⟩))
-    --   (H₀ := (xl ~⟨x in ⟪0, {(default_trm, 0)}⟫⟩~> xv))
-    -- yfor
-    sorry
-  | succ k hk => sorry
+  intro n hsn
+  unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
+  unfold LGTM.triple LGTM.wp labSet
+  open Classical in simp +unfoldPartialApp [fun_insert]
+  have tmp := htriple_prod (α := (trm × payload)ˡ) (s := {⟨1, (sn, default_payload)⟩, ⟨0, (default_trm, ↑n)⟩})
+    (ht := open Classical in (fun a =>
+      if a = ⟨0, (default_trm, ↑n)⟩ then prog_c1.trm_call [xl, [lang| ⟨a.val.2⟩]]
+      else if a = ⟨1, (sn, default_payload)⟩ then a.val.1.trm_call [xl] else [lang| ()]))
+    (H := fun _ => xl ~~> xv)
+    (Q := fun _ _ => xl ~~> ((xv + n) : ℤ))
+  specialize tmp (by
+    clear tmp
+    simp
+    constructor
+    · rw [hsn] ; (apply xwp_lemma_funs'; rfl; rfl; { simp [get_vars, type_match] }; { rfl })
+      rw [regexp_grammar_isubst, trm1] ; simp [isubst, isubst.go]
+      intro h hh ; apply (equiv_1 (i := "k") 0 _ _).mpr
+      on_goal 2=> intro v ; rfl
+      on_goal 2=> intros ; rfl
+      simp ; revert h hh
+      apply simple_loop_pre
+    · xwp ; xapp_pre    -- ?
+      apply simple_loop_pre
+  )
+  apply hhimpl_trans ; apply tmp
+  clear tmp
+  apply hwp_conseq
+  ysimp
+  unfold bighstar bighstarDef ; open Classical in simp
+  intro h hh
+  have h1 := hh ⟨1, (trm_funs [trm_varl "xl"] (regexp_grammar n trm1), 0)⟩ ; simp at h1
+  have h2 := hh ⟨0, (default_trm, ↑n)⟩ ; simp at h2
+  unfold hsingle at h1 h2 ; rw [h1, h2]
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
