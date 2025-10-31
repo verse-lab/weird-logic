@@ -191,6 +191,9 @@ lemma xwp_lemma_funs' (xs : List trm) (ts : List trm) :
   -- { v,
   --   fun h => ∀ l ∈ ({(sn,default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, (Int.ofNat n))} : Set (trm × payload)) , h ⟨1, l⟩= h ⟨0, p⟩
   -- }
+  -- := by
+  -- unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
+  -- unfold LGTM.triple
 lemma example2_single_iter (xv : ℤ) :
   ∀ n : ℕ,
   sn = [lang| fun ⸨xl: Loc⸩ => {regexp_grammar n trm1}] →
@@ -198,12 +201,9 @@ lemma example2_single_iter (xv : ℤ) :
   LGTM.wp
     [{ s := ⟪0, {(default_trm, Int.ofNat n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] },
      { s := ⟪1, {(sn, default_payload)}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }]
-    fun _ h => ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, Int.ofNat n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩ := by
-
-  -- := by
+    fun _ h => ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, Int.ofNat n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩
+  := by
   intro n hsn
-  -- unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
-  -- unfold LGTM.triple
   unfold LGTM.wp labSet
   open Classical in simp +unfoldPartialApp [fun_insert]
   have tmp := htriple_prod (α := (trm × payload)ˡ) (s := {⟨1, (sn, default_payload)⟩, ⟨0, (default_trm, ↑n)⟩})
@@ -290,7 +290,6 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
   unfold pay_index; simp; simp; apply disjoint_label_set.mpr; simp
   {
     /- first 1/2: p <0 -/
-    -- unfold pay_index
     dsimp [LGTM.wp, LGTM.SHTs.htrm]
     rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))] --remove union set
     on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; intro a b ; simp only [b, reduceIte]
