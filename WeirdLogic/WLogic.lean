@@ -321,7 +321,7 @@ lemma weird_weaken_lemma' (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s⟫ ->
   sht_lang.s = ⟪1, s''⟫ ->
   s' ⊆ s -> Disjoint sht_prog.s sht_lang.s ->
-  H₁ ==> LGTM.wp [⟨⟪0, s \ s'⟫, sht_prog.ht⟩] (fun _ => fun h ↦ ∀ a, a ∉ ⟪0, s \ s'⟫ ∧ h a = ∅ ) ->
+  H₁ ==> LGTM.wp [⟨⟪0, s \ s'⟫, sht_prog.ht⟩] (fun _ => fun h ↦ ∀ a ∉ ⟪0, s \ s'⟫, h a = ∅ ) ->
   H₂ ==> LGTM.wp [⟨⟪0, s'⟫, sht_prog.ht⟩, sht_lang]
     (fun _ h => ∀ ll ∈ s'', ∃ pp ∈ s', h ⟨1,ll⟩= h ⟨0, pp⟩ ) ->
   H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
@@ -331,7 +331,7 @@ lemma weird_weaken_lemma' (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
   move=> H12
   apply weird_weaken_mid_post_lemma'=>//
   set Qp1 : hval αˡ → hhProp αˡ:= fun _ => (fun h ↦ ∀ ll ∈ s'', ∃ pp ∈ s', h ⟨1, ll⟩ = h ⟨0, pp⟩)
-  set B : hhProp αˡ:= fun h ↦ ∀ a, a ∉ ⟪0, s \ s'⟫ ∧ h a = ∅
+  set B : hhProp αˡ:= fun h ↦ ∀ a ∉ ⟪0, s \ s'⟫, h a = ∅
   set B' : hval αˡ → hhProp αˡ:= fun _ => B
   apply weird_wp_conseq (Q1 := whqstar Qp1 B)
   · unfold whqstar B Qp1
@@ -1330,15 +1330,19 @@ lemma weird_seqleft_lemma (s₁ s₂ : Set α):
   simp
 
 /- ********************************** For Rules ************************************** -/
-lemma weird_infdisj_lemma {c : htrm (α × β)ˡ} (s1 s2 : Set (α × β)) (trm_repeat : ℕ → α → α) (inside_trm : α ) (depay : β) (sht_prog sht_lang : LGTM.SHT):
+lemma weird_infdisj_lemma (s1 s2 : Set (α × β)) (Idx : Set ℕ)
+    (sht_prog sht_lang : LGTM.SHT)
+    (f g : ℕ -> (α × β)):
   sht_prog.s = ⟪0, s1⟫ ->
   sht_lang.s = ⟪ 1, s2⟫ ->
-  s2 = (⋃ i : ℕ , {(trm_repeat i inside_trm, depay)} : Set (α × β)) ->
-  ∀ i : ℕ , H₁ ==> LGTM.wp
-    [⟨⟪ 0, s1⟫, fun j => trm_for vr z n (c j) ⟩, ⟨⟪ 1, s2⟫, sht_lang.ht ⟩ ]
-    (fun _ h => (∀ ll ∈ ({(trm_repeat i inside_trm, depay)} : Set (α × β)), ∃ pp, pp ∈ s1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) ->
-  H₁ ==> LGTM.wp
-    [⟨⟪ 0, s1⟫, fun j => trm_for vr z n (c j) ⟩, ⟨⟪ 1, s2⟫, sht_lang.ht ⟩ ]
+  s1 = (⋃ i : ℕ , {f i}) ->
+  s2 = (⋃ i : ℕ , {g i}) ->
+  -- s2 = (⋃ i : ℕ , {(trm_repeat i inside_trm, depay)} : Set (α × β)) ->
+  ∀ k ∈ Idx , ([∗i in ({⟨0,f k⟩,⟨1,g k⟩} : Set (α × β)ˡ) | Hx ] ==> LGTM.wp
+    [⟨ {⟨0,f k⟩}, sht_prog.ht ⟩, ⟨{⟨1,g k⟩}, sht_lang.ht ⟩ ]
+    (fun _ h => (∀ ll ∈ ({g k} : Set (α × β)), ∃ pp, pp ∈ ({f k} : Set (α × β)) ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) )) ->
+  [∗i in ⟪0, s1⟫ ∪ ⟪1, s2⟫ | Hx ] ==> LGTM.wp
+    [sht_prog, sht_lang ]
     (fun _ h => (∀ ll ∈ s2, ∃ pp, pp ∈ s1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) := by
   sorry
 

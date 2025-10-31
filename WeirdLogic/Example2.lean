@@ -10,6 +10,7 @@ import WeirdLogic.WLogic
 import WeirdLogic.WTriple
 import WeirdLogic.Util
 import WeirdLogic.Hete
+import WeirdLogic.WUnary
 
 open Unary prim val trm
 open ContextFreeGrammar
@@ -109,9 +110,10 @@ def lang_index : Set (trm × payload ):=
 
 lemma regexp_grammar_isubst (n : ℕ) (t : trm) :
   isubst Ev El (regexp_grammar n t) = regexp_grammar n (isubst Ev El t) := by
-  fun_induction regexp_grammar n t
-  all_goals simp [regexp_grammar, isubst]
-  assumption
+  sorry
+  -- fun_induction regexp_grammar n t
+  -- all_goals simp [regexp_grammar, isubst]
+  -- assumption
 
 lemma eval_for_val (v : val) : eval s v Q ↔ Q v s := by
   constructor
@@ -132,38 +134,39 @@ lemma equiv_1 (a : Int)
   (hQ : (∀ v1 v2, Q v1 = Q v2))
   :
   eval s (regexp_grammar n t) Q ↔ eval s (trm_for i a ((a + n : Int)) t) Q := by
-  fun_induction regexp_grammar n t generalizing s a
-  next t =>
-    simp [regexp_grammar] ; rw [empty_for_loop, eval_for_val]
-  next t =>
-    simp [regexp_grammar]
-    constructor
-    · intro hh ; constructor ; simp ; rw [h]
-      constructor ; assumption
-      intros ; rw [empty_for_loop, hQ] ; assumption
-    · intro hh ; cases hh ; rename_i hh
-      simp at hh ; rw [h] at hh
-      cases hh ; rename_i Q1 hmid h2
-      simp only [empty_for_loop] at h2
-      apply eval_conseq' ; assumption
-      intros ; rw [hQ _ val_unit] ; solve_by_elim
-  next n t not0 ih =>
-    have tmp : a + 1 + ↑n = a + (↑n + 1) := by ac_rfl
-    simp [regexp_grammar]
-    constructor
-    · intro hh ; constructor ; simp ; rw [h]
-      cases hh ; rename_i Q1 hmid h2
-      constructor ; assumption
-      intro v1 s2 h2_ ; specialize h2 _ _ h2_
-      specialize @ih s2 (a + 1) h ; rw [tmp] at ih
-      rw [← ih] ; assumption
-    · intro hh ; cases hh ; rename_i hh
-      simp at hh ; rw [h] at hh
-      cases hh ; rename_i Q1 hmid h2
-      constructor ; assumption
-      intro v1 s2 h2_ ; specialize h2 _ _ h2_
-      specialize @ih s2 (a + 1) h ; rw [tmp] at ih
-      rw [ih] ; assumption
+  sorry
+  -- fun_induction regexp_grammar n t generalizing s a
+  -- next t =>
+  --   simp [regexp_grammar] ; rw [empty_for_loop, eval_for_val]
+  -- next t =>
+  --   simp [regexp_grammar]
+  --   constructor
+  --   · intro hh ; constructor ; simp ; rw [h]
+  --     constructor ; assumption
+  --     intros ; rw [empty_for_loop, hQ] ; assumption
+  --   · intro hh ; cases hh ; rename_i hh
+  --     simp at hh ; rw [h] at hh
+  --     cases hh ; rename_i Q1 hmid h2
+  --     simp only [empty_for_loop] at h2
+  --     apply eval_conseq' ; assumption
+  --     intros ; rw [hQ _ val_unit] ; solve_by_elim
+  -- next n t not0 ih =>
+  --   have tmp : a + 1 + ↑n = a + (↑n + 1) := by ac_rfl
+  --   simp [regexp_grammar]
+  --   constructor
+  --   · intro hh ; constructor ; simp ; rw [h]
+  --     cases hh ; rename_i Q1 hmid h2
+  --     constructor ; assumption
+  --     intro v1 s2 h2_ ; specialize h2 _ _ h2_
+  --     specialize @ih s2 (a + 1) h ; rw [tmp] at ih
+  --     rw [← ih] ; assumption
+  --   · intro hh ; cases hh ; rename_i hh
+  --     simp at hh ; rw [h] at hh
+  --     cases hh ; rename_i Q1 hmid h2
+  --     constructor ; assumption
+  --     intro v1 s2 h2_ ; specialize h2 _ _ h2_
+  --     specialize @ih s2 (a + 1) h ; rw [tmp] at ih
+  --     rw [ih] ; assumption
 
 lemma simple_loop_pre (xl : loc) (xv : ℤ) (n : Nat) :
   let nn : val := val_int n
@@ -195,18 +198,24 @@ lemma xwp_lemma_funs' (xs : List trm) (ts : List trm) :
 lemma example2_single_iter (xv : ℤ) :
   ∀ n : ℕ,
   sn = [lang| fun ⸨xl: Loc⸩ => {regexp_grammar n trm1}] →
-  {
-    xl ~⟨i in {⟨0,(default_trm, (Int.ofNat n))⟩} ∪ {⟨1,(sn,default_payload)⟩}⟩~> xv
-  }
-  [0| p in {(default_trm, (Int.ofNat n))} => prog_c1(⸨xl: Loc⸩, ⟨p.val.2⟩)]
-  [1| l in {(sn,default_payload)} => l.val.fst(⸨xl: Loc⸩)]
-  { v,
-    fun h => ∀ l ∈ ({(sn,default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, (Int.ofNat n))} : Set (trm × payload)) , h ⟨1, l⟩= h ⟨0, p⟩
-  }
-  := by
+  [∗i in {⟨0, (default_trm, Int.ofNat n)⟩} ∪ {⟨1, (sn, default_payload)⟩}| xl ~~> xv] ==>
+  LGTM.wp
+    [{ s := ⟪0, {(default_trm, Int.ofNat n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] },
+     { s := ⟪1, {(sn, default_payload)}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }]
+    fun v h ↦ ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, Int.ofNat n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩ := by
+  -- {
+  --   xl ~⟨i in {⟨0,(default_trm, (Int.ofNat n))⟩} ∪ {⟨1,(sn,default_payload)⟩}⟩~> xv
+  -- }
+  -- [0| p in {(default_trm, (Int.ofNat n))} => prog_c1(⸨xl: Loc⸩, ⟨p.val.2⟩)]
+  -- [1| l in {(sn,default_payload)} => l.val.fst(⸨xl: Loc⸩)]
+  -- { v,
+  --   fun h => ∀ l ∈ ({(sn,default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, (Int.ofNat n))} : Set (trm × payload)) , h ⟨1, l⟩= h ⟨0, p⟩
+  -- }
+  -- := by
   intro n hsn
-  unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
-  unfold LGTM.triple LGTM.wp labSet
+  -- unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
+  -- unfold LGTM.triple
+  unfold LGTM.wp labSet
   open Classical in simp +unfoldPartialApp [fun_insert]
   have tmp := htriple_prod (α := (trm × payload)ˡ) (s := {⟨1, (sn, default_payload)⟩, ⟨0, (default_trm, ↑n)⟩})
     (ht := open Classical in (fun a =>
@@ -240,9 +249,9 @@ lemma example2_single_iter (xv : ℤ) :
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example2_spec (xv : ℤ):
+lemma example2_spec (xv : ℤ) (k : ℕ):
   {
-    xl ~⟨i in {⟨0,p⟩ | p ∈ pay_index} ∪ {⟨1,l⟩ | l ∈ lang_index}⟩~> xv
+    xl ~⟨i in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫⟩~> xv
   }
   [0| p in pay_index => prog_c1(⸨xl: Loc⸩, ⟨p.val.2⟩)]
   [1| l in lang_index => l.val.fst(⸨xl: Loc⸩)]
@@ -250,9 +259,153 @@ lemma example2_spec (xv : ℤ):
     fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, l⟩= h ⟨0, p⟩
   }
   := by
-  unfold LGTM.triple
+  unfold LGTM.triple hhsingle
+  dsimp
+  rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p <0 }) (s₂ := {⟨0,(default_trm,p)⟩ | p ≥ 0} ∪ ⟪1, lang_index⟫ )]
+  rotate_left
+  { apply Set.disjoint_union_right.mpr
+    simp;
+    constructor
+    · srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
+      move=> x1 h1 [x2] h2 Z; cases Z
+      exact lt_irrefl x1 (lt_of_lt_of_le h1 h2)
+    · unfold labSet
+      srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
+      move=>y1 H1 [y2] H2 Z; cases Z
+      simp
+  }
+  { rw [←Set.union_assoc]
+    apply Set.union_eq_union_iff_right.mpr
+    have eq : {x | ∃ p < 0, ⟨0, (default_trm, p)⟩ = x} ∪ {x | ∃ p ≥ 0, ⟨0, (default_trm, p)⟩ = x} = ⟪0, pay_index⟫ := by
+      unfold labSet pay_index
+      ext x
+      constructor
+      · intro hx
+        rcases hx with ⟨p, hp, rfl⟩ | ⟨p, hp, rfl⟩
+        · simp;
+        · simp
+      · intro hx
+        rcases hx with ⟨p, hp, rfl⟩
+        simp_all only [Set.mem_univ, true_and, Set.mem_setOf_eq, ge_iff_le, Set.mem_union, Labeled.mk.injEq]
+        obtain ⟨fst, snd⟩ := p
+        obtain ⟨w, h⟩ := hp
+        simp_all only [Prod.mk.injEq, true_and, exists_eq_right]
+        obtain ⟨left, right⟩ := h
+        subst right left
+        exact lt_or_ge w 0
+    rw [eq]
+    constructor <;> apply Set.subset_union_left
+  }
+  apply weird_weaken_lemma' (s' := {(default_trm,p) | p ≥ 0 })=>//
+  unfold pay_index; simp; simp; apply disjoint_label_set.mpr; simp
+  {
+    /- first 1/2: p <0 -/
+    -- unfold pay_index
+    dsimp [LGTM.wp, LGTM.SHTs.htrm]
+    rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))] --remove union set
+    on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; intro a b ; simp only [b, reduceIte]
+    -- unfold labSet;
 
-  sorry
+    have tmp := htriple_prod (α := (trm × payload)ˡ) (s := ⟪0, pay_index \ {x | ∃ p ≥ 0, (default_trm, p) = x}⟫ ∪ ∅)
+      (ht := open Classical in (fun a => prog_c1.trm_call [xl, [lang| ⟨a.val.2⟩]]))
+      (H := fun _ => xl ~~> xv)
+      (Q := fun i v => fun h => i ∉ ⟪0, {x | ∃ p <0, (default_trm, p) = x}⟫ -> h = ∅)
+    specialize tmp (by
+      clear tmp
+      intro a ha
+      unfold prog_c1
+      xwp ; xapp_pre
+      apply xfor_empty_lemma
+      {
+        sorry
+      }
+      unfold hsingle qimpl himpl
+      intro v h hh haa
+      sorry
+    )
+    have eq : [∗i in ⟪0, pay_index \ {x | ∃ p ≥ 0, (default_trm, p) = x}⟫ ∪ ∅| xl ~~> xv] = [∗i in {x | ∃ p < 0, ⟨0, (default_trm, p)⟩ = x}| xl ~~> xv] := by
+      apply bighstar_set_eq
+      unfold labSet; rw [Set.union_empty]
+      unfold pay_index;
+      ext x
+      constructor
+      · intro ⟨x₁, ⟨⟨p, ⟨h1,h2⟩⟩, hnot⟩, hx⟩
+        simp at hnot
+        refine ⟨p, ?_, ?_⟩
+        · by_contra hge
+          have hp0 : 0 ≤ p := le_of_not_lt hge
+          have hcontra := hnot p hp0 h2
+          contradiction
+        · rw [←hx, ←h2]
+      · intro ⟨p, hp, hx⟩
+        refine ⟨(default_trm, p), ⟨⟨p, trivial, rfl⟩, ?_⟩, hx⟩
+        intro ⟨p', hp', heq⟩
+        simp [heq] at hp' hp
+        simp_all
+        exact lt_irrefl p (lt_of_lt_of_le hp hp')
+
+    rw [←eq]; clear eq
+    apply hhimpl_trans ; apply tmp
+    clear tmp
+    apply hwp_conseq
+    unfold pay_index
+    ysimp
+    unfold bighstar bighstarDef ; open Classical in simp
+    intro h hh a ha
+    specialize hh a
+    by_cases h : a.lab = 0
+    · specialize ha h
+      have hfalse :
+        ¬((a.lab = 0) ∧ (∃ p, (default_trm, p) = a.val) ∧ ∀ (x : payload), 0 ≤ x → ¬(default_trm, x) = a.val) := by
+        intro hcon
+        rcases hcon with ⟨_, ⟨p, hp⟩, hforall⟩
+        rcases ha p hp with ⟨x, hx₀, hxval⟩
+        have hcontra := hforall x hx₀
+        contradiction
+      simp [hfalse] at hh
+      assumption
+    · simp [h] at hh
+      assumption
+  }
+  dsimp
+  set pay_index2 : Set (trm × payload) := {x | ∃ p ≥ 0, (default_trm, p) = x} with hp2
+  have pidx_eq : {x | ∃ p ≥ 0, ⟨0, (default_trm, p)⟩ = x} = ⟪0,pay_index2⟫ := by sorry
+  rw [pidx_eq]; clear pidx_eq
+  apply weird_infdisj_lemma (s1 := pay_index2) (s2 := lang_index) (Hx := xl ~~> xv)
+    (f := fun i => (default_trm, Int.ofNat i))
+    (g := fun i => ([lang| fun ⸨xl: Loc⸩ => {regexp_grammar i trm1}],default_payload))
+    (Idx := @Set.univ ℕ)
+  simp; simp;
+  { unfold pay_index2; simp;
+    ext x
+    constructor
+    · intro ⟨p, hp₁, hp₂⟩
+      have : p = Int.ofNat (Int.toNat p) := by
+        subst hp₂
+        simp_all only [ge_iff_le, Int.ofNat_eq_coe, Int.ofNat_toNat, sup_of_le_left, pay_index2]
+      rw [←hp₂, this]
+      exact ⟨Int.toNat p, rfl⟩
+    · intro ⟨n, hn⟩
+      use (n : Int)
+      constructor
+      · exact Int.ofNat_nonneg n
+      · rw [←hn]
+  }
+  { unfold lang_index lang_fun_list lang_squeeze_list; simp; rfl }
+  { simp }
+  on_goal 2=> exact k
+  dsimp
+  have kreplace : ↑k = Int.ofNat k := by simp
+  rw [kreplace]; clear kreplace
+  have pr : {⟨0, (default_trm, Int.ofNat k)⟩} = ⟪0,{(default_trm, Int.ofNat k)}⟫ := by unfold labSet; simp
+  have lr : {⟨1, (trm_funs [trm_varl "xl"] (regexp_grammar k trm1), default_payload)⟩} = ⟪1, {(trm_funs [trm_varl "xl"] (regexp_grammar k trm1), default_payload)}⟫ := by unfold labSet; simp
+  rw [pr,lr]; clear pr lr
+  have idx_eq : insert ⟨0, (default_trm, Int.ofNat k)⟩ ⟪1, {(trm_funs [trm_varl "xl"] (regexp_grammar k trm1), default_payload)}⟫ =
+    {⟨0, (default_trm, Int.ofNat k)⟩ } ∪ {⟨1, (trm_funs [trm_varl "xl"] (regexp_grammar k trm1), default_payload)⟩} := by
+    unfold labSet; aesop
+  rw [idx_eq]; clear idx_eq
+  apply example2_single_iter (sn := trm_funs [trm_varl "xl"] (regexp_grammar k trm1)) (xl := xl) (n := k) (xv := xv)
+  simp
 
 /- Previously, constraints for payloads in the heap are in the post-condition
     -- ∧ arr⟨{⟨0,p⟩}⟩(pa , i in pa_len => p.2.1[i]!) h

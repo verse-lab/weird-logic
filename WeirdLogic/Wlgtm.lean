@@ -371,3 +371,10 @@ lemma hyper_triple_sht_extend (shts : LGTM.SHTs α) (s : Set α) (p : htrm α) (
     specialize H ?_
     { move=> a /==; split_ifs=> // }
     scase: H=> ? /== /(_ x) /==
+
+lemma bighstar_set_eq (s1 s2 : Set α) :
+  s1 = s2 ->
+  [∗i in s1| Hx] = [∗i in s2| Hx] := by
+  move=> hs
+  unfold bighstar bighstarDef
+  congr!
