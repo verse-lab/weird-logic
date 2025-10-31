@@ -299,6 +299,24 @@ def well_formed_focus_inverse_lemma (idx : ℕ) (l : LabType) (s' s : Set α) (s
     · simp_all
   exact up1
 
+def well_formed_nest_wp_eq (shts1 shts2 : LGTM.SHTs (Labeled α)) (Q : hval αˡ → hhProp αˡ) :
+  -- R = (fun x => LGTM.wp shts2 fun hv' => Q (hv' ∪_shts2.set x)) ->
+  ∃ R : hval αˡ → hhProp αˡ,
+  H ==> LGTM.wp shts1 ( fun x => LGTM.wp shts2 fun hv' => Q (hv' ∪_shts2.set x)) =
+  (H ==> LGTM.wp shts1 (fun hv' => R hv') ∧
+  ∀ x, R x ==> LGTM.wp shts2 fun hv' => Q (hv' ∪_shts2.set x)) := by
+  set hh := (fun x => LGTM.wp shts2 fun hv' => Q (hv' ∪_shts2.set x))
+  use hh
+  apply propext; apply Iff.intro
+  · move=> up
+    constructor
+    · simp [hh]
+      exact up
+    · simp [hh]
+  · move=> up
+    rcases up with ⟨up1,up2⟩
+    apply hhimpl_trans=>//
+
 lemma hhstar_symbol_replace {hH₁ hH₂ : hhProp α} : hhstar hH₁ hH₂ = hH₁ ∗ hH₂ := by
   unfold HStar.hStar instHStarHhProp
   simp
@@ -315,3 +333,41 @@ lemma hhstar_comm_special1 {hH₁ hH₂ : hhProp α} : hhstar hH₁ ((hH₂ ∗ 
   rw [hhstar_assoc]
   rw [hhstar_comm (hH₁ := hH₄)]
   rw [hhstar_assoc]
+
+/- not directly useful, leave here for future extension -/
+set_option maxHeartbeats 1600000 in
+lemma hyper_triple_sht_extend (shts : LGTM.SHTs α) (s : Set α) (p : htrm α) (h : hheap α) (Hx : hProp) (Qx : val -> hProp) :
+  LGTM.triple (⟨s, p⟩ :: shts) ([∗ in s ∪ shts.set | Hx]) (fun hv => [∗ in s ∪ shts.set | Qx (hv x)]) ->
+  LGTM.triple [⟨s, p⟩] ([∗ in s | Hx] ) (fun hv => [∗ in s | Qx (hv x)]) := by
+    simp [LGTM.triple, LGTM.wp] at *
+    unfold bighstar bighstarDef hhimpl
+    simp
+    move => preun hs hs1
+    rw [hwp_ht_eq (ht₂ := p)]
+    on_goal 2=> simp [Set.EqOn]; intro x h1 h2; contradiction
+    stop
+    -- => htr h hx
+    set h' : hheap α := ( h ∪_s hEmpty )
+    specialize htr (h') ?_
+    { simp [bighstar]
+      intro a; unfold h'; simp
+      unfold bighstar bighstarDef at hx
+      specialize hx a
+      by_cases hh : a ∈ s
+      · simp_all [hh]
+      · simp_all [hh]
+
+        sorry
+    }
+    scase!: htr=> hQ /[dup] hev /(_ x) /==; unfold bighstarDef; simp [fun_insert] => ev imp
+
+    apply heval_conseq=> // -- v h' hh
+    have := fun a ain => eval_sat (hev a ain)
+    have : ∀ a ∈ insert x shts.set, ∃ hv : _ × _, hQ a hv.2 hv.1 := by aesop
+    move: this=> /choose_fun  hh
+    specialize hh default
+    scase: hh=> hh H
+    move: (imp (fun a => if a = x then v else if a ∈ shts.set then (hh a).2 else default) (fun a => if a = x then h' else if a ∈ shts.set then (hh a).1 else h))=> H
+    specialize H ?_
+    { move=> a /==; split_ifs=> // }
+    scase: H=> ? /== /(_ x) /==
