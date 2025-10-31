@@ -84,8 +84,6 @@ def lang_expand_list : Set Lang :=
 -- def lang_squeeze_list: Set trm :=
 --   {squeeze_trm t | t ∈ lang_expand_list}
 
-
-
 def regexp_grammar : ℕ → trm → trm
   | 0, _ => trm_val val_unit
   | 1, t => t
@@ -114,17 +112,6 @@ lemma regexp_grammar_isubst (n : ℕ) (t : trm) :
   -- fun_induction regexp_grammar n t
   -- all_goals simp [regexp_grammar, isubst]
   -- assumption
-
-lemma eval_for_val (v : val) : eval s v Q ↔ Q v s := by
-  constructor
-  · intro h ; cases h ; assumption
-  · intro h ; constructor ; assumption
-
-lemma empty_for_loop (a : Int) :
-  eval s (trm_for i a a t) Q ↔ Q val_unit s := by
-  constructor
-  · intro h ; cases h ; rename_i h ; simp at h ; rw [eval_for_val] at h ; assumption
-  · intro h ; constructor ; simp ; rw [eval_for_val] ; assumption
 
 lemma equiv_1 (a : Int)
   (h : ∀ (v : val), subst i v t = t)
@@ -195,14 +182,7 @@ lemma xwp_lemma_funs' (xs : List trm) (ts : List trm) :
   apply wp_eval_like
   apply eval_like_trm_apps_funs_pre <;> try assumption
 
-lemma example2_single_iter (xv : ℤ) :
-  ∀ n : ℕ,
-  sn = [lang| fun ⸨xl: Loc⸩ => {regexp_grammar n trm1}] →
-  [∗i in {⟨0, (default_trm, Int.ofNat n)⟩} ∪ {⟨1, (sn, default_payload)⟩}| xl ~~> xv] ==>
-  LGTM.wp
-    [{ s := ⟪0, {(default_trm, Int.ofNat n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] },
-     { s := ⟪1, {(sn, default_payload)}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }]
-    fun v h ↦ ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, Int.ofNat n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩ := by
+/- old format -/
   -- {
   --   xl ~⟨i in {⟨0,(default_trm, (Int.ofNat n))⟩} ∪ {⟨1,(sn,default_payload)⟩}⟩~> xv
   -- }
@@ -211,6 +191,15 @@ lemma example2_single_iter (xv : ℤ) :
   -- { v,
   --   fun h => ∀ l ∈ ({(sn,default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, (Int.ofNat n))} : Set (trm × payload)) , h ⟨1, l⟩= h ⟨0, p⟩
   -- }
+lemma example2_single_iter (xv : ℤ) :
+  ∀ n : ℕ,
+  sn = [lang| fun ⸨xl: Loc⸩ => {regexp_grammar n trm1}] →
+  [∗ in {⟨0, (default_trm, Int.ofNat n)⟩} ∪ {⟨1, (sn, default_payload)⟩}| xl ~~> xv] ==>
+  LGTM.wp
+    [{ s := ⟪0, {(default_trm, Int.ofNat n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]] },
+     { s := ⟪1, {(sn, default_payload)}⟫, ht := fun l ↦ l.val.1.trm_call [xl] }]
+    fun _ h => ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, Int.ofNat n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩ := by
+
   -- := by
   intro n hsn
   -- unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
@@ -251,7 +240,7 @@ set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
 lemma example2_spec (xv : ℤ) (k : ℕ):
   {
-    xl ~⟨i in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫⟩~> xv
+    xl ~⟨_ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫⟩~> xv
   }
   [0| p in pay_index => prog_c1(⸨xl: Loc⸩, ⟨p.val.2⟩)]
   [1| l in lang_index => l.val.fst(⸨xl: Loc⸩)]
@@ -296,6 +285,7 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
     rw [eq]
     constructor <;> apply Set.subset_union_left
   }
+  /- Step 1: remove negative payloads -/
   apply weird_weaken_lemma' (s' := {(default_trm,p) | p ≥ 0 })=>//
   unfold pay_index; simp; simp; apply disjoint_label_set.mpr; simp
   {
@@ -304,8 +294,6 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
     dsimp [LGTM.wp, LGTM.SHTs.htrm]
     rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))] --remove union set
     on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; intro a b ; simp only [b, reduceIte]
-    -- unfold labSet;
-
     have tmp := htriple_prod (α := (trm × payload)ˡ) (s := ⟪0, pay_index \ {x | ∃ p ≥ 0, (default_trm, p) = x}⟫ ∪ ∅)
       (ht := open Classical in (fun a => prog_c1.trm_call [xl, [lang| ⟨a.val.2⟩]]))
       (H := fun _ => xl ~~> xv)
@@ -317,11 +305,21 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
       xwp ; xapp_pre
       apply xfor_empty_lemma
       {
-        sorry
+        simp [pay_index] at ha
+        rcases ha with ⟨ ha1,⟨p,ha2⟩,ha3⟩
+        specialize ha3 p
+        simp_all
+        rw [←ha2]
+        simp
+        assumption
       }
       unfold hsingle qimpl himpl
       intro v h hh haa
-      sorry
+      simp [pay_index] at ha
+      rcases ha with ⟨ ha1,⟨p,ha2⟩,ha3⟩
+      specialize ha3 p
+      specialize haa ha1 p
+      simp_all only [not_true_eq_false, imp_false, not_le]
     )
     have eq : [∗i in ⟪0, pay_index \ {x | ∃ p ≥ 0, (default_trm, p) = x}⟫ ∪ ∅| xl ~~> xv] = [∗i in {x | ∃ p < 0, ⟨0, (default_trm, p)⟩ = x}| xl ~~> xv] := by
       apply bighstar_set_eq
@@ -369,8 +367,11 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
   }
   dsimp
   set pay_index2 : Set (trm × payload) := {x | ∃ p ≥ 0, (default_trm, p) = x} with hp2
-  have pidx_eq : {x | ∃ p ≥ 0, ⟨0, (default_trm, p)⟩ = x} = ⟪0,pay_index2⟫ := by sorry
+  have pidx_eq : {x | ∃ p ≥ 0, ⟨0, (default_trm, p)⟩ = x} = ⟪0,pay_index2⟫ := by
+    unfold labSet pay_index2
+    simp
   rw [pidx_eq]; clear pidx_eq
+  /- Step 2: Infinite disjoint lemma -/
   apply weird_infdisj_lemma (s1 := pay_index2) (s2 := lang_index) (Hx := xl ~~> xv)
     (f := fun i => (default_trm, Int.ofNat i))
     (g := fun i => ([lang| fun ⸨xl: Loc⸩ => {regexp_grammar i trm1}],default_payload))
@@ -406,11 +407,3 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
   rw [idx_eq]; clear idx_eq
   apply example2_single_iter (sn := trm_funs [trm_varl "xl"] (regexp_grammar k trm1)) (xl := xl) (n := k) (xv := xv)
   simp
-
-/- Previously, constraints for payloads in the heap are in the post-condition
-    -- ∧ arr⟨{⟨0,p⟩}⟩(pa , i in pa_len => p.2.1[i]!) h
-    -- ∧ arr⟨{⟨0,p⟩}⟩(pb , i in pb_len => p.2.2[i]!) h
-  And pre-condition is default
-  -- arr⟨⋆⟩(pa , i in pa_len =>g i) ∗
-  -- arr⟨⋆⟩(pb , i in pb_len =>q i)
--/
