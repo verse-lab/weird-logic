@@ -1330,9 +1330,22 @@ lemma weird_seqleft_lemma (s₁ s₂ : Set α):
   simp
 
 /- ********************************** For Rules ************************************** -/
-lemma weird_infdisj_lemma (s1 s2 : Set (α × β)) (Idx : Set ℕ)
-    (sht_prog sht_lang : LGTM.SHT)
-    (f g : ℕ -> (α × β)):
+lemma htriple_htriple_prod (s1 s2 : Set α) (f : α -> Set α) (H : α -> hProp) (Q : α -> hProp) :
+  Disjoint s1 s2 ->
+  (∀ a ∈ (s1 ∪ s2), htriple (f a) ht [∗ i in (f a)| H i] (fun hv => [∗ i in (f a)| Q i])) ->
+  htriple (s1 ∪ s2) ht [∗ i in (s1 ∪ s2)| H i] (fun hv => [∗ i in (s1 ∪ s2)| Q i]) := by
+    move=> disj htr hh hH;
+    stop
+    apply heval_prod
+    {
+      sorry
+      -- sby move=> a /[dup]?/htr; sapply; move: (hH a)
+    }
+    sby move=> a; move: (hH a)
+
+#check heval_prod
+
+lemma weird_infdisj_lemma (s1 s2 : Set (α × β)) (Idx : Set ℕ) (sht_prog sht_lang : LGTM.SHT) (f g : ℕ -> (α × β)):
   sht_prog.s = ⟪0, s1⟫ ->
   sht_lang.s = ⟪ 1, s2⟫ ->
   s1 = (⋃ i : ℕ , {f i}) ->
@@ -1344,6 +1357,14 @@ lemma weird_infdisj_lemma (s1 s2 : Set (α × β)) (Idx : Set ℕ)
   [∗i in ⟪0, s1⟫ ∪ ⟪1, s2⟫ | Hx ] ==> LGTM.wp
     [sht_prog, sht_lang ]
     (fun _ h => (∀ ll ∈ s2, ∃ pp, pp ∈ s1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) := by
+  move=> prog lang hf hg n hn pre
+  stop
+  have tmp := htriple_htriple_prod
+      (α := (α × β)ˡ) (s1 := ⟪0, s1⟫) (s2 := ⟪1, s2⟫)
+      (f := fun i => {i})
+      (H := fun i => Hx)
+      -- (Q := fun i => fun h => ∀ ll ∈ s2, ∃ pp, pp ∈ s1 ∧ h i= h j)
+
   sorry
 
 #check hmkstruct
