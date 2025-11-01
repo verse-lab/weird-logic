@@ -108,10 +108,9 @@ def lang_index : Set (trm × payload ):=
 
 lemma regexp_grammar_isubst (n : ℕ) (t : trm) :
   isubst Ev El (regexp_grammar n t) = regexp_grammar n (isubst Ev El t) := by
-  sorry
-  -- fun_induction regexp_grammar n t
-  -- all_goals simp [regexp_grammar, isubst]
-  -- assumption
+  fun_induction regexp_grammar n t
+  all_goals simp [regexp_grammar, isubst]
+  assumption
 
 lemma equiv_1 (a : Int)
   (h : ∀ (v : val), subst i v t = t)
@@ -121,39 +120,38 @@ lemma equiv_1 (a : Int)
   (hQ : (∀ v1 v2, Q v1 = Q v2))
   :
   eval s (regexp_grammar n t) Q ↔ eval s (trm_for i a ((a + n : Int)) t) Q := by
-  sorry
-  -- fun_induction regexp_grammar n t generalizing s a
-  -- next t =>
-  --   simp [regexp_grammar] ; rw [empty_for_loop, eval_for_val]
-  -- next t =>
-  --   simp [regexp_grammar]
-  --   constructor
-  --   · intro hh ; constructor ; simp ; rw [h]
-  --     constructor ; assumption
-  --     intros ; rw [empty_for_loop, hQ] ; assumption
-  --   · intro hh ; cases hh ; rename_i hh
-  --     simp at hh ; rw [h] at hh
-  --     cases hh ; rename_i Q1 hmid h2
-  --     simp only [empty_for_loop] at h2
-  --     apply eval_conseq' ; assumption
-  --     intros ; rw [hQ _ val_unit] ; solve_by_elim
-  -- next n t not0 ih =>
-  --   have tmp : a + 1 + ↑n = a + (↑n + 1) := by ac_rfl
-  --   simp [regexp_grammar]
-  --   constructor
-  --   · intro hh ; constructor ; simp ; rw [h]
-  --     cases hh ; rename_i Q1 hmid h2
-  --     constructor ; assumption
-  --     intro v1 s2 h2_ ; specialize h2 _ _ h2_
-  --     specialize @ih s2 (a + 1) h ; rw [tmp] at ih
-  --     rw [← ih] ; assumption
-  --   · intro hh ; cases hh ; rename_i hh
-  --     simp at hh ; rw [h] at hh
-  --     cases hh ; rename_i Q1 hmid h2
-  --     constructor ; assumption
-  --     intro v1 s2 h2_ ; specialize h2 _ _ h2_
-  --     specialize @ih s2 (a + 1) h ; rw [tmp] at ih
-  --     rw [ih] ; assumption
+  fun_induction regexp_grammar n t generalizing s a
+  next t =>
+    simp [regexp_grammar] ; rw [empty_for_loop, eval_for_val]
+  next t =>
+    simp [regexp_grammar]
+    constructor
+    · intro hh ; constructor ; simp ; rw [h]
+      constructor ; assumption
+      intros ; rw [empty_for_loop, hQ] ; assumption
+    · intro hh ; cases hh ; rename_i hh
+      simp at hh ; rw [h] at hh
+      cases hh ; rename_i Q1 hmid h2
+      simp only [empty_for_loop] at h2
+      apply eval_conseq' ; assumption
+      intros ; rw [hQ _ val_unit] ; solve_by_elim
+  next n t not0 ih =>
+    have tmp : a + 1 + ↑n = a + (↑n + 1) := by ac_rfl
+    simp [regexp_grammar]
+    constructor
+    · intro hh ; constructor ; simp ; rw [h]
+      cases hh ; rename_i Q1 hmid h2
+      constructor ; assumption
+      intro v1 s2 h2_ ; specialize h2 _ _ h2_
+      specialize @ih s2 (a + 1) h ; rw [tmp] at ih
+      rw [← ih] ; assumption
+    · intro hh ; cases hh ; rename_i hh
+      simp at hh ; rw [h] at hh
+      cases hh ; rename_i Q1 hmid h2
+      constructor ; assumption
+      intro v1 s2 h2_ ; specialize h2 _ _ h2_
+      specialize @ih s2 (a + 1) h ; rw [tmp] at ih
+      rw [ih] ; assumption
 
 lemma simple_loop_pre (xl : loc) (xv : ℤ) (n : Nat) :
   let nn : val := val_int n
@@ -255,11 +253,11 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
   { apply Set.disjoint_union_right.mpr
     simp;
     constructor
-    · srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
+    · srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_notMem=>x//==
       move=> x1 h1 [x2] h2 Z; cases Z
       exact lt_irrefl x1 (lt_of_lt_of_le h1 h2)
     · unfold labSet
-      srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_not_mem=>x//==
+      srw Set.disjoint_iff_inter_eq_empty Set.eq_empty_iff_forall_notMem=>x//==
       move=>y1 H1 [y2] H2 Z; cases Z
       simp
   }

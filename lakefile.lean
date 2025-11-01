@@ -15,16 +15,16 @@ lean_lib WeirdLogic {
 }
 
 require batteries from
-    git "https://github.com/leanprover-community/batteries" @ "v4.17.0"
+    git "https://github.com/leanprover-community/batteries" @ "v4.20.0"
 
 require mathlib from
-    git "https://github.com/leanprover-community/mathlib4.git" @ "v4.17.0"
+    git "https://github.com/leanprover-community/mathlib4.git" @ "v4.20.0"
 
 require ssreflect from
-    git "https://github.com/verse-lab/lean-ssr.git" @ "v4.17.0"
+    git "https://github.com/verse-lab/lean-ssr.git" @ "v4.20.0"
 
 require lgtm from
-    git "https://github.com/verse-lab/lean-lgtm.git" @ "popl26-submission"
+    git "https://github.com/verse-lab/lean-lgtm.git" @ "v4.20.0"
 
 -- @[default_target]
 -- lean_lib «WeirdLogic» where
