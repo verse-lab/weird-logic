@@ -267,6 +267,7 @@ lemma swap_hqstar  (H' : @hval α → @hhProp α) (H₂ H : @hhProp α):
 /- ********************************** Weaken Rule ************************************** -/
 
 /- s' is the part to keep (P' in weaken rule) -/
+set_option maxHeartbeats 640000 in
 lemma weird_weaken_lemma  (s' s s'': Set (α ⊕ β)) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s⟫ ->
   sht_lang.s = ⟪1, s''⟫ ->
@@ -317,6 +318,7 @@ lemma weird_weaken_lemma  (s' s s'': Set (α ⊕ β)) (sht_prog sht_lang : LGTM.
     aesop
 
 /- Prod version: s' is the part to keep (P' in weaken rule) -/
+set_option maxHeartbeats 640000 in
 lemma weird_weaken_lemma' (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s⟫ ->
   sht_lang.s = ⟪1, s''⟫ ->
@@ -409,14 +411,14 @@ lemma weird_strengthen_lang (s : Set (α ⊕ β)) (sht_prog sht_lang sht_lang': 
   intro hh
   have hh1 := hh ∪_⟪1, s'⟫ hh
   move=> pre
-  have shtt : (List.insertIdx 0 { s := ⟪0, s''⟫, ht := sht_prog.ht } [sht_lang]) = [sht_prog, sht_lang] := by simp; rw [← prog]
+  have shtt : (List.insertIdx [sht_lang] 0 { s := ⟪0, s''⟫, ht := sht_prog.ht }) = [sht_prog, sht_lang] := by simp; rw [← prog]
   rw [← shtt] at pre
   rw [← yunfocus_lemma (shts:= [sht_lang]) (idx:= 0) (l:= 0) (s:= s'') (ht:= sht_prog.ht)
     (Q' := (fun _ _ h => ∀ ll ∈ {l | Sum.inl l ∈ s},  ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩))
     (Q := (fun _ h => ∀ ll ∈ {l | Sum.inl l ∈ s},  ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩))] at pre =>//
   rotate_left
   { simp; rw [lang']; apply disjoint_label_set.mpr; aesop }
-  have shtt' : (List.insertIdx 0 { s := ⟪0, s''⟫, ht := sht_prog.ht } [sht_lang']) = [sht_prog, sht_lang'] := by simp; rw [← prog]
+  have shtt' : (List.insertIdx [sht_lang'] 0 { s := ⟪0, s''⟫, ht := sht_prog.ht }) = [sht_prog, sht_lang'] := by simp; rw [← prog]
   rw [← shtt']
   rw [← yunfocus_lemma (shts:= [sht_lang']) (idx:= 0) (l:= 0) (s:= s'') (ht:= sht_prog.ht)
     (Q' := (fun _ _ h => ∀ ll ∈ {l | Sum.inl l ∈ s'},  ∃ pp, Sum.inr pp ∈ s'' ∧ h ⟨1, Sum.inl ll ⟩= h ⟨0, Sum.inr pp⟩))
@@ -605,11 +607,11 @@ lemma weird_grmdisj_lemma_safe_clean (s' s : Set (α × β)) (sht_prog sht_lang 
       have hl_not_in_s1 : ⟨1,ll⟩ ∉ ⟪1, s1⟫ ∪ ⟪0, s'1⟫ := by
         simp
         intro h_in_s1
-        exact Set.not_mem_empty ll ((by rw [←sp1]; exact ⟨h_in_s1, h_in_s2⟩) : ll ∈ ∅)
+        exact Set.notMem_empty ll ((by rw [←sp1]; exact ⟨h_in_s1, h_in_s2⟩) : ll ∈ ∅)
       have hp_not_in_s1 : ⟨0,pp⟩ ∉ ⟪1, s1⟫ ∪ ⟪0, s'1⟫ := by
         simp
         intro p_in_s2
-        exact Set.not_mem_empty pp ((by rw [←sp3]; exact ⟨p_in_s2, hp⟩) : pp ∈ ∅)
+        exact Set.notMem_empty pp ((by rw [←sp3]; exact ⟨p_in_s2, hp⟩) : pp ∈ ∅)
       have hr2l := hr2 ⟨1,ll⟩ hl_not_in_s1
       have hr2p := hr2 ⟨0,pp⟩ hp_not_in_s1
       rw [← hr2l] at hr2p
@@ -625,7 +627,7 @@ lemma weird_grmdisj_lemma_safe_clean (s' s : Set (α × β)) (sht_prog sht_lang 
       have hp_not_in_s1 : ⟨0,pp⟩ ∉ ⟪1, s2⟫ ∪ ⟪0, s'2⟫ := by
         simp
         intro p_in_s2
-        exact Set.not_mem_empty pp ((by rw [←sp3]; exact ⟨hp, p_in_s2⟩) : pp ∈ ∅)
+        exact Set.notMem_empty pp ((by rw [←sp3]; exact ⟨hp, p_in_s2⟩) : pp ∈ ∅)
       have hr2l := hl2 ⟨1,ll⟩ hl_not_in_s1
       have hr2p := hl2 ⟨0,pp⟩ hp_not_in_s1
       rw [← hr2l] at hr2p
@@ -823,7 +825,7 @@ lemma weird_grmdisj_extend_aux2 (s' s : Set (α × β)) (sht_prog sht_lang : LGT
     intro hv hh up
     aesop
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 3200000 in
 lemma weird_grmdisj_lemma_standard (s' s : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s'⟫ ->
   sht_lang.s = ⟪ 1, s⟫ ->
@@ -1014,6 +1016,7 @@ lemma weird_grmdisj_lemma_premium (s' s : Set (α × β))  (sht_prog sht_lang : 
 /- separate the grammar into s' and s \ s'
  linking to Grmdisj rule in the note
 -/
+set_option maxHeartbeats 3200000 in
 lemma weird_grmdisj_lemma_old (s' s : Set (α ⊕ β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s''⟫ ->
   sht_lang.s = ⟪ 1, s⟫ ->
@@ -1142,6 +1145,7 @@ lemma weird_payload_lemma2 (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGT
   aesop
 
 /- fix the payload index set; derivable from weaken lemma -/
+set_option maxHeartbeats 3200000 in
 lemma weird_payload_aux_lemma (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s⟫ ->
   sht_lang.s = ⟪1, s''⟫ ->
@@ -1192,6 +1196,7 @@ lemma weird_payload_aux_lemma (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
     convert form2
     aesop
 
+set_option maxHeartbeats 3200000 in
 lemma weird_payload_aux_lemma2 (s' s s'' s2' sp: Set α) (sht_prog sht_lang : LGTM.SHT):
   sht_prog.s = ⟪0, s⟫ ->
   sht_lang.s = ⟪1, s''⟫ ->
@@ -1250,6 +1255,7 @@ lemma weird_payload_aux_lemma2 (s' s s'' s2' sp: Set α) (sht_prog sht_lang : LG
     convert form2
     aesop
 
+set_option maxHeartbeats 3200000 in
 lemma weird_payload_index_lemma (s₁ s₂ : Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s₁⟫ ->
   sht_lang.s = ⟪ 1, s₂⟫ ->
@@ -1261,6 +1267,7 @@ lemma weird_payload_index_lemma (s₁ s₂ : Set (α × β)) (sht_prog sht_lang 
   move=> prog lang dsj ele pre1 pre2
   apply weird_payload_aux_lemma (s' := {pr}) (s := s₁)=>//
 
+set_option maxHeartbeats 3200000 in
 lemma weird_payload_index_lemma2 (s₁ s₂ s₃ s₄: Set (α × β)) (sht_prog sht_lang : LGTM.SHT) :
   sht_prog.s = ⟪0, s₁⟫ ->
   sht_lang.s = ⟪ 1, s₂⟫ ->
