@@ -1349,6 +1349,147 @@ lemma weird_seqleft_lemma (s₁ s₂ : Set α):
 --   move=> hev; exists hQ=> ⟨|hv ⟩ //
 --   sby apply (hhimpl_hhexists_r hv); srw fun_insert_ff
 
+lemma heval_prod''_aux (pf : β → Set α) (s : Set β) :
+  (∀ i ∈ s, ∀ j ∈ s, i ≠ j → Disjoint (pf i) (pf j)) →
+  ∃ aux : α → Option β,
+    (∀ a i, i ∈ s ∧ a ∈ pf i ↔ aux a = some i) := by
+  intro hdj
+  have tmp := skolem (b := fun _ => Option β) (p := fun a c => ∀ (i : β), i ∈ s ∧ a ∈ pf i ↔ c = some i)
+  rw [← tmp]
+  intro a
+  by_cases h : ∃ i ∈ s, a ∈ pf i
+  · rcases h with ⟨i, iin, ain⟩
+    exists some i
+    intro v ; constructor
+    · rintro ⟨vin, ain'⟩
+      congr ; specialize hdj i iin v vin ; rw [Set.disjoint_iff_forall_ne] at hdj
+      rw [← @not_not (i = v)] ; intro c ; specialize hdj c ; apply hdj ain ain' ; rfl
+    · intro h ; simp at h ; subst_eqs ; aesop
+  · simp at h
+    exists none
+    clear tmp ; intro v ; aesop
+
+lemma heval_prod'' (hQ : β → hval α → hhProp α)
+  (pf : β → Set α) (s : Set β) (hh : β → hheap α) (ht : β → htrm α)
+  (aux : α → Option β)
+  -- this is required in some form (maybe not this strong), since
+  -- `hQ v` might assert on some initial heap that can be modified by others;
+  -- if not asserted here, then the form of the post-condition in the goal
+  -- must change
+  (hQlocal2 : ∀ v hv hh1 hh2, (∀ a, a ∈ pf v → hh1 a = hh2 a) → hQ v hv hh1 = hQ v hv hh2)
+  -- same reason as above
+  (hQlocal1 : ∀ v hv1 hv2, (∀ a, a ∈ pf v → hv1 a = hv2 a) → hQ v hv1 = hQ v hv2)
+   :
+  -- (∀ i ∈ s, ∀ j ∈ s, i ≠ j → Disjoint (pf i) (pf j)) →
+  (∀ a i, i ∈ s ∧ a ∈ pf i ↔ aux a = some i) →
+  (∀ (a : { a : β // a ∈ s }), heval (pf a) (hh a) (ht a) (hQ a)) →
+  heval (⋃ i ∈ s, pf i)
+    -- (fun a => open Classical in
+    --   if h : ∃ i ∈ s, a ∈ pf i then
+    --     hh (choose h) a
+    --   else ∅)
+    (fun a => (aux a).elim ∅ (hh · a))
+    -- (fun a => open Classical in
+    --   if h : ∃ i ∈ s, a ∈ pf i then
+    --     ht (choose h) a
+    --   else [lang| ()])
+    (fun a => (aux a).elim [lang| ()] (ht · a))
+    (fun hv => h∀ i, h∀ (_ : i ∈ s),
+      hQ i hv
+      -- ∃ʰ hv', hQ i (hv ∪_(pf i) hv')
+      ) := by
+  intro haux h1
+  unfold heval at h1 ; rw [skolem] at h1 ; rcases h1 with ⟨hQQ, h1⟩
+  exists (fun a v => hexists fun x => hexists fun (_ : a ∈ pf x.val) => (hQQ x a v))   -- ?
+  constructor
+  · whnf ; simp ; intro a x xin ain
+    specialize h1 ⟨_, xin⟩ ; apply And.left at h1 ; whnf at h1 ; simp at h1
+    specialize h1 _ ain
+    specialize haux a x ; simp [xin, ain] at haux ; rw [haux] ; simp
+    apply eval_conseq ; assumption
+    intro vv hh hq
+    exists ⟨x, xin⟩ ; dsimp ; exists ain
+  · intro hv h
+    unfold bighstarDef ; open Classical in simp
+    intro hpre
+    exists hv ; dsimp ; whnf ; intro v ; whnf ; intro vin
+    specialize h1 ⟨_, vin⟩ ; apply And.right at h1
+    specialize h1 hv (fun a => open Classical in (if a ∈ pf v then h a else hh v a))
+    unfold bighstarDef at h1 ; simp at h1
+    specialize h1 (by
+      intro a ; specialize hpre a ; split
+      next h=>
+        rw [if_pos] at hpre
+        on_goal 2=> exists v
+        rcases hpre with ⟨⟨v', v'in⟩, z, hpre⟩ ; dsimp at z
+        have haux1 := haux a v ; simp [vin, h] at haux1
+        have haux2 := haux a v' ; simp [v'in, z] at haux2
+        rw [haux1] at haux2 ; simp at haux2 ; subst v'
+        have eqproof : vin = v'in := by simp
+        rw [eqproof] ; assumption
+      next hnotin=>
+        intro ; contradiction
+    )
+    rcases h1 with ⟨hv', h1⟩
+    open Classical in rw [hQlocal2 (hh2 := h)] at h1
+    on_goal 2=> simp ; intros ; contradiction
+    revert h1 ; apply Iff.mp ; rw [← propext_iff] ; apply congr_fun ; apply hQlocal1
+    intro a h ; simp ; intros ; contradiction
+
+lemma htriple_htriple_partition
+  (pf : β → Set α) (s : Set β) (hh : α → hProp) (ht : htrm α)
+  (Q : β → hval α → hhProp α)
+  (hQlocal2 : ∀ v hv hh1 hh2, (∀ a, a ∈ pf v → hh1 a = hh2 a) → Q v hv hh1 = Q v hv hh2)
+  (hQlocal1 : ∀ v hv1 hv2, (∀ a, a ∈ pf v → hv1 a = hv2 a) → Q v hv1 = Q v hv2)
+  :
+  (∀ i ∈ s, ∀ j ∈ s, i ≠ j → Disjoint (pf i) (pf j)) →
+  (∀ k ∈ s, htriple (pf k) ht [∗ i in (pf k)| hh i] (Q k)) →
+  htriple (⋃ i ∈ s, pf i) ht [∗ i in (⋃ j ∈ s, pf j)| hh i]
+    (fun hv => h∀ i, h∀ (_ : i ∈ s), Q i hv)
+    -- (fun hv hh => ∀ i : ℕ, Q i hh)
+    := by
+  intro hdj h1
+  apply heval_prod''_aux at hdj
+  rcases hdj with ⟨aux, hdj_aux⟩
+  intro h hpre ; unfold bighstar bighstarDef at hpre ; open Classical in simp at hpre
+  have tmp := heval_prod'' (hQ := Q) pf s (fun _ => h) (fun _ => ht) aux
+    hQlocal2 hQlocal1 hdj_aux ; simp at tmp
+  have eq1 : (fun a ↦ (aux a).elim ∅ fun x ↦ h a) = h := by
+    funext a
+    rcases ho : aux a with _ | x
+    · simp ; specialize hpre a ; split at hpre
+      next hh=> rcases hh with ⟨i, hh⟩ ; rw [hdj_aux] at hh ; rw [hh] at ho ; contradiction
+      next => rw [hpre]
+    · rfl
+  rw [eq1] at tmp ; clear eq1
+  specialize tmp (by
+    intro k kin ; specialize h1 _ kin (fun a => open Classical in if a ∈ pf k then h a else ∅)
+    unfold bighstar bighstarDef at h1 ; open Classical in simp at h1
+    specialize h1 (by
+      intro a ; split
+      next hh=>
+        specialize hpre a ; split at hpre
+        next=> assumption
+        next hhh=> simp at hhh ; clear *- kin hh hhh ; aesop
+      next=> intros ; contradiction
+    )
+    -- well, why need to prove this?
+    whnf at h1 ⊢ ; rcases h1 with ⟨hQ', hnr, hbd⟩
+    exists hQ' ; constructor
+    · whnf at hnr ⊢ ; intro a ain ; specialize hnr _ ain ; simp [ain] at hnr ; assumption
+    · intro hv hha hpre ; unfold bighstarDef at hpre ; simp at hpre
+      specialize hbd hv (fun a => open Classical in if a ∈ pf k then hha a else ∅) (by
+        simp ; intro a ; split
+        next hh=> specialize hpre a ; simp [hh] at hpre ; assumption
+        next=> rfl
+      )
+      rcases hbd with ⟨hv', hbd⟩ ; exists hv'
+      dsimp ; rw [hQlocal2] ; assumption ; intro a ain ; simp [ain]
+  )
+  rw [heval_ht_eq] ; assumption
+  whnf ; simp ; intro a b bin ain
+  specialize hdj_aux a b ; simp [ain, bin] at hdj_aux ; rw [hdj_aux] ; simp
+/-
 lemma htriple_htriple_partition (s : Set α) (idxx : Set ℕ) (pf : ℕ -> Set α) (H : α -> hProp) (Q : ℕ -> hheap α -> Prop) :
   s = (⋃ i ∈ idxx, (pf i) ) ->
   (∀ i ∈ idxx, ∀ j ∈ idxx, i ≠ j → Disjoint (pf i) (pf j)) ->
@@ -1373,6 +1514,7 @@ lemma htriple_htriple_partition (s : Set α) (idxx : Set ℕ) (pf : ℕ -> Set �
 
 #check heval_prod
 
+-/
 lemma inject_labSet (s1 : Set α) (Idx : Set β)(f : β -> α) (k : ℕ):
   s1 = ⋃ i ∈ Idx, {f i} ->
   ⟪k,s1⟫ = ⋃ i ∈ Idx, ({⟨k,(f i)⟩ }: Set αˡ) := by
@@ -1420,124 +1562,39 @@ lemma weird_infdisj_lemma (s1 s2 : Set (α × β)) (Idx : Set ℕ) (sht_prog sht
     [sht_prog, sht_lang ]
     (fun _ h => (∀ ll ∈ s2, ∃ pp, pp ∈ s1 ∧ h ⟨1, ll ⟩= h ⟨0, pp⟩) ) := by
   move=> prog lang hf hg injf injg pre
-  let Q' : hval (α × β)ˡ -> hheap (α × β)ˡ -> Prop := fun _ (h : hheap (α × β)ˡ) => ∀ i : ℕ, if i ∈ Idx then h ⟨1, g i⟩ = h ⟨0, f i⟩
-    else  h ⟨1, g i⟩ = ∅ ∧ h ⟨0, f i⟩ = ∅
-  apply weird_post_conseq (Q1 := Q')
-  {
-    simp only [Q']
-    intro xv hh pre ll hll
-    have ⟨j,tmp1, tmp2⟩ : ∃ j ∈ Idx, g j = ll := by
-      rw [hg, Set.mem_iUnion] at hll
-      aesop
-    specialize pre j
-    simp [tmp1] at pre
-    use f j
-    constructor <;> aesop
-  }
-  simp [Q']
-  unfold LGTM.wp hwp at pre
+  unfold LGTM.wp at pre ; simp [LGTM.SHTs.set] at pre
   have tmp := htriple_htriple_partition
-      (α := (α × β)ˡ) (s := ⟪0, s1⟫ ∪ ⟪1, s2⟫ ) (idxx := Idx)
+      (α := (α × β)ˡ) (s := Idx)
       (pf := fun i => {⟨0, f i⟩, ⟨1, g i⟩ })
       (ht := sht_prog.ht ∪_⟪0, s1⟫ sht_lang.ht ∪_⟪1, s2⟫ fun x => [lang| ()])
-      (H := fun i => Hx)
-      (Q := fun i => fun h => if i ∈ Idx then (h ⟨1, g i⟩ )= (h ⟨0, f i⟩ )
-          else  h ⟨1, g i⟩ = ∅ ∧ h ⟨0, f i⟩ = ∅)
-  specialize tmp ( by sorry )
+      (hh := fun i => Hx)
+      (Q := fun i _ => fun h => (h ⟨1, g i⟩ )= (h ⟨0, f i⟩ )
+          -- else  h ⟨1, g i⟩ = ∅ ∧ h ⟨0, f i⟩ = ∅
+          )
+  specialize tmp ( by simp ; clear *- ; aesop ) (by intros ; rfl)
     (by
-      intro i hi j hj ijneq;
-      simp_all
-      constructor <;> intro h;
-      · have t : f i ≠ f j := by intro hfi; exact ijneq (injf hfi)
-        simp_all
-      · have t : g i ≠ g j := by intro hgi; exact ijneq (injg hgi)
-        simp_all
+      intro i hi j hj ijneq ; rw [Set.disjoint_iff_forall_ne] ; simp
+      constructor <;> intro hh
+      · apply injf at hh ; contradiction
+      · apply injg at hh ; contradiction
     )
-    (by sorry )
-    ( by
-      intro k hk hha hpre
-      specialize pre k hk hha hpre
-      simp [LGTM.SHTs.set, fun_insert] at pre
-      rw [heval_ht_eq (ht₂ := sht_prog.ht ∪_{⟨0, f k⟩}sht_lang.ht ∪_{⟨1, g k⟩}fun x ↦ [lang| ()])]
+    (by
+      intro k kin ; specialize pre k kin
+      rewrite (occs := .pos [2]) [Set.pair_comm] at pre
+      rw [hwp_ht_eq (ht₂ := (sht_prog.ht ∪_⟪0, s1⟫sht_lang.ht ∪_⟪1, s2⟫fun x ↦ [lang| ()]))] at pre
       on_goal 2 =>
         simp [Set.EqOn]
         constructor
-        · intro hneq
-          have hfk : f k ∈ s1 := by rw [hf];simp; use k;
-          contradiction
-        · intro hneq
-          have hfk : g k ∈ s2 := by rw [hg];simp; use k;
-          contradiction
-      apply heval_conseq (Q1 := fun x h ↦ h ⟨1, g k⟩ = h ⟨0, f k⟩)
-      rw [Set.pair_comm];exact pre
-      intro xxx hxx; simp; intro hh; simp [hk]; exact hh
-
-    )
-  unfold htriple at tmp
-  unfold LGTM.wp hwp
-  simp [LGTM.SHTs.set, fun_insert]
-  intro hh
-  specialize tmp hh
-  simp
-  rw [prog, lang]
-  exact tmp
-
-#check hmkstruct
-#check hformula
-
-  -- unfold bighstar bighstarDef
-  -- let H' : hheap (α × β)ˡ -> Prop := fun (h : hheap (α × β)ˡ) => ∀ i : ℕ, if i ∈ Idx then Hx (h ⟨1, g i⟩ ) ∧ Hx (h ⟨0, f i⟩ )
-  --   else  h ⟨1, g i⟩ = ∅ ∧ h ⟨0, f i⟩ = ∅
-  -- apply weird_pre_conseq (H2 := H')
-  -- {
-  --   simp only [H']
-  --   intro hh pre i
-  --   scase_if
-  --   · intro hidx
-  --     have pre1 := pre ⟨0,f i⟩
-  --     have pre2 := pre ⟨1,g i⟩
-  --     have ins1 : ⟨0, f i⟩ ∈ ⟪0, s1⟫ ∪ ⟪1, s2⟫ := by
-  --       simp only [Set.mem_union, not_or]
-  --       left; unfold labSet; use f i; simp
-  --       rw [hf]; simp; use i
-  --     have ins2 : ⟨1, g i⟩ ∈ ⟪0, s1⟫ ∪ ⟪1, s2⟫ := by
-  --       simp only [Set.mem_union, not_or]
-  --       right; unfold labSet; use g i; simp
-  --       rw [hg]; simp; use i
-  --     simp [ins1] at pre1
-  --     simp [ins2] at pre2
-  --     trivial
-  --   · intro hidx
-  --     have ⟨ns1,ns1i⟩ : f i ∉ s1 ∧ ⟨0,f i⟩ ∉ ⟪0, s1⟫ ∪ ⟪1, s2⟫:= by
-  --       constructor <;> try rw [hf]
-  --       · simp; intro xx hx; intro heq; have eq_idx := injf heq
-  --         rw [eq_idx] at hidx
-  --         contradiction
-  --       · simp only [Set.mem_union, not_or]
-  --         constructor
-  --         · unfold labSet; simp
-  --           intro a b x hx hh1
-  --           rw [hh1]; intro heq; have eq_idx := injf heq
-  --           rw [eq_idx] at hx
-  --           contradiction
-  --         · unfold labSet; simp
-  --     have ⟨ns2,ns2i⟩ : g i ∉ s2 ∧ ⟨1,g i⟩ ∉ ⟪0, s1⟫ ∪ ⟪1, s2⟫:= by
-  --       constructor <;> try rw [hg]
-  --       · simp; intro xx hx; intro heq; have eq_idx := injg heq
-  --         rw [eq_idx] at hidx
-  --         contradiction
-  --       · simp only [Set.mem_union, not_or]
-  --         constructor
-  --         · unfold labSet; simp
-  --         · unfold labSet; simp
-  --           intro a b x hx hh1
-  --           rw [hh1]; intro heq; have eq_idx := injg heq
-  --           rw [eq_idx] at hx
-  --           contradiction
-  --     have pre1 := pre ⟨0,f i⟩
-  --     have pre2 := pre ⟨1,g i⟩
-  --     simp [ns1i] at pre1
-  --     simp [ns2i] at pre2
-  --     trivial
-  -- }
-  -- simp [H', Q']
+        · have hfk : f k ∈ s1 := by rw [hf];simp; use k
+          simp [hfk]
+        · have hfk : g k ∈ s2 := by rw [hg];simp; use k;
+          simp [hfk]
+      assumption )
+  unfold LGTM.wp
+  simp [LGTM.SHTs.set, prog, lang]
+  have eq : (⟪0, s1⟫ ∪ ⟪1, s2⟫) = (⋃ j ∈ Idx, {⟨0, f j⟩, ⟨1, g j⟩}) := by
+    simp [inject_labSet _ _ _ _ hf, inject_labSet _ _ _ _ hg]
+    simp only [← Set.iUnion_union_distrib] ; rfl
+  rw [← eq] at tmp
+  apply htriple_conseq ; apply tmp ; apply hhimpl_refl
+  intro hv hh ; simp [hhforall, hf, hg] ; clear *- hh ; aesop
