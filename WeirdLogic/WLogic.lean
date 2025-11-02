@@ -1448,11 +1448,12 @@ lemma weird_infdisj_lemma (s1 s2 : Set (α × β)) (Idx : Set ℕ) (sht_prog sht
       intro i hi j hj ijneq;
       simp_all
       constructor <;> intro h;
-      · have t : f i ≠ f j := by sorry
-        contradiction
-      · have t : g i ≠ g j := by sorry
-        contradiction
-    ) (by sorry )
+      · have t : f i ≠ f j := by intro hfi; exact ijneq (injf hfi)
+        simp_all
+      · have t : g i ≠ g j := by intro hgi; exact ijneq (injg hgi)
+        simp_all
+    )
+    (by sorry )
     ( by
       intro k hk hha hpre
       specialize pre k hk hha hpre
