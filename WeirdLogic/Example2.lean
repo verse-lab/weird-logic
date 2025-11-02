@@ -235,25 +235,61 @@ lemma example2_single_iter (xv : ℤ) :
   unfold hsingle at h1 h2 ; rw [h1, h2]
 
 
+lemma trm_seq_neq (t t2 : trm) : t ≠ trm_seq t t2 := by
+  intro h ; apply congrArg sizeOf at h ; simp at h ; omega
+
+  -- intro h
+  -- cases t <;> simp [trm_seq, *] at h
+  -- case trm_seq t1 t2' =>
+  --   rcases h with ⟨ih1,ih2⟩
+  --   rw [ih2] at ih1
+  --   cases t1 <;> try simp [trm_seq, *] at ih1
+  --   case trm_seq a1 a2 =>
+  --     rcases ih1 with ⟨ih11,ih12⟩
+  --     rw [ih12] at ih11
+  --     sorry
+
 def regexp_grammar_injective ( i j : ℕ) ( t : trm):
   t ≠ [lang| ()] ->
   regexp_grammar i t =  regexp_grammar j t ->
   i = j := by
   intro ht h
   unfold regexp_grammar at h
-  cases i with
+  induction i generalizing j with
   | zero =>
-    cases j with
+    induction j with
     | zero => rfl
-    | succ j' => sorry
-  | succ i' =>
-    cases j with
-    | zero => sorry
-    | succ j' =>
-      -- injection h with hnm
-      congr
-      sorry
-
+    | succ jn hjn =>
+        cases jn
+        case zero => simp_all
+        case succ jj => simp_all
+  | succ ik hik=>
+    induction j with
+    | zero =>
+        cases ik
+        case zero => simp_all
+        case succ jj => simp_all
+    | succ jn hjn =>
+        simp
+        cases ik
+        case zero =>
+          cases jn
+          case zero => simp_all
+          case succ jnn =>
+            simp only [Nat.zero_add, Nat.add_zero] at h
+            have tnq := trm_seq_neq t (regexp_grammar (jnn + 1) t)
+            contradiction
+        case succ ikk =>
+          cases jn
+          case zero =>
+            simp only [Nat.zero_add, Nat.add_zero] at h
+            have tnq := trm_seq_neq t (regexp_grammar (ikk + 1) t)
+            simp_all
+          case succ jnn =>
+            simp_all
+            unfold regexp_grammar at h
+            specialize hik (jnn+1) h
+            simp_all
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
