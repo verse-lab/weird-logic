@@ -234,9 +234,30 @@ lemma example2_single_iter (xv : ℤ) :
   have h2 := hh ⟨0, (default_trm, ↑n)⟩ ; simp at h2
   unfold hsingle at h1 h2 ; rw [h1, h2]
 
+
+def regexp_grammar_injective ( i j : ℕ) ( t : trm):
+  t ≠ [lang| ()] ->
+  regexp_grammar i t =  regexp_grammar j t ->
+  i = j := by
+  intro ht h
+  unfold regexp_grammar at h
+  cases i with
+  | zero =>
+    cases j with
+    | zero => rfl
+    | succ j' => sorry
+  | succ i' =>
+    cases j with
+    | zero => sorry
+    | succ j' =>
+      -- injection h with hnm
+      congr
+      sorry
+
+
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example2_spec (xv : ℤ) (k : ℕ):
+lemma example2_spec (xv : ℤ):
   {
     xl ~⟨_ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫⟩~> xv
   }
@@ -390,8 +411,21 @@ lemma example2_spec (xv : ℤ) (k : ℕ):
       · rw [←hn]
   }
   { unfold lang_index lang_fun_list lang_squeeze_list; simp; rfl }
-  { simp }
-  on_goal 2=> exact k
+  { simp; intro i j h; rw [Prod.ext_iff] at h;
+    rcases h with ⟨h1,h2⟩
+    simp_all
+  }
+  {
+    intro i j h; rw [Prod.ext_iff] at h;
+    rcases h with ⟨h1,h2⟩
+    simp_all
+    unfold trm_funs at h1; simp_all
+    unfold trm_funs at h1
+    apply regexp_grammar_injective (t := trm1)
+    unfold trm1; simp
+    assumption
+  }
+  intro k hk2
   dsimp
   have kreplace : ↑k = Int.ofNat k := by simp
   rw [kreplace]; clear kreplace
