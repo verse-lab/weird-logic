@@ -208,3 +208,15 @@ lemma pair_wrap_eq_right {α β : Type} (i : ℕ) (d : β) (s' : Set α) (s : Se
 lemma unsimp_singleton_set ( t : trm) ( p : β) :
   {x | ∃ l ∈ ({t} : Set trm), (l, p) = x} = {(t, p)} := by
   simp
+
+-- lemma hharray_disj (s₁ : Set α) (f : ℤ → val):
+--   arr⟨s₁⟩(p , x in n =>f x) ∗ arr⟨⋆ \ s₁⟩(p , x in n =>f x) = arr⟨⋆⟩(p , x in n =>f x) :=by
+--   have tmp : arr⟨⋆⟩(p , x in n =>f x) = arr⟨s₁ ∪ (⋆ \ s₁)⟩(p , x in n =>f x) := by
+--     congr!
+--     exact Eq.symm (Set.union_diff_cancel' (fun ⦃a⦄ a ↦ a) fun ⦃a⦄ a ↦ trivial)
+--   rw [tmp]
+--   unfold hharrayFun
+--   apply eq_comm.mpr
+--   symm
+--   apply bighstar_hhstar_disj (s₂ := ⋆ \ s₁)=>//
+--   exact Set.disjoint_sdiff_right

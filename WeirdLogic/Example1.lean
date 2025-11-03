@@ -625,21 +625,4 @@ lemma example1_spec (xv : ℤ):
         simp
 
 
-
-#check Function.partialInv_left
-#print bighstar_hhstar_disj
-
--- lemma hharray_disj (s₁ : Set α) (f : ℤ → val):
---   arr⟨s₁⟩(p , x in n =>f x) ∗ arr⟨⋆ \ s₁⟩(p , x in n =>f x) = arr⟨⋆⟩(p , x in n =>f x) :=by
---   have tmp : arr⟨⋆⟩(p , x in n =>f x) = arr⟨s₁ ∪ (⋆ \ s₁)⟩(p , x in n =>f x) := by
---     congr!
---     exact Eq.symm (Set.union_diff_cancel' (fun ⦃a⦄ a ↦ a) fun ⦃a⦄ a ↦ trivial)
---   rw [tmp]
---   unfold hharrayFun
---   apply eq_comm.mpr
---   symm
---   apply bighstar_hhstar_disj (s₂ := ⋆ \ s₁)=>//
---   exact Set.disjoint_sdiff_right
-
-
 end WeirdLogic

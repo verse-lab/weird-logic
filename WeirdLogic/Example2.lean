@@ -59,14 +59,6 @@ def cfg_expand : Set ( List (Symbol T N)) :=
     c | cfg1.Generates c
   }
 
--- lang_def prog_c1 :=
---   fun ⸨xl: Loc⸩ ⸨pa: Val⸩ =>
---     for k in [0 : pa] {
---       let tmp := !xl in
---       xl := tmp + 1
---     };
---     ()
-
 lang_def prog_c1 :=
   fun ⸨xl: Loc⸩ ⸨pa: Val⸩ =>
     for k in [0 : pa] {
@@ -168,18 +160,6 @@ lemma simple_loop_pre (xl : loc) (xv : ℤ) (n : Nat) :
   on_goal 2=> xsimp ; xsimp
   xapp ; xwp ; xlet ; xstep ; xapp ; xsimp
 
-lemma xwp_lemma_funs' (xs : List trm) (ts : List trm) :
-  t = trm_call tfunc ts ->
-  tfunc = trm_funs xs t1 ->
-  func_call_shape_condition xs (get_vars xs) ts ->
-  func_call_ctx_prepare (List.zip xs ts) = some (Ev, El) ->
-  himpl H (wp (isubst Ev.toAList El.toAList t1) Q) →
-  triple t H Q := by
-  move=> -> -> ?? h
-  srw -wp_equiv ; apply himpl_trans ; apply h
-  apply wp_eval_like
-  apply eval_like_trm_apps_funs_pre <;> try assumption
-
 /- old format -/
   -- {
   --   xl ~⟨i in {⟨0,(default_trm, (Int.ofNat n))⟩} ∪ {⟨1,(sn,default_payload)⟩}⟩~> xv
@@ -233,21 +213,6 @@ lemma example2_single_iter (xv : ℤ) :
   have h1 := hh ⟨1, (trm_funs [trm_varl "xl"] (regexp_grammar n trm1), 0)⟩ ; simp at h1
   have h2 := hh ⟨0, (default_trm, ↑n)⟩ ; simp at h2
   unfold hsingle at h1 h2 ; rw [h1, h2]
-
-
-lemma trm_seq_neq (t t2 : trm) : t ≠ trm_seq t t2 := by
-  intro h ; apply congrArg sizeOf at h ; simp at h ; omega
-
-  -- intro h
-  -- cases t <;> simp [trm_seq, *] at h
-  -- case trm_seq t1 t2' =>
-  --   rcases h with ⟨ih1,ih2⟩
-  --   rw [ih2] at ih1
-  --   cases t1 <;> try simp [trm_seq, *] at ih1
-  --   case trm_seq a1 a2 =>
-  --     rcases ih1 with ⟨ih11,ih12⟩
-  --     rw [ih12] at ih11
-  --     sorry
 
 def regexp_grammar_injective ( i j : ℕ) ( t : trm):
   t ≠ [lang| ()] ->
