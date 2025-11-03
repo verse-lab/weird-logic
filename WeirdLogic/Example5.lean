@@ -8,7 +8,7 @@ import Lgtm.Experiments.HyperCommon
 import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
-import WeirdLogic.Util
+import WeirdLogic.WUtil
 import WeirdLogic.Hete
 
 open Unary prim val trm
@@ -98,9 +98,6 @@ lang_def prog_c1 :=
 
 abbrev multi_payload := List ℤ
 
-abbrev default_payload : multi_payload:= [0]
-abbrev default_trm : trm := [lang|()]
-
 def pay_index : Set (trm × multi_payload × multi_payload) :=
   {
     ([lang|()],(p,p)) | p ∈ @Set.univ multi_payload
@@ -115,7 +112,7 @@ variable (pa_len : ℕ) (pb_len : ℕ) (xptr : loc)
 variable (paptr : trm × multi_payload × multi_payload -> loc)
  (pbptr : trm × multi_payload × multi_payload -> loc)
 
-lemma example4_spec' (f : ℤ -> val) (x : loc) (g q : ℤ -> val):
+lemma example5_spec' (f : ℤ -> val) (x : loc) (g q : ℤ -> val):
   {
     arr⟨⋆⟩(xptr , i in 1 =>f i)
     -- check the syntax of x->_

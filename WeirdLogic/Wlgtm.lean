@@ -134,7 +134,7 @@ def wp_nest_focus_lemma (shts1 shts2: LGTM.SHTs (Labeled α)) :
   unfold Set.EqOn
   intro xl xlh
   simp
-  have xl2 : xl ∉ shts1.set := by exact Disjoint.not_mem_of_mem_left (id (Disjoint.symm sh)) xlh
+  have xl2 : xl ∉ shts1.set := by exact Disjoint.notMem_of_mem_left (id (Disjoint.symm sh)) xlh
   split_ifs=>//
 
 
@@ -174,7 +174,6 @@ lemma yfocus_set_lemma_eq (idx : ℕ) (l : LabType) (s' s : Set α) (shts : LGTM
     (hwp ⟪l, s \ s'⟫ shts[idx].ht fun hv =>
     LGTM.wp ((shts.eraseIdx (idx)).insertIdx idx ⟨⟪l, s ∩ s'⟫,shts[idx].ht⟩) fun hv' =>
       Q (hv ∪_⟪l,s \ s'⟫ hv') ) = LGTM.wp shts Q := by
-    -- stop -- to save time for testing
     move=> seq
     move =>/[dup]?/List.pairwise_iff_getElem dj' /[dup] dj₁ /Set.disjoint_left dj
     srw (LGTM.wp_focus idx) //' seq -(Set.diff_union_inter ⟪l,s⟫ ⟪l,s'⟫) /==
@@ -335,46 +334,13 @@ lemma hhstar_comm_special1 {hH₁ hH₂ : hhProp α} : hhstar hH₁ ((hH₂ ∗ 
   rw [hhstar_assoc]
 
 /- not directly useful, leave here for future extension -/
-set_option maxHeartbeats 1600000 in
-lemma hyper_triple_sht_extend (shts : LGTM.SHTs α) (s : Set α) (p : htrm α) (h : hheap α) (Hx : hProp) (Qx : val -> hProp) :
-  LGTM.triple (⟨s, p⟩ :: shts) ([∗ in s ∪ shts.set | Hx]) (fun hv => [∗ in s ∪ shts.set | Qx (hv x)]) ->
-  LGTM.triple [⟨s, p⟩] ([∗ in s | Hx] ) (fun hv => [∗ in s | Qx (hv x)]) := by
-    simp [LGTM.triple, LGTM.wp] at *
-    unfold bighstar bighstarDef hhimpl
-    simp
-    move => preun hs hs1
-    rw [hwp_ht_eq (ht₂ := p)]
-    on_goal 2=> simp [Set.EqOn]; intro x h1 h2; contradiction
-    stop
-    -- => htr h hx
-    set h' : hheap α := ( h ∪_s hEmpty )
-    specialize htr (h') ?_
-    { simp [bighstar]
-      intro a; unfold h'; simp
-      unfold bighstar bighstarDef at hx
-      specialize hx a
-      by_cases hh : a ∈ s
-      · simp_all [hh]
-      · simp_all [hh]
-
-        sorry
-    }
-    scase!: htr=> hQ /[dup] hev /(_ x) /==; unfold bighstarDef; simp [fun_insert] => ev imp
-
-    apply heval_conseq=> // -- v h' hh
-    have := fun a ain => eval_sat (hev a ain)
-    have : ∀ a ∈ insert x shts.set, ∃ hv : _ × _, hQ a hv.2 hv.1 := by aesop
-    move: this=> /choose_fun  hh
-    specialize hh default
-    scase: hh=> hh H
-    move: (imp (fun a => if a = x then v else if a ∈ shts.set then (hh a).2 else default) (fun a => if a = x then h' else if a ∈ shts.set then (hh a).1 else h))=> H
-    specialize H ?_
-    { move=> a /==; split_ifs=> // }
-    scase: H=> ? /== /(_ x) /==
+-- lemma hyper_triple_sht_extend (shts : LGTM.SHTs α) (s : Set α) (p : htrm α) (h : hheap α) (Hx : hProp) (Qx : val -> hProp) :
+--   LGTM.triple (⟨s, p⟩ :: shts) ([∗ in s ∪ shts.set | Hx]) (fun hv => [∗ in s ∪ shts.set | Qx (hv x)]) ->
+--   LGTM.triple [⟨s, p⟩] ([∗ in s | Hx] ) (fun hv => [∗ in s | Qx (hv x)]) := by
 
 lemma bighstar_set_eq (s1 s2 : Set α) :
   s1 = s2 ->
-  [∗i in s1| Hx] = [∗i in s2| Hx] := by
+  [∗ in s1| Hx] = [∗ in s2| Hx] := by
   move=> hs
   unfold bighstar bighstarDef
   congr!

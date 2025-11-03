@@ -10,10 +10,7 @@ import Lean
 
 open Lean Elab Tactic Meta
 
--- import WeirdLogic.Util
--- import WeirdLogic.Heap
-
--- open Classical
+open Classical
 open trm var
 
 /- =========================== Vulnerable Program Language ==================== -/
@@ -117,26 +114,26 @@ def symbol_to_trm_list (slist : List (Symbol T N)) : List trm :=
   | (Symbol.terminal x)::xs => [x] ++ symbol_to_trm_list xs
   | (Symbol.nonterminal _)::xs => symbol_to_trm_list xs
 
-/- =========================== Macros ============================== -/
+/- =========================== Macros For CFG ============================== -/
 /- **TODO** Too many bugs, solve later -/
-declare_syntax_cat gram
-declare_syntax_cat sym
-declare_syntax_cat prod
+-- declare_syntax_cat gram
+-- declare_syntax_cat sym
+-- declare_syntax_cat prod
 
-syntax ident : sym
-syntax term : sym
-syntax var : sym
-syntax "ε" : sym
-syntax sym " ; " sym : sym
--- syntax gram " ::= " term : gram
--- syntax gram " or " gram : gram
-syntax gram " ; " gram : gram
--- syntax "(" gram ")" : gram
--- syntax "(" nonterminals ")" : gram
-syntax "[sym| " sym "]" : term
-syntax "[prod| " sym "::=" sym* "]" : term
+-- syntax ident : sym
+-- syntax term : sym
+-- syntax var : sym
+-- syntax "ε" : sym
+-- syntax sym " ; " sym : sym
+-- -- syntax gram " ::= " term : gram
+-- -- syntax gram " or " gram : gram
+-- syntax gram " ; " gram : gram
+-- -- syntax "(" gram ")" : gram
+-- -- syntax "(" nonterminals ")" : gram
+-- syntax "[sym| " sym "]" : term
+-- syntax "[prod| " sym "::=" sym* "]" : term
 
-local notation "%" x => (Lean.quote (toString (Lean.Syntax.getId x)))
+-- local notation "%" x => (Lean.quote (toString (Lean.Syntax.getId x)))
 
 -- macro_rules
 --   | `([sym| $x:var]) => `(symbol.nonterminal $(%x))

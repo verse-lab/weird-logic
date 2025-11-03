@@ -8,7 +8,7 @@ import Lgtm.Experiments.HyperCommon
 import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
-import WeirdLogic.Util
+import WeirdLogic.WUtil
 import WeirdLogic.Hete
 
 open Unary prim val trm
@@ -95,9 +95,6 @@ lang_def prog_c1 :=
     x := -x
 
 abbrev multi_payload := List ℤ
-
-abbrev default_payload : multi_payload:= [0]
-abbrev default_trm : trm := [lang|()]
 
 def pay_index : Set (trm × multi_payload × multi_payload) :=
   {

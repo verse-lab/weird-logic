@@ -1,5 +1,4 @@
 import Lean
--- lemmas on heaps
 import Mathlib.Data.Finmap
 import Qq
 
@@ -81,43 +80,6 @@ lemma Heap.join_single (p : loc) (v v' : val) [PartialCommMonoid val] :
   Heap.add (Finmap.singleton p v) (Finmap.singleton p v') = (Finmap.singleton p (v + v')) := by
   apply Finmap.ext_lookup; srw Heap.add_lookup /== => l
   scase: [l = p]=> [?|->//]; srw ?Finmap.lookup_eq_none.mpr //
-
-lemma hjoin_single_gen (v v' : val) [PartialCommMonoid val] :
-  PartialCommMonoid.valid v ->
-  PartialCommMonoid.valid v' ->
-  (p ~~> v) + (p ~~> v') = if v=v' then p ~~> (v) else p ~~> (val.val_int 0):= by
-  move=> ?? !h //
-  constructor
-  all_goals
-    by_cases h: v=v' <;> simp [h];
-  unfold HAdd.hAdd instHAdd=> /=;
-  stop
-  srw -Heap.add_single; exists (Finmap.singleton p v), (Finmap.singleton p v')
-  sdo 3 constructor=> //
-  move=> /==; apply PartialCommMonoid.add_valid=> //
-
-lemma hadd_single (v v' : Bool) :
-  (p ~~> v) + (p ~~> v') = p ~~> (v || v') := by
-  stop
-  apply hadd_single_gen=> //
-
-instance GenInst (op : hval α -> Int -> Bool) (x : α -> loc) (s : Set α) :
-  IsGeneralisedJoin
-    z n s
-    JoinPCM.add JoinPCM.valid
-    (x i ~⟨i in s⟩~> 0)
-    (fun i hv => x j ~⟨j in s⟩~> op hv i)
-    (Int)
-    (fun _ j =>  x i ~⟨i in s⟩~> j)
-    (fun i j hv => x k ~⟨k in s⟩~> if i=j then val.val_int (op hv i) else val.val_int 0)
-    (fun hv => x k ~⟨k in s⟩~> if (∀ i ∈ ⟦z,n-1⟧, op hv i = op hv (i+1)) then val.val_int (op hv z) else val.val_int 0 ) where
-    eqGen := by
-      move=> > ?
-      stop
-      exists (∃ i ∈ ⟦z, j-1⟧, op (hv i) i) , emp ; simp [hhlocalE]
-      srw or_hhsingle; ysimp=> //
-    eqInd := by stop move=> >; srw hhadd_hhsingle_gen //
-    eqSum := by stop move=> >; srw or_hhsingle //
 
 @[simp]
 lemma validE : PartialCommMonoid.valid = JoinPCM.valid := by trivial

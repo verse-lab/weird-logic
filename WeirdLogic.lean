@@ -1,9 +1,7 @@
 import WeirdLogic.Gram
-import WeirdLogic.Heap
-import WeirdLogic.HoareLogic
 import WeirdLogic.Main
-import WeirdLogic.Util
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
 import WeirdLogic.WP
--- import WeirdLogic.Wlgtm.lean
+import WeirdLogic.Wlgtm
+import WeirdLogic.WUtil

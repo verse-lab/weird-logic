@@ -6,22 +6,15 @@ open Classical trm val prim
 
 local macro "LabType" : term => `(ℕ)
 
--- open prim val trm
+def Sum.getLeft! {α β: Type} [Inhabited α] (ab : α ⊕ β) : α :=
+  match ab with
+  | Sum.inl a => a
+  | Sum.inr _ => default
 
--- lemma arr_union_eq (f : ℤ -> val):
---   s = s₁ ∪ s₂ ->
---   Disjoint s₁ s₂ ->
---   arr⟨s⟩(xptr , i in 1 =>f i) = arr⟨s₁⟩(xptr , i in 1 =>f i) ∗ arr⟨s₂⟩(xptr , i in 1 =>f i) := by
---   move=> unio disj
---   unfold hharrayFun
---   rw [unio]
---   apply eq_comm.mpr
---   apply bighstar_hhstar_disj=>//
-
-#check heap
-#check bighstar_hhstar_disj
-#check bighstar_hhadd
-#check Set.diff_union_of_subset
+def Sum.getRight! {α β: Type} [Inhabited β] (ab : α ⊕ β) : β :=
+  match ab with
+  | Sum.inl _ => default
+  | Sum.inr b => b
 
 open EmptyPCM in
 lemma bighstar_hhstar_disj_dir
@@ -208,15 +201,3 @@ lemma pair_wrap_eq_right {α β : Type} (i : ℕ) (d : β) (s' : Set α) (s : Se
 lemma unsimp_singleton_set ( t : trm) ( p : β) :
   {x | ∃ l ∈ ({t} : Set trm), (l, p) = x} = {(t, p)} := by
   simp
-
--- lemma hharray_disj (s₁ : Set α) (f : ℤ → val):
---   arr⟨s₁⟩(p , x in n =>f x) ∗ arr⟨⋆ \ s₁⟩(p , x in n =>f x) = arr⟨⋆⟩(p , x in n =>f x) :=by
---   have tmp : arr⟨⋆⟩(p , x in n =>f x) = arr⟨s₁ ∪ (⋆ \ s₁)⟩(p , x in n =>f x) := by
---     congr!
---     exact Eq.symm (Set.union_diff_cancel' (fun ⦃a⦄ a ↦ a) fun ⦃a⦄ a ↦ trivial)
---   rw [tmp]
---   unfold hharrayFun
---   apply eq_comm.mpr
---   symm
---   apply bighstar_hhstar_disj (s₂ := ⋆ \ s₁)=>//
---   exact Set.disjoint_sdiff_right

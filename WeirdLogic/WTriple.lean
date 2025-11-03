@@ -16,10 +16,6 @@ namespace WeirdLogic
 
 variable {α : Type} (s : Set α)
 
--- local notation "htrm" => htrm α
--- local notation "hval" => hval α
--- local notation "hhProp" => hhProp α
-
 local macro "LabType" : term => `(ℕ)
 
 def hgram (α : Type) := α -> trm
@@ -28,6 +24,10 @@ def hgram (α : Type) := α -> trm
 
 abbrev payload := ℤ
 
+abbrev default_payload : payload:= 0
+abbrev default_trm : trm := [lang|()]
+
+/- ==================== Payload Inductive Definition ==================== -/
 inductive payload_base : Type where
   | pld_bool : Bool → payload_base
   | pld_nat : ℕ → payload_base
@@ -41,7 +41,6 @@ abbrev index_set := @Set.univ (trm ⊕ payload')ˡ
 
 example : payload' :=
   payload'.pld_cons (payload_base.pld_nat 3) (payload'.pld_cons (payload_base.pld_bool true) payload'.pld_nil)
-
 
 
 -- def hwtrm (α : Type) := α -> trm /- α is payload later-/

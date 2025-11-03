@@ -8,7 +8,7 @@ import Lgtm.Experiments.HyperCommon
 import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
-import WeirdLogic.Util
+import WeirdLogic.WUtil
 import WeirdLogic.Hete
 import WeirdLogic.WUnary
 
@@ -87,9 +87,6 @@ def lang_squeeze_list: Set trm :=
 def lang_fun_list : Set trm :=
   {[lang| fun ⸨xl: Loc⸩ => {tt}] | tt ∈ lang_squeeze_list }
 
-abbrev default_payload : payload:= 0
-abbrev default_trm : trm := [lang|()]
-
 def pay_index : Set (trm × payload) :=
   {
     (default_trm,p) | p ∈ @Set.univ payload
@@ -106,9 +103,6 @@ lemma regexp_grammar_isubst (n : ℕ) (t : trm) :
 
 lemma equiv_1 (a : Int)
   (h : ∀ (v : val), subst i v t = t)
-  -- (hQ : (∀ v1 v2, Q v1 = Q v2) ∨ (∀ v h, Q v h → v = val_unit))
-  -- (hQt : ∀ Q', eval s t Q' →
-  --   ((∀ v1 v2, Q' v1 = Q' v2) ∨ (∀ v h, Q' v h → v = val_unit)))
   (hQ : (∀ v1 v2, Q v1 = Q v2))
   :
   eval s (regexp_grammar n t) Q ↔ eval s (trm_for i a ((a + n : Int)) t) Q := by
@@ -169,9 +163,6 @@ lemma simple_loop_pre (xl : loc) (xv : ℤ) (n : Nat) :
   -- { v,
   --   fun h => ∀ l ∈ ({(sn,default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, (Int.ofNat n))} : Set (trm × payload)) , h ⟨1, l⟩= h ⟨0, p⟩
   -- }
-  -- := by
-  -- unfold hhsingle-- ; rw [← bighstar_hhstar_disj] ; dsimp
-  -- unfold LGTM.triple
 lemma example2_single_iter (xv : ℤ) :
   ∀ n : ℕ,
   sn = [lang| fun ⸨xl: Loc⸩ => {regexp_grammar n trm1}] →

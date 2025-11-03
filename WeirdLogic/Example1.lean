@@ -8,7 +8,7 @@ import Lgtm.Experiments.HyperCommon
 import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
-import WeirdLogic.Util
+import WeirdLogic.WUtil
 import WeirdLogic.Hete
 
 open Unary prim val trm
@@ -17,6 +17,7 @@ open ContextFreeGrammar
 namespace WeirdLogic
 
 /- L -> trm1 | trm 2 -/
+/- regular + if rule -/
 def trm1 : trm := [lang| fun ⸨xk: Loc⸩ => let xx := !xk in let temp0 := xx + 1 in xk := temp0]
 def trm2 : trm := [lang| fun ⸨xr: Loc⸩ => let xx := !xr in let temp0 := xx + 2 in xr := temp0]
 def r1 : ContextFreeRule trm String :=
@@ -55,14 +56,10 @@ def cfg_expand : Set ( List (Symbol T N)) :=
   {
     [Symbol.terminal trm1],[Symbol.terminal trm2]
   }
-  -- {
-  --   [Symbol.terminal trm0, Symbol.terminal trm1],[Symbol.terminal trm0, Symbol.terminal trm2]
-  -- }
+
   -- {
   --   c | cfg1.Generates c
   -- }
-
--- cfg_expand \ {x=x+1}
 
 def pay_index1 : Set payload :=
   {
@@ -153,29 +150,6 @@ def cfg1_right : ContextFreeGrammar trm :=
     initial := "L",
     rules := Finset.mk {r2} (by unfold r2 trm2; simp)
   }
-
-#check Language.instMembershipList
-#check l1
-#print LGTM.SHT.mk
-#check LGTM.triple
-
-variable (xptr : loc) (x_ptr : ℤ -> ℤ)
-
--- lemma example4_spec_origin(f : ℤ -> val):
---   {
---     [∗ in Set.univ | H ] ∗ arr⟨⋆⟩(xptr , i in 1 =>f i)
---   }
---   [0| p in pay_index => prog_c1(⟨val_int (Sum.getRight! p.val)⟩)]
---   [1| l in lang_index => ⟦Sum.getLeft! l.val⟧]
---   { v,
---     fun h => ∀ l ∈ lang_index', ∃ p , h ⟨1, Sum.inl l⟩ = h ⟨0, Sum.inr p⟩
---   } := by
---   unfold LGTM.triple
---   sorry
-
-
-abbrev default_payload : payload:= 0
-abbrev default_trm : trm := [lang|()]
 
 def lang_set1 : Set trm :=
   {trm1}
@@ -291,16 +265,12 @@ lemma example1_spec (xv : ℤ):
       unfold prog_c1 --; yapp
       apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, [lang| ⟨p.val.2⟩]])
       intro _ ; rfl ; intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
-      -- unfold prog_c1
       simp  [Unary.func_call_ctx_prepare]
       all_goals
-        try simp [isubstE, Unary.reduce_call_isubst]; --(try simp [Unary.isubst, Unary.isubst.go])--; (srw ?Unary.guard_pos; all_goals try rfl)
+        try simp [isubstE, Unary.reduce_call_isubst];
         try simp [wpgen]
-        -- try simp [substE, Unary.reduce_call_subst]; (srw ?Unary.subst ?Unary.subst.go ?Unary.subst /==/- ?Unary.guard_pos; all_goals try rfl-/)
-        -- try simp [substlE, Unary.reduce_call_substl]; (srw ?Unary.substl ?Unary.substl.go ?Unary.substl /==/- ?Unary.guard_pos; all_goals try rfl-/)
         try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
       apply hwp_of_hwpgen
-      -- all_goals try simp [hwpgen]
       simp [subst, subst.go]
       ylet
       have eq : ({x | ∃ (p : payload), (0 < p ∧ ¬p = 10) ∧ ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ)
@@ -376,8 +346,6 @@ lemma example1_spec (xv : ℤ):
       all_goals
         try simp [isubstE, Unary.reduce_call_isubst]; --(try simp [Unary.isubst, Unary.isubst.go])--; (srw ?Unary.guard_pos; all_goals try rfl)
         try simp [wpgen]
-        -- try simp [substE, Unary.reduce_call_subst]; (srw ?Unary.subst ?Unary.subst.go ?Unary.subst /==/- ?Unary.guard_pos; all_goals try rfl-/)
-        -- try simp [substlE, Unary.reduce_call_substl]; (srw ?Unary.substl ?Unary.substl.go ?Unary.substl /==/- ?Unary.guard_pos; all_goals try rfl-/)
         try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
       ywp; ylet; simp [subst, subst.go]
       rw [hhstar_comm]
@@ -439,7 +407,6 @@ lemma example1_spec (xv : ℤ):
       unfold prog_c1 --; yapp
       apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, [lang| ⟨p.val.2⟩]])
       intro _ ; rfl ; intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
-      -- unfold prog_c1
       simp  [Unary.func_call_ctx_prepare]
       all_goals
         try simp [isubstE, Unary.reduce_call_isubst]; --(try simp [Unary.isubst, Unary.isubst.go])--; (srw ?Unary.guard_pos; all_goals try rfl)
@@ -504,12 +471,8 @@ lemma example1_spec (xv : ℤ):
             have hh : (∃ p_1 ≤ 0, ([lang| ()], p_1) = ([lang| ()], p)) := by
               use p
             specialize h hh
-            simp [h]
-            aesop
-        · right
-          use p
-          simp [hp]
-          aesop
+            simp [h]; simp_all
+        · right; use p; simp [hp]; simp_all
       · intro h
         rcases h with (rfl | ⟨a, ha_pos, ha_eq⟩)
         · constructor
@@ -527,14 +490,12 @@ lemma example1_spec (xv : ℤ):
           simp [tmp]
     rw [payeq]; clear payeq
     set H₅ := fun x h : hheap (trm × payload)ˡ => ∀ ll ∈ lang_index, ∃ pp ∈ {x | ∃ p ∈ pay_index1 ∪ {-10}, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩ with hH5
-    -- rw [← hH5]
     rw [← weird_fix_payload1 (pv := -10)]
     unfold default_payload; dsimp
     rw [hhstar_comm, hhstar_assoc]
     yin 0: ywp; ylet; simp [subst, subst.go]
     rw [← hhstar_symbol_replace (hH₁ := [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv]) (hH₂ := H₃)]
     apply htriple_conseq_frame (H₂ := hhstar [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv] H₃); apply htriple_get (v := fun _ => xv) ;
-    -- apply htriple_conseq_frame (H₂ := [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv]); apply htriple_get (v := fun _ => xv) ;
     { ysimp; rw [labSet]; simp }
     ysimp
     simp only [OfNat.ofNat, Int.ofNat]; simp

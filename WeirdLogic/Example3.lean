@@ -8,7 +8,7 @@ import Lgtm.Experiments.HyperCommon
 import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
-import WeirdLogic.Util
+import WeirdLogic.WUtil
 import WeirdLogic.Hete
 import WeirdLogic.WUnary
 
@@ -70,9 +70,6 @@ lang_def prog_c1 :=
       yl := temp1
     }
 
-abbrev default_payload : payload:= 0
-abbrev default_trm : trm := [lang|()]
-
 abbrev Lang := List trm
 
 def lang_list_index : Set (List trm) :=
@@ -128,9 +125,6 @@ lemma cfgexp_grammar_isubst (n : ℕ) (t1 t2 : trm) :
 
 lemma equiv_1 (a : Int)
   (h : ∀ (v : val), subst i v t = t)
-  -- (hQ : (∀ v1 v2, Q v1 = Q v2) ∨ (∀ v h, Q v h → v = val_unit))
-  -- (hQt : ∀ Q', eval s t Q' →
-  --   ((∀ v1 v2, Q' v1 = Q' v2) ∨ (∀ v h, Q' v h → v = val_unit)))
   (hQ : (∀ v1 v2, Q v1 = Q v2))
   :
   eval s (regexp_grammar n t) Q ↔ eval s (trm_for i a ((a + n : Int)) t) Q := by
@@ -295,50 +289,6 @@ lemma example3_single_iter (xv : ℤ) (yv : ℤ):
   rcases h2 with ⟨h21,h22,hh21,hh22,hh23,hh24⟩
   rw [hh24,hh4,hh1,hh2,hh21,hh22]
 
--- injective proofs for the old format
--- def cfgexp_grammar_injective ( i j : ℕ) ( t : trm):
---   t ≠ [lang| ()] ->
---   cfgexp_grammar i t1 t2 =  cfgexp_grammar j t1 t2 ->
---   i = j := by
---   intro ht h
---   unfold cfgexp_grammar at h
---   induction i generalizing j with
---   | zero =>
---     induction j with
---     | zero => rfl
---     | succ jn hjn =>
---         cases jn
---         case zero => simp_all
---         case succ jj => simp_all
---   | succ ik hik=>
---     induction j with
---     | zero =>
---         cases ik
---         case zero => simp_all
---         case succ jj => simp_all
---     | succ jn hjn =>
---         simp
---         cases ik
---         case zero =>
---           cases jn
---           case zero => simp_all
---           case succ jnn =>
---             simp only [Nat.zero_add, Nat.add_zero] at h
---             simp [*] at h
---             have tnq := trm_seq_neq' ((cfgexp_grammar (jnn + 1) t1 t2)) t2
---             contradiction
---         case succ ikk =>
---           cases jn
---           case zero =>
---             simp only [Nat.zero_add, Nat.add_zero] at h
---             simp [*] at h
---             have tnq := trm_seq_neq' ((cfgexp_grammar (ikk + 1) t1 t2)) t2
---             simp_all
---           case succ jnn =>
---             simp_all
---             unfold cfgexp_grammar at h
---             specialize hik (jnn+1) h
---             simp_all
 
 def regexp_grammar_injective ( i j : ℕ) ( t : trm):
   t ≠ [lang| ()] ->
@@ -408,7 +358,6 @@ set_option maxHeartbeats 6400000 in
 lemma example3_spec (xv yv : ℤ) :
   {
     [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
-    -- [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | yl ~~> yv]
   }
   [0| p in pay_index => prog_c1(⸨xl : Loc⸩, ⸨yl : Loc⸩, ⟨p.val.2⟩) ]
   [1| l in lang_index => l.val.fst(⸨xl: Loc⸩, ⸨yl : Loc⸩)]
@@ -584,11 +533,3 @@ lemma example3_spec (xv yv : ℤ) :
   rw [idx_eq]; clear idx_eq
   apply example3_single_iter (sn := trm_funs [trm_varl "xl", trm_varl "yl"] (cfgexp_grammar k trm1 trm2)) (xl := xl) (yl := yl) (n := k) (yv := yv) (xv := xv)
   simp
-
-/- Previously, constraints for payloads in the heap are in the post-condition
-    -- ∧ arr⟨{⟨0,p⟩}⟩(pa , i in pa_len => p.2.1[i]!) h
-    -- ∧ arr⟨{⟨0,p⟩}⟩(pb , i in pb_len => p.2.2[i]!) h
-  And pre-condition is default
-  -- arr⟨⋆⟩(pa , i in pa_len =>g i) ∗
-  -- arr⟨⋆⟩(pb , i in pb_len =>q i)
--/
