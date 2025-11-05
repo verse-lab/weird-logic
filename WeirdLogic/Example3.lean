@@ -20,8 +20,9 @@ namespace WeirdLogic
 /- L -> (S1)
   S1 -> trm1; S1; trm2
         | ε
- -/
- /- context free + langseq rule -/
+
+  L = {trm1ⁿ;trm2ⁿ : n ≥ 0}
+  context free + infdisj rule -/
 def trm1 : trm := [lang| let xx := !xl in let temp0 := xx + 1 in xl := temp0]
 def trm2 : trm := [lang| let yy := !yl in let temp1 := yy + 1 in yl := temp1]
 def r1 : ContextFreeRule trm String :=

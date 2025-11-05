@@ -16,8 +16,10 @@ open ContextFreeGrammar
 
 namespace WeirdLogic
 
-/- L -> trm1 | trm 2 -/
-/- regular + if rule -/
+/- L -> trm1 | trm 2
+
+  L = {(trm1|trm2)}
+  regular + if rule -/
 def trm1 : trm := [lang| fun ⸨xk: Loc⸩ => let xx := !xk in let temp0 := xx + 1 in xk := temp0]
 def trm2 : trm := [lang| fun ⸨xr: Loc⸩ => let xx := !xr in let temp0 := xx + 2 in xr := temp0]
 def r1 : ContextFreeRule trm String :=
@@ -283,7 +285,15 @@ lemma example1_spec (xv : ℤ):
       ysimp
       ywp ; ylet
       apply htriple_conseq_frame ; apply htriple_gt ; ysimp
-      ysimp ; simp [subst, subst.go]
+      ysimp_start
+      ysimp_step
+      ysimp_step
+      ysimp_step
+      ysimp_step
+      try rev_pure
+      try hsimp
+      rotate_left
+      simp [subst, subst.go]
 
       rw [hwp_ht_eq (ht₂ := (fun a ↦
       [lang|

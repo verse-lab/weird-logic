@@ -20,9 +20,9 @@ namespace WeirdLogic
 /- L -> S1
   S1 -> trm1; S1
         | ε
- -/
-/- regular + for rule -/
-/- for a language instance in type trm, the outermost type must be trm_funs -/
+  L = {trm1ⁿ, n ≥ 0}
+  regular + for rule
+  for a language instance in type trm, the outermost type must be trm_funs -/
 
 def trm_tmp : trm := [lang| fun ⸨xl: Loc⸩ => () ]
 def trm1 : trm := [lang| let xx := !xl in let temp0 := xx + 1 in xl := temp0]
