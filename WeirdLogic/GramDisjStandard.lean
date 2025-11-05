@@ -1,7 +1,5 @@
 import WeirdLogic.WLogic
 
-namespace Tmp
-
 lemma hhlocal_union {s1 s2 : Set α} {h : hhProp _} :
   hhlocal s1 h ∨ hhlocal s2 h → hhlocal (s1 ∪ s2) h := by
   unfold hhlocal hlocal hhimpl ; aesop
@@ -244,5 +242,3 @@ lemma weird_grmdisj_lemma_standard (s' s : Set α) (sht_prog sht_lang : LGTM.SHT
       have ⟨_, tmp⟩ := evalExact_det hnr1 hnr2
       exists pp ; rw [hprel, hprer] ; constructor ; assumption ; aesop
   }
-
-end Tmp

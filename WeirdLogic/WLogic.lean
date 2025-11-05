@@ -834,11 +834,22 @@ lemma weird_fix_payload1 (dt : trm) (pv : ℤ) (prog : trm) :
 
 /- ********************************** Sequence Rules ************************************** -/
 
-/- deriables from focus rule and similar to the proof of weaken lemma? -/
+/- requires a new sequantial composition rule and merge rule (if we do not change the index set) -/
 
-lemma weird_seqleft_lemma (s₁ s₂ : Set α):
-  True := by
-  simp
+-- lemma weird_seqleft_lemma (s₁ s₂ ls ps ls1 ls2: Set α) (f : trm -> trm) (trm1 trm2 : trm) (arg_list : List trm):
+--   ls = {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {trm_seq tt1 tt2}] | tt1 ∈ ls1 ∧ tt2 ∈ ls2  } ->
+--   (H ==> LGTM.wp
+--     [{s := ⟪0,ps⟫, ht := fun _ => trm1}, {s := ⟪1,ls1⟫, ht := fun lang => lang.val.1.trm_call arg_list}]
+--      fun x => R) ->
+--   (R ==> LGTM.wp
+--     [{s := ⟪0,ps⟫, ht := fun _ => trm2}, {s := ⟪1,ls1⟫, ht := fun lang => lang.val.1.trm_call arg_list}]
+--      fun x => Q) ->
+--   H ==> LGTM.wp
+--     [{s := ⟪0,ps⟫, ht := fun _ => trm_seq trm1 trm2},
+--      {s := ⟪1,ls⟫, ht := fun lang => lang.val.1.trm_call arg_list}]
+--     fun x => Q := by
+--   simp
+--   sorry
 
 /- ********************************** InfDisj Rules ************************************** -/
 

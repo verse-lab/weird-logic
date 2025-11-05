@@ -201,3 +201,27 @@ lemma pair_wrap_eq_right {α β : Type} (i : ℕ) (d : β) (s' : Set α) (s : Se
 lemma unsimp_singleton_set ( t : trm) ( p : β) :
   {x | ∃ l ∈ ({t} : Set trm), (l, p) = x} = {(t, p)} := by
   simp
+
+lemma labSet_union (i : ℕ) (p p1 p2 : Set α):
+  p = p1 ∪ p2 ->
+  ⟪i, p⟫ = ⟪i, p1⟫ ∪ ⟪i, p2⟫ := by
+  move=> h
+  unfold labSet;
+  ext x; simp
+  constructor <;> intro h1
+  · aesop
+  · cases h1 with
+    | inl h2 =>
+      subst h
+      simp_all only [Set.mem_union]
+      obtain ⟨w, h⟩ := h2
+      obtain ⟨left, right⟩ := h
+      subst right
+      simp_all only [Labeled.mk.injEq, true_and, exists_eq_right, true_or]
+    | inr h2 =>
+      subst h
+      simp_all only [Set.mem_union]
+      obtain ⟨w, h⟩ := h2
+      obtain ⟨left, right⟩ := h
+      subst right
+      simp_all only [Labeled.mk.injEq, true_and, exists_eq_right, or_true]
