@@ -94,11 +94,21 @@ def cfgexp_grammar : ℕ → trm → trm → trm
   | 0, _, _ => trm_val val_unit
   | n, t1, t2 => trm_seq (regexp_grammar n t1) (regexp_grammar n t2)
 
+def orexp_grammar : Bool → trm
+  | true => trm3
+  | false => trm4
+
+def lang_squeeze_list': Set trm :=
+  {trm_seq
+    (cfgexp_grammar i trm1 trm2)
+    (orexp_grammar j)
+    | (i : ℕ) (j : Bool) }
+
 def lang_squeeze_list: Set trm :=
   {trm_seq (cfgexp_grammar i trm1 trm2) (trm3) | i : ℕ } ∪ {trm_seq (cfgexp_grammar i trm1 trm2) (trm4) | i : ℕ }
 
 def lang_fun_set : Set trm :=
-  {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {tt}] | tt ∈ lang_squeeze_list }
+  {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {tt}] | tt ∈ lang_squeeze_list' }
 
 def pay_index : Set (trm × payload × payload) :=
   { x |
@@ -106,17 +116,17 @@ def pay_index : Set (trm × payload × payload) :=
   }
 
 def lang_index : Set (trm × payload × payload ):=
-  { (l, (default_payload,default_payload)) | l ∈ lang_fun_set}
+  { (l, (default_payload,default_payload)) | l ∈ lang_squeeze_list'}
 
 def lang_index1 : Set (trm × payload × payload ):=
-  { (l, (default_payload,default_payload)) | l ∈ {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {tt}] | tt ∈ {trm_seq (cfgexp_grammar i trm1 trm2) (trm3) | i : ℕ } }}
+  { (l, (default_payload,default_payload)) | l  ∈ {trm_seq (cfgexp_grammar i trm1 trm2) (trm3) | i : ℕ } }
 
 def lang_index2 : Set (trm × payload × payload ):=
-  { (l, (default_payload,default_payload)) | l ∈ {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {tt}] | tt ∈ {trm_seq (cfgexp_grammar i trm1 trm2) (trm4) | i : ℕ } }}
+  { (l, (default_payload,default_payload)) | l ∈ {trm_seq (cfgexp_grammar i trm1 trm2) (trm4) | i : ℕ } }
 
 lemma lang_union :
   lang_index = lang_index1 ∪ lang_index2 := by
-  unfold lang_index1 lang_index2 lang_index lang_fun_set lang_squeeze_list
+  unfold lang_index1 lang_index2 lang_index lang_squeeze_list'
   aesop
 
 lemma lang_disjoint :
@@ -127,10 +137,10 @@ lemma lang_disjoint :
   ext e; simp
   intro n h1 n2
   rw [← h1]
-  unfold trm_funs; simp
-  unfold trm_funs; simp
-  unfold trm_funs; simp
-  intro hh
+  -- unfold trm_funs; simp
+  -- unfold trm_funs; simp
+  -- unfold trm_funs; simp
+  -- intro hh
   unfold trm4 trm3
   simp
 
@@ -174,11 +184,27 @@ lemma pay_disjoint :
   have tmp := not_le_of_gt h1
   contradiction
 
-lemma hhstar_flip_exp4 :
-  hpy ∗ hl1y ∗ hl2y ∗ hpx ∗ hl1x ∗ hl2x =
-  (hpx ∗ hpy) ∗ (hl1x ∗ hl1y) ∗ (hl2x ∗ hl2y) := by
+/-
+  This is the proof for option 1
+-/
+set_option maxRecDepth 2000 in
+set_option maxHeartbeats 6400000 in
+lemma example4_spec0 (xv : ℤ) (yv : ℤ):
+  {
+    [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
+  }
+  [0| p in pay_index => prog_c1(⸨xl : Loc⸩, ⸨yl : Loc⸩, ⟨p.val.2.1⟩, ⟨p.val.2.2⟩) ]
+  [1| l in lang_index => l.val.fst(⸨xl: Loc⸩, ⸨yl : Loc⸩)]
+  { v,
+    fun h => ∀ ll ∈ lang_index, ∃ pp ∈ pay_index , h ⟨1, ll⟩ = h ⟨0, pp⟩
+  }
+  := by
+  unfold LGTM.triple
+  unfold lang_index
   sorry
-
+  -- dsimp
+  -- yin 1 : apply ywp_lemma_funs' (tfunc := fun i => i.val.1) (ts := fun (p : (trm × payload × payload)ˡ) => [xl, yl]);
+  -- simp;
 /-
   Option 1: with SeqU rule
   Option 2: without SeqU rule
@@ -299,6 +325,7 @@ lemma example4_spec (xv : ℤ) (yv : ℤ):
     {
       -- Step 3: InfDisj rule
       dsimp
+      stop
       -- need to use ymerge to merge all positive p.val.2.2
       apply ymerge_lemma
         («μ» := fun x => (x.1, (x.2.1, 10)))
