@@ -225,7 +225,7 @@ lemma swap_hqstar  (H' : @hval α → @hhProp α) (H₂ H : @hhProp α):
 
 /- Standard Weaken Rule:
 
-          {H1} [C(P \ P1)] {∀ p ∉ P \ P1, h p = ∅}
+          hlocal(P \ P1, H1) {H1} [C(P \ P1)] {⊤}
       {H2} [C(P1); L] { ∀ l ∈ L, ∃ p ∈ P1, h l = hp }
    ------------------------------------------------------
     {H1 ∗ H2} [C(P); L] { ∀ l ∈ L, ∃ p ∈ P, h l = hp }
@@ -825,6 +825,13 @@ lemma weird_fix_lang (t : trm) (p : β) (arg_list : List trm):
 lemma weird_fix_payload1 (dt : trm) (pv : ℤ) (prog : trm) :
   H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun _ : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨pv⟩]]}, sht_lang] Q =
   H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun p : (trm × ℤ)ˡ => prog.trm_call [ x , [lang| ⟨p.val.2⟩]]}, sht_lang] Q := by
+  congr
+  apply LGTM.wp_sht_eq
+  simp_all
+
+lemma weird_fix_payload2 (dt : trm) (pv : ℤ) (prog : trm):
+  H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun _ : (trm × ℤ)ˡ => prog.trm_call [x, y, [lang| ⟨pv⟩]]}, sht_lang] Q =
+  H ==> LGTM.wp [{s := ⟪0, {(dt, pv)}⟫, ht := fun p : (trm × ℤ)ˡ => prog.trm_call [x, y, [lang| ⟨p.val.2⟩]]}, sht_lang] Q := by
   congr
   apply LGTM.wp_sht_eq
   simp_all
