@@ -1,5 +1,6 @@
 import WeirdLogic.WLogic
 
+-- TODO collect all these stuff
 lemma hhlocal_union {s1 s2 : Set α} {h : hhProp _} :
   hhlocal s1 h ∨ hhlocal s2 h → hhlocal (s1 ∪ s2) h := by
   unfold hhlocal hlocal hhimpl ; aesop

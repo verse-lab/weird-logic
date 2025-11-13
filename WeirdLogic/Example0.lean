@@ -14,7 +14,7 @@ import WeirdLogic.Hete
 open Unary prim val trm
 open ContextFreeGrammar
 
-namespace WeirdLogic
+namespace WeirdLogic.Example0
 
 /- L -> trm1 | trm 2
 
@@ -43,7 +43,7 @@ def cfg1 : ContextFreeGrammar trm :=
 
 def l1 : Language trm := cfg1.language
 
-lang_def' prog_c1 :=
+lang_def' WeirdLogic.Example0.prog_c1 :=
   fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ ⸨pb:Val⸩ =>
     let xx := !xl in
     let yy := !yl in
@@ -679,4 +679,4 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
         simp_all
 
 
-end WeirdLogic
+end WeirdLogic.Example0
