@@ -1,6 +1,5 @@
 import Lean
 
--- import Ssreflect.Lang
 import Mathlib.Data.Finmap
 import Mathlib.Data.List.Indexes
 

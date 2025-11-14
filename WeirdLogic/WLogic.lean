@@ -837,24 +837,6 @@ lemma weird_fix_payload2 (dt : trm) (pv : ℤ) (prog : trm):
 #check bighstar_hhstar_disj
 #check bighstarDef_hhstar
 
-/- ********************************** Sequence Rules ************************************** -/
-
-/- requires a new sequantial composition rule and merge rule (if we do not change the index set) -/
-
--- lemma weird_seqleft_lemma (s₁ s₂ ls ps ls1 ls2: Set α) (f : trm -> trm) (trm1 trm2 : trm) (arg_list : List trm):
---   ls = {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {trm_seq tt1 tt2}] | tt1 ∈ ls1 ∧ tt2 ∈ ls2  } ->
---   (H ==> LGTM.wp
---     [{s := ⟪0,ps⟫, ht := fun _ => trm1}, {s := ⟪1,ls1⟫, ht := fun lang => lang.val.1.trm_call arg_list}]
---      fun x => R) ->
---   (R ==> LGTM.wp
---     [{s := ⟪0,ps⟫, ht := fun _ => trm2}, {s := ⟪1,ls1⟫, ht := fun lang => lang.val.1.trm_call arg_list}]
---      fun x => Q) ->
---   H ==> LGTM.wp
---     [{s := ⟪0,ps⟫, ht := fun _ => trm_seq trm1 trm2},
---      {s := ⟪1,ls⟫, ht := fun lang => lang.val.1.trm_call arg_list}]
---     fun x => Q := by
---   simp
---   sorry
 
 /- ********************************** InfDisj Rules ************************************** -/
 
@@ -866,21 +848,6 @@ lemma weird_fix_payload2 (dt : trm) (pv : ℤ) (prog : trm):
 
 -/
 
--- comment for later
--- lemma htriple_heval_prod (hQ : α -> val -> hProp) :
---   (∀ a ∈ s, heval {a} hh ht (hQ a)) ->
---   heval s hh ht fun hv => bighstarDef s (fun a => hQ a (hv a)) hh := by
---   move=> hev; exists hQ=> ⟨|hv ⟩ //
---   sby apply (hhimpl_hhexists_r hv); srw fun_insert_ff
-
-/-
-lemma htriple_htriple_partition (s : Set α) (idxx : Set ℕ) (pf : ℕ -> Set α) (H : α -> hProp) (Q : ℕ -> hheap α -> Prop) :
-  s = (⋃ i ∈ idxx, (pf i) ) ->
-  (∀ i ∈ idxx, ∀ j ∈ idxx, i ≠ j → Disjoint (pf i) (pf j)) ->
-  (∀ i ∈ idxx, pf i ⊆ s )->
-  (∀ k ∈ idxx, htriple (pf k) ht [∗ i in (pf k)| H i] (fun hv hh => Q k hh)) ->
-  htriple (s) ht [∗ i in (s)| H i] (fun hv hh => ∀ i : ℕ, Q i hh) := by
--/
 
 lemma inject_labSet (s1 : Set α) (Idx : Set β)(f : β -> α) (k : ℕ):
   s1 = ⋃ i ∈ Idx, {f i} ->

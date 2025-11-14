@@ -186,13 +186,6 @@ theorem weird_gram_seq_full_gen
     have tmpeq : (ssubst (proj2 j) (sp ∪ sl) (sp ∪ sl)) =
       (sht_prog2 j).s ∪ (sht_lang2 j).s := by
       simp only [ssubst_set_union_union]
-      -- rw [← ssubst_subset_change (s := sht_prog.s) (s' := sp)]
-      -- on_goal 2=> apply hvsub_prog2_s _ jin
-      -- on_goal 2=> simp [sp]
-      -- rw [← ssubst_subset_change (s := sht_lang.s) (s' := sl)]
-      -- on_goal 2=> apply hvsub_lang2_s _ jin
-      -- on_goal 2=> simp [sl]
-      -- rw [← hsub_lang2_s _ jin, ← hsub_prog2_s _ jin]
       rw [hsub_prog2_s _ jin, hsub_lang2_s _ jin]
 
     apply htriple_conseq (Q := fun _ h ↦
@@ -600,8 +593,6 @@ theorem weird_gram_seq_full_prod
     · rw [fsubst_out] ; rw [ssubst_image'', ← himage_lang2' _ jin] ; assumption
   · intro j jin
     whnf ; simp ; clear *- ; aesop
-  -- · intro j jin
-  --   sorry
   · intro a ain ; simp only [sht_prog', ain, reduceIte] ; apply hshape_prog ; assumption
   · rw [ssubst_image''] ; symm ; assumption
   · funext b
@@ -625,184 +616,11 @@ theorem weird_gram_seq_full_prod
     · rw [fsubst_out] ; rw [ssubst_image'', ← himage_prog2' _ jin'] ; assumption
   · intro j jin
     whnf ; simp ; aesop
-  -- · intro j jin
-  --   sorry
   · intros ; rfl
   · intro j jin ; specialize hpart2 j jin
     unfold LGTM.triple at hpart2 ⊢
     rw [LGTM.wp_sht_eq] ; apply hpart2
     simp ; clear *- ; aesop
 
--- ???
-/-
-set_option maxHeartbeats 640000 in
-theorem weird_gram_seq_gen
-  (sht_prog sht_lang : @LGTM.SHT α)
-  (prog_ht_1 prog_ht_2 : α → trm)
-  (lang_ht_1 lang_ht_2 : α → trm)
-  (sht_prog1 sht_lang1 : @LGTM.SHT β)
-  (proj1 : α → β)
-  (sht_prog2 sht_lang2 : β → @LGTM.SHT γ)
-  (proj2 : β → α → γ)
-  (H : α → hProp)
-  (H1 Q1 : β → hProp)
-  -- this could be refined like below, but for now seems not necessary
-  [inst : ∀ i, HPropExact (H1 i)]
-  -- (inst : ∀ i ∈ sht_prog.s ∪ sht_lang.s, HPropExact (H1 (proj1 i)))
-  -- [inst' : ∀ i, HPropExact (Q1 i)]
-  (inst' : ∀ i ∈ sht_prog.s ∪ sht_lang.s, HPropExact (Q1 (proj1 i)))
-  (hdisj : Disjoint sht_prog.s sht_lang.s)
-  (hdisj1 : Disjoint sht_prog1.s sht_lang1.s)
-  (hdisj2 : ∀ j ∈ sht_lang1.s, Disjoint (sht_prog2 j).s (sht_lang2 j).s)
-  -- (part1_oracle : β → β)
-  -- (hsurjective : sht_prog1.s = (part1_oracle '' sht_lang1.s))
-  -- exploit as much as we can from the equality between heaps
-  (hQ1 : [∗ i in sht_prog1.s ∪ sht_lang1.s| Q1 i ] ==>
-    (fun h => ∀ ll ∈ sht_lang1.s, ∃ pp ∈ sht_prog1.s, h ll = h pp))
-  -- shape: all `trm_seq`
-  -- using `∃` might also work, but with skolemization this should be the same
-  (hshape_lang : ∀ a ∈ sht_lang.s, sht_lang.ht a = trm_seq (lang_ht_1 a) (lang_ht_2 a))
-  (hsub_lang1_s : sht_lang1.s = ssubst proj1 sht_lang.s sht_lang.s)
-  (hsub_lang1_ht : sht_lang1.ht = fsubst proj1 sht_lang.s lang_ht_1)
-  (hvsub_lang1_ht : validSubst proj1 sht_lang.s lang_ht_1)
-  -- thing about `(sht_lang2 j).s`
-  (hsub_lang2_s : ∀ j ∈ sht_lang1.s,
-    (sht_lang2 j).s = ssubst (proj2 j)
-    (preimageRestr j proj1 sht_lang.s)
-    -- sht_lang.s
-    -- sht_lang.s
-    -- ... the subset that maps to j
-    (preimageRestr j proj1 sht_lang.s)
-    )
-  -- (hvsub_lang2_s : ∀ j ∈ sht_lang1.s,
-  --   validSubst (proj2 j) sht_lang.s
-  --   (preimageRestr j proj1 sht_lang.s)
-  --   )
-  (hsub_lang2_ht : ∀ j ∈ sht_lang1.s,
-    (sht_lang2 j).ht = fsubst (proj2 j)
-    (preimageRestr j proj1 sht_lang.s)
-    lang_ht_2
-    )
-  (hvsub_lang2_ht : ∀ j ∈ sht_lang1.s,
-    validSubst (proj2 j)
-    (preimageRestr j proj1 sht_lang.s)
-    lang_ht_2
-    )
-
-  -- similar
-  (hshape_prog : ∀ a ∈ sht_prog.s, sht_prog.ht a = trm_seq (prog_ht_1 a) (prog_ht_2 a))
-  (hsub_prog1_s : sht_prog1.s = ssubst proj1 sht_prog.s sht_prog.s)
-  (hsub_prog1_ht : sht_prog1.ht = fsubst proj1 sht_prog.s prog_ht_1)
-  (hvsub_prog1_ht : validSubst proj1 sht_prog.s prog_ht_1)
-  /-
-  (hsub_prog2_s :
-    ∀ j ∈ sht_lang1.s,
-    (sht_prog2 j).s = ssubst (proj2 j)
-    (preimageRestr (part1_oracle j) proj1 sht_prog.s)
-    -- sht_prog.s
-    -- sht_prog.s
-    -- ... the subset that maps to `(part1_oracle j)`!!
-    (preimageRestr (part1_oracle j) proj1 sht_prog.s)
-    )
-  -- (hvsub_prog2_s :
-  --   ∀ j ∈ sht_lang1.s,
-  --   validSubst (proj2 j) sht_prog.s
-  --   (preimageRestr (part1_oracle j) proj1 sht_prog.s)
-  --   )
-  (hsub_prog2_ht :
-    ∀ j ∈ sht_lang1.s,
-    (sht_prog2 j).ht = fsubst (proj2 j)
-    (preimageRestr (part1_oracle j) proj1 sht_prog.s)
-    prog_ht_2
-    )
-  (hvsub_prog2_ht :
-    ∀ j ∈ sht_lang1.s,
-    validSubst (proj2 j)
-    (preimageRestr (part1_oracle j) proj1 sht_prog.s)
-    prog_ht_2
-    )
-  -/
-  -- i.e., `H1 = fsubst sht_lang.s proj1 H`
-  (hH1 : ∀ a ∈ sht_prog.s ∪ sht_lang.s, H a = H1 (proj1 a))
-
-  (hpart1 : LGTM.triple [sht_prog1, sht_lang1]
-    [∗ i in sht_prog1.s ∪ sht_lang1.s| H1 i ]
-    (fun _ => [∗ i in sht_prog1.s ∪ sht_lang1.s| Q1 i ]))
-
-  -- due to the "crossing", need to do such "normalization"
-  (hpart2 : ∀ j ∈ sht_lang1.s,
-    LGTM.triple [sht_prog2 j, sht_lang2 j]
-    -- all start with the same heap, `Q1 j`
-    [∗ in (sht_prog2 j).s ∪ (sht_lang2 j).s| Q1 j ]
-    (fun _ h => ∀ ll ∈ (sht_lang2 j).s, ∃ pp ∈ (sht_prog2 j).s, h ll = h pp))
-  :
-  LGTM.triple [sht_prog, sht_lang]
-  [∗ i in sht_prog.s ∪ sht_lang.s| H i ]
-  (fun _ h => ∀ ll ∈ sht_lang.s, ∃ pp ∈ sht_prog.s, h ll = h pp)
-  := by
-
-  apply LGTM.triple_seq
-    (Q := [∗i in sht_prog.s ∪ sht_lang.s| Q1 (proj1 i)])
-    (ht_list1 := [prog_ht_1, lang_ht_1]) (ht_list2 := [prog_ht_2, lang_ht_2])
-  on_goal 1=> simp ; aesop
-  { dsimp only [List.zipWith]
-    -- go manual here?
-    unfold LGTM.triple LGTM.wp at hpart1 ⊢
-    simp only [LGTM.SHTs.set, LGTM.SHTs.htrm] at hpart1 ⊢
-    rw [hwp_ht_eq (ht₂ := (sht_prog1.ht ∪_sht_prog1.s sht_lang1.ht ∪_sht_lang1.s fun x ↦ [lang| ()]) ∘ proj1)] ; rotate_left
-    { whnf ; simp ; rintro x (hin | hin) <;> simp [hin]
-      { -- simp [Set.disjoint_left.mp hdisj hin]
-        have hin' := hin ; apply fsubst_in at hin' ; rw [← hsub_prog1_s] at hin'
-        simp [hin', hsub_prog1_ht] ; rw [fsubst_σ] <;> assumption
-      }
-      { simp [Set.disjoint_right.mp hdisj hin]
-        have hin' := hin ; apply fsubst_in at hin' ; rw [← hsub_lang1_s] at hin'
-        simp [hin', hsub_lang1_ht] ; rw [fsubst_σ] <;> try assumption
-        simp [Set.disjoint_right.mp hdisj1 hin']
-      }
-    }
-    { rw [bighstar_eq (H' := fun a => H1 (proj1 a))] <;> try assumption
-      apply htriple_merge
-      { simp ; apply validSubst_bighstar ; intros ; infer_instance }
-      { intro hv ; simp [hhlocalE] }
-      { simp [hhlocalE] }
-      { repeat rw [hsubst_bighstar_gen] <;> try solve | simp | assumption
-        simp [ssubst_set_union_union, ← hsub_lang1_s, ← hsub_prog1_s]
-        simp at hpart1 ; exact hpart1
-      }
-    }
-  }
-
-  have hQ1' : [∗i in sht_prog.s ∪ sht_lang.s| Q1 (proj1 i)] ==>
-    fun h => ∀ ll ∈ sht_lang.s, ∃ qq ∈ sht_prog.s, h ll = h qq := by
-    -- this part is mostly copied and pasted
-    intro hh hpre ; have hpre' := hpre ; apply validSubst_bighstar at hpre'
-    on_goal 2=> assumption
-    whnf at hpre ; dsimp at hpre
-    specialize hQ1 (fun b => if b ∈ sht_prog1.s ∪ sht_lang1.s then fsubst proj1 (sht_prog.s ∪ sht_lang.s) hh b else ∅) ?_
-    { whnf ; intro a ; dsimp ; split <;> try rfl
-      rename_i h ; simp at h ; rcases h with (hin | hin)
-      · rw [hsub_prog1_s, ssubst_image''] at hin ; simp at hin ; rcases hin with ⟨x, xin, heq⟩ ; subst a
-        have hpre' := hpre x ; simp [xin] at hpre'
-        rw [fsubst_σ] <;> try assumption
-        · simp ; left ; assumption
-      · rw [hsub_lang1_s, ssubst_image''] at hin ; simp at hin ; rcases hin with ⟨x, xin, heq⟩ ; subst a
-        have hpre' := hpre x ; simp [xin] at hpre'
-        rw [fsubst_σ] <;> try assumption
-        · simp ; right ; assumption
-    }
-    -- also for this part, with very small changes
-    dsimp at hQ1 ; whnf
-    intro ll hll
-    have hinll : proj1 ll ∈ sht_lang1.s := by rw [hsub_lang1_s] ; apply fsubst_in ; assumption
-    specialize hQ1 _ hinll ; rcases hQ1 with ⟨pp, hinpp, hQ1⟩
-    simp [hinll, hinpp] at hQ1
-    rw [hsub_prog1_s, ssubst_image''] at hinpp ; simp at hinpp ; rcases hinpp with ⟨x, xin, heq⟩ ; subst pp
-    rw [fsubst_σ] at hQ1 <;> try assumption
-    on_goal 2=> simp ; right ; assumption
-    rw [fsubst_σ] at hQ1 <;> try assumption
-    on_goal 2=> simp ; left ; assumption
-    exists x
--/
 
 end

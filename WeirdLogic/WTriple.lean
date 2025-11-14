@@ -43,18 +43,6 @@ example : payload' :=
   payload'.pld_cons (payload_base.pld_nat 3) (payload'.pld_cons (payload_base.pld_bool true) payload'.pld_nil)
 
 
--- def hwtrm (α : Type) := α -> trm /- α is payload later-/
-
--- local notation "hwtrm" => hwtrm α
-
--- def payload_to_list (p : payload) : List val :=
---   match p with
---   | payload.pld_nil => []
---   | payload.pld_cons b p' =>
---     match b with
---     | payload_base.pld_bool b => [val.val_bool b] ++ payload_to_list p'
---     | payload_base.pld_nat n => [val.val_int n] ++ payload_to_list p'
-
 abbrev payload_map := Finmap ( λ _ : var ↦ val)
 
 /- ==================== Payload and Language Mapping Functions ==================== -/
