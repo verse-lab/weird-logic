@@ -1,2 +1,2 @@
 
-import WeirdLogic.Examples.Example4
+import WeirdLogic.Examples.VulnWM
