@@ -8,6 +8,6 @@ Rules:
 - `GrmSeq`: `weird_gram_seq_full_prod` in `GramSeq.lean`
 
 Case study: 
-- Main: `Example4.lean`
-- Part1: `Example3_1.lean`
-- Part2: `Example0.lean`
+- Main: `VulnWM.lean`
+- Part1: `ForWM.lean`
+- Part2: `IfWM.lean`

@@ -13,15 +13,15 @@ import WeirdLogic.GramDisjStandard
 import WeirdLogic.WUnary
 
 import WeirdLogic.GramSeq
-import WeirdLogic.Examples.Example3_1
-import WeirdLogic.Examples.Example0
+import WeirdLogic.Examples.ForWM
+import WeirdLogic.Examples.IfWM
 
 open Unary prim val trm
 open ContextFreeGrammar
 -- #check Set.BijOn
 open Classical
 
-namespace WeirdLogic.Example4
+namespace WeirdLogic.VulnWM
 
 /- L -> S1; S2
   S1 -> trm1; S1; trm2
@@ -69,46 +69,11 @@ def cfg1 : ContextFreeGrammar trm :=
 
 def l1 : Language trm := cfg1.language
 
-/-
-lang_def' prog_c1_pre :=
-  fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ ⸨pa:Val⸩ =>
-    for k in [0:pa] {
-      let xx := !xl in
-      let temp0 := xx + 1 in
-      xl := temp0
-    };
-    for j in [0:pa] {
-      let yy := !yl in
-      let temp1 := yy + 1 in
-      yl := temp1
-    }
-
-lang_def' prog_c1_post :=
-  fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ ⸨pb:Val⸩ =>
-    let xx := !xl in
-    let yy := !yl in
-    if pb > 10 then
-      let temp0 := xx + yy in
-      yl := temp0
-    else
-      let temp1 := xx - yy in
-      yl := temp1
--/
 
 lang_def' prog_c1 :=
   fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ ⸨pa:Val⸩ ⸨pb:Val⸩=>
     Example3.prog_c1(⸨xl:Loc⸩, ⸨yl:Loc⸩, pa);
     Example0.prog_c1(⸨xl:Loc⸩, ⸨yl:Loc⸩, pb)
-/-
-def regexp_grammar : ℕ → trm → trm
-  | 0, _ => trm_val val_unit
-  | 1, t => t
-  | (n+1), t => trm_seq t (regexp_grammar n t)
-
-def cfgexp_grammar : ℕ → trm → trm → trm
-  | 0, _, _ => trm_val val_unit
-  | n, t1, t2 => trm_seq (regexp_grammar n t1) (regexp_grammar n t2)
--/
 
 def orexp_grammar : Bool → trm
   | true => Example0.trm1
@@ -150,13 +115,7 @@ def trm_call_args : trm → List trm
   | trm_call _ args => args
   | _ => []
 
-/-
-def lang_squeeze_list: Set trm :=
-  {trm_seq (cfgexp_grammar i trm1 trm2) (trm3) | i : ℕ } ∪ {trm_seq (cfgexp_grammar i trm1 trm2) (trm4) | i : ℕ }
 
-def lang_fun_set : Set trm :=
-  {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {tt}] | tt ∈ lang_squeeze_list' }
--/
 def pay_index : Set (trm × payload × payload) :=
   { x |
     ∃ p1 ∈ @Set.univ payload, ∃ p2 ∈ @Set.univ payload, (default_trm,(p1,p2))=x
@@ -164,85 +123,10 @@ def pay_index : Set (trm × payload × payload) :=
 
 def lang_index : Set (trm × payload × payload ):=
   { (l, (default_payload,default_payload)) | l ∈ lang_squeeze_list'}
-/-
-def lang_index1 : Set (trm × payload × payload ):=
-  { (l, (default_payload,default_payload)) | l  ∈ {trm_seq (cfgexp_grammar i trm1 trm2) (trm3) | i : ℕ } }
 
-def lang_index2 : Set (trm × payload × payload ):=
-  { (l, (default_payload,default_payload)) | l ∈ {trm_seq (cfgexp_grammar i trm1 trm2) (trm4) | i : ℕ } }
-/-
-lemma lang_union :
-  lang_index = lang_index1 ∪ lang_index2 := by
-  unfold lang_index1 lang_index2 lang_index lang_squeeze_list'
-  aesop
--/
-lemma lang_disjoint :
-  Disjoint lang_index1 lang_index2 := by
-  unfold lang_index1 lang_index2
-  simp_all
-  apply Set.disjoint_iff_inter_eq_empty.mpr
-  ext e; simp
-  intro n h1 n2
-  rw [← h1]
-  -- unfold trm_funs; simp
-  -- unfold trm_funs; simp
-  -- unfold trm_funs; simp
-  -- intro hh
-  unfold trm4 trm3
-  simp
-
-def pay_index1 : Set (trm × payload × payload) :=
-  {x | ∃ p1 ∈ @Set.univ payload, ∃ p2 ∈ @Set.univ payload, p2 > 10 ∧ (default_trm,(p1,p2)) = x }
-
-def pay_index2 : Set (trm × payload × payload) :=
-  {x | ∃ p1 ∈ @Set.univ payload, ∃ p2 ∈ @Set.univ payload, p2 ≤ 10 ∧ (default_trm,(p1,p2)) = x }
-
-lemma pay_union :
-  pay_index = pay_index1 ∪ pay_index2 := by
-  unfold pay_index pay_index1 pay_index2
-  simp
-  ext x
-  constructor <;> simp_all;
-  · intro x_1 h h2
-    subst h2
-    simp_all only [Prod.mk.injEq, true_and, exists_eq_right_right, exists_eq_right]
-    exact Int.lt_or_le 10 h
-  · intro h
-    cases h with
-    | inl h1 =>
-      rcases h1 with ⟨p1,p2,hh1,hh2⟩
-      subst hh2
-      use p1; simp
-    | inr h2 =>
-      rcases h2 with ⟨p1,p2,hh1,hh2⟩
-      use p1,p2
-
-lemma pay_disjoint :
-  Disjoint pay_index1 pay_index2 := by
-  unfold pay_index1 pay_index2
-  simp_all
-  apply Set.disjoint_iff_inter_eq_empty.mpr
-  ext e; simp
-  intro p1 p2 h1 h2 p3 p4 h3
-  subst h2
-  simp
-  intro h heq
-  rw [heq] at h3
-  have tmp := not_le_of_gt h1
-  contradiction
--/
-/-
-  This is the proof for option 1
--/
 
 attribute [-simp] Bool.exists_bool
--- attribute [simp] trm_seq_fst trm_seq_snd trm_call_fun
 
--- theorem exists_labType {p : ℕ → α → Prop} :
---   (∃ (x : αˡ), p x.lab x.val) ↔ (∃ (l : ℕ) (a : α), p l a) := by
---   constructor
---   · rintro ⟨⟨xl, xval⟩, h⟩ ; exists xl, xval
---   · rintro ⟨l, a, h⟩ ; exists ⟨l, a⟩
 theorem exists_labType {p : αˡ → Prop} :
   (∃ (x : αˡ), p x) ↔ (∃ (l : ℕ) (a : α), p ⟨l, a⟩) := by
   constructor
@@ -473,11 +357,3 @@ lemma example4_spec (xv : ℤ) (yv : ℤ):
   { simp [forall_labType, exists_labType, lang_index, lang_squeeze_list', pay_index]
     intro hv hh hpre a b c d ; specialize hpre _ a b c rfl d ; aesop
   }
-
-/- Previously, constraints for payloads in the heap are in the post-condition
-    -- ∧ arr⟨{⟨0,p⟩}⟩(pa , i in pa_len => p.2.1[i]!) h
-    -- ∧ arr⟨{⟨0,p⟩}⟩(pb , i in pb_len => p.2.2[i]!) h
-  And pre-condition is default
-  -- arr⟨⋆⟩(pa , i in pa_len =>g i) ∗
-  -- arr⟨⋆⟩(pb , i in pb_len =>q i)
--/
