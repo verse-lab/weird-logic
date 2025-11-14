@@ -341,4 +341,32 @@ theorem LGTM.triple_seq (shts : LGTM.SHTs α) (ht_list1 ht_list2 : List (htrm α
   · rw [← hs1] ; exact h1
   · rw [← hs2] ; exact h2
 
+theorem LGTM.triple_sequ1 (s1 : Set α) (ht1 ht2 : htrm α) (shts2 : LGTM.SHTs α) :
+  Disjoint s1 shts2.set →
+  LGTM.triple [⟨s1, ht1⟩] H (fun _ => R) →
+  LGTM.triple (⟨s1, ht2⟩ :: shts2) R Q →
+  LGTM.triple (⟨s1, fun a => trm_seq (ht1 a) (ht2 a)⟩ :: shts2) H Q := by
+  intro hdisj h1 h2
+  unfold LGTM.triple
+  rw [LGTM.wp_cons] <;> try assumption
+  dsimp ; ywp ; yseq
+  unfold LGTM.triple LGTM.wp at h1 ; simp at h1
+  apply htriple_conseq ; rw [← hwp_equiv, hwp_ht_eq] ; apply h1
+  on_goal 1=> whnf ; aesop
+  on_goal 1=> ysimp
+  ysimp ; rw [LGTM.triple, LGTM.wp_cons] at h2 ; simp at h2 ; exact h2 ; assumption
+
+theorem LGTM.triple_sequ2 (s1 : Set α) (ht1 ht2 : htrm α) (shts2 : LGTM.SHTs α) :
+  Disjoint s1 shts2.set →
+  LGTM.triple (⟨s1, ht1⟩ :: shts2) H Q →
+  (∀ hv, LGTM.triple [⟨s1, ht2⟩] (Q hv) (fun hv' => R (hv' ∪_s1 hv))) →
+  LGTM.triple (⟨s1, fun a => trm_seq (ht1 a) (ht2 a)⟩ :: shts2) H R := by
+  intro hdisj h1 h2
+  zseq_if_needed ; assumption ; zapp h1
+  specialize h2 x ; unfold LGTM.triple LGTM.wp at h2 ; simp at h2
+  apply htriple_conseq ; rw [← hwp_equiv, hwp_ht_eq] ; apply h2
+  · whnf ; aesop
+  · ysimp
+  · ysimp
+
 end DerivedRules
