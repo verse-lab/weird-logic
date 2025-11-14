@@ -93,14 +93,9 @@ def lang_squeeze_list: Set trm :=
 def lang_fun_list : Set trm :=
   {[lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {tt}] | tt ∈ lang_squeeze_list }
 
--- TODO for now, to keep things mostly feasible, we restrict the payload to `ℕ`
-
-def payload := Nat
-def default_payload := 0
-
 def pay_index : Set (trm × payload) :=
   {
-    (default_trm,p) | p ∈ @Set.univ payload
+    (default_trm,p) | p ∈ { pp : ℤ | pp ≥ 0 }
   }
 
 def lang_index : Set (trm × payload ):=
@@ -217,9 +212,9 @@ lemma simple_loop_pre3 (xl : loc) (xv : ℤ) (yv : ℤ) (n : Nat) :
 lemma example3_single_iter (xv : ℤ) (yv : ℤ):
   ∀ n : ℕ,
   sn = [lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar n trm1 trm2}] →
-  [∗ in {⟨0, (default_trm, n)⟩} ∪ {⟨1, (sn, default_payload)⟩}| xl ~~> xv ∗ yl ~~> yv] ==>
+  [∗ in {⟨0, (default_trm, Int.ofNat n)⟩} ∪ {⟨1, (sn, default_payload)⟩}| xl ~~> xv ∗ yl ~~> yv] ==>
   LGTM.wp
-    [{ s := ⟪0, {(default_trm, n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, yl, [lang| ⟨Int.ofNat p.val.2⟩]] },
+    [{ s := ⟪0, {(default_trm, Int.ofNat n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, yl, [lang| ⟨p.val.2⟩]] },
      { s := ⟪1, {(sn, default_payload)}⟫, ht := fun l ↦ l.val.1.trm_call [xl, yl] }]
     fun _ =>
       -- h => ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩
@@ -230,7 +225,7 @@ lemma example3_single_iter (xv : ℤ) (yv : ℤ):
   open Classical in simp +unfoldPartialApp [fun_insert]
   have tmp := htriple_prod (α := (trm × payload)ˡ) (s := {⟨1, (sn, default_payload)⟩, ⟨0, (default_trm, ↑n)⟩})
     (ht := open Classical in (fun a =>
-      if a = ⟨0, (default_trm, ↑n)⟩ then prog_c1.trm_call [xl, yl, [lang| ⟨Int.ofNat a.val.2⟩]]
+      if a = ⟨0, (default_trm, ↑n)⟩ then prog_c1.trm_call [xl, yl, [lang| ⟨a.val.2⟩]]
       else if a = ⟨1, (sn, default_payload)⟩ then a.val.1.trm_call [xl, yl] else [lang| ()]))
     (H := fun _ => xl ~~> xv ∗ yl ~~> yv)
     (Q := fun _ _ => xl ~~> ((xv + n) : ℤ) ∗ yl ~~> ((yv + n) : ℤ) )
@@ -271,12 +266,12 @@ lemma example3_single_iter (xv : ℤ) (yv : ℤ):
         rw [hstar_comm]; simp
     · xwp; xseq_xlet_if_needed;
       xfor (fun a => xl ~~> ((xv + a) : ℤ))
-      -- exact Nat.cast_nonneg n;
+      exact Nat.cast_nonneg n;
       intro i h1 h2 ; xwp ; xlet;
       · xapp ; xwp ; xlet ; xstep ; xapp ; xsimp
       · intro h; simp
         xfor (fun a => yl ~~> ((yv + a) : ℤ))
-        -- · exact Nat.cast_nonneg n;
+        · exact Nat.cast_nonneg n;
         intro i h1 h2 ; xwp ; xlet;
         · xapp ; xwp ; xlet ; xstep ; xapp ; xsimp
         · xsimp ; xsimp;
@@ -368,7 +363,7 @@ lemma example3_spec_ (xv yv : ℤ) :
   {
     [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
   }
-  [0| p in pay_index => prog_c1(⸨xl : Loc⸩, ⸨yl : Loc⸩, ⟨Int.ofNat p.val.2⟩) ]
+  [0| p in pay_index => prog_c1(⸨xl : Loc⸩, ⸨yl : Loc⸩, ⟨p.val.2⟩) ]
   [1| l in lang_index => l.val.fst(⸨xl: Loc⸩, ⸨yl : Loc⸩)]
   { v,
     -- fun h => ∀ ll ∈ lang_index, ∃ pp ∈ pay_index , h ⟨1, ll⟩ = h ⟨0, pp⟩
@@ -529,10 +524,13 @@ lemma example3_spec_ (xv yv : ℤ) :
   -/
   unfold LGTM.wp ; simp
   have eq : (⟪0, pay_index⟫ ∪ ⟪1, lang_index⟫) =
-    ⋃ (i : payload), ({⟨0, (default_trm, i)⟩} ∪
+    ⋃ (i : Nat), ({⟨0, (default_trm, Int.ofNat i)⟩} ∪
       {⟨1, ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar i trm1 trm2}], default_payload)⟩}) := by
     simp only [Set.iUnion_union_distrib] ; congr! 1
-    · ext a ; rcases a with ⟨al, aval⟩ ; simp [pay_index] ; aesop
+    · ext a ; rcases a with ⟨al, aval⟩ ; simp [pay_index]-- ; aesop
+      constructor
+      · rintro ⟨_, ⟨p, hp1, _⟩⟩ <;> subst_eqs ; simp ; exists Int.toNat p ; simp [hp1]
+      · rintro ⟨_, ⟨p, hp1, _⟩⟩ <;> subst_eqs ; simp
     · ext a ; rcases a with ⟨al, aval⟩ ; simp [lang_index, lang_fun_list, lang_squeeze_list] ; aesop
   rw [← Set.biUnion_univ] at eq
   rw [eq]
@@ -578,7 +576,7 @@ lemma example3_spec_ (xv yv : ℤ) :
           unfold trm2; simp
         }
         { aesop }
-      next h=> simp only [h, reduceIte] at hpre ; assumption
+      next h=> simp only [Int.ofNat_eq_coe] at h ; simp only [h, reduceIte] at hpre ; assumption
     }
   }
   /-

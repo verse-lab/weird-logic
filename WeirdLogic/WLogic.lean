@@ -283,6 +283,23 @@ lemma weird_weaken_lemma' (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
     convert form2
     aesop
 
+set_option maxHeartbeats 640000 in
+lemma weird_weaken_lemma (s' s s'': Set α) (sht_prog sht_lang : LGTM.SHT):
+  sht_prog.s = ⟪0, s⟫ ->
+  sht_lang.s = ⟪1, s''⟫ ->
+  s' ⊆ s -> Disjoint sht_prog.s sht_lang.s ->
+  hhlocal ⟪0, s \ s'⟫ H₁ ->
+  H₁ ==> LGTM.wp [⟨⟪0, s \ s'⟫, sht_prog.ht⟩] (fun _ => ⊤) ->
+  H₂ ==> LGTM.wp [⟨⟪0, s'⟫, sht_prog.ht⟩, sht_lang]
+    (fun _ h => ∀ ll ∈ s'', ∃ pp ∈ s', h ⟨1,ll⟩= h ⟨0, pp⟩ ) ->
+  H₁ ∗ H₂ ==> LGTM.wp [sht_prog, sht_lang]
+  (fun _ h => ∀ ll ∈ s'', ∃ pp ∈ s, h ⟨1, ll ⟩= h ⟨0, pp⟩) := by
+  intros ; apply weird_weaken_lemma' <;> try assumption
+  rename_i hh tmp ; rw [← LGTM.triple.eq_1, LGTM.triple_hlocal_add_to_post] at hh
+  apply LGTM.triple_conseq ; apply hhimpl_refl
+  on_goal 2=> apply hh
+  on_goal 2=> simp ; assumption
+  intro hv hh hpre ; simp at hpre ; apply hpre.left
 
 #check hwp_conseq
 #check yfocus_set_lemma_eq
