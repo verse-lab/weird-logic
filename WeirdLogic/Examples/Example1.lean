@@ -9,19 +9,18 @@ import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
 import WeirdLogic.WUtil
-import WeirdLogic.Hete
 
 open Unary prim val trm
 open ContextFreeGrammar
 
-namespace WeirdLogic.Example0
+namespace WeirdLogic.Example1
 
 /- L -> trm1 | trm 2
 
   L = {(trm1|trm2)}
   regular + if rule -/
-def trm1 : trm := [lang| fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ => let xx := !xl in let yy := !yl in let temp0 := xx + yy in yl := temp0]
-def trm2 : trm := [lang| fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ => let xx := !xl in let yy := !yl in let temp0 := xx - yy in yl := temp0]
+def trm1 : trm := [lang| fun ⸨xk: Loc⸩ => let xx := !xk in let temp0 := xx + 1 in xk := temp0]
+def trm2 : trm := [lang| fun ⸨xr: Loc⸩ => let xx := !xr in let temp0 := xx + 2 in xr := temp0]
 def r1 : ContextFreeRule trm String :=
   {
     input := "L",
@@ -38,21 +37,18 @@ def cfg1 : ContextFreeGrammar trm :=
   {
     NT := String,
     initial := "L",
-    rules := Finset.mk {r1, r2} (by unfold r1 r2 trm1 trm2 trm_funs; simp; unfold trm_funs; simp; unfold trm_funs; simp  )
+    rules := Finset.mk {r1, r2} (by unfold r1 r2 trm1 trm2 trm_funs; simp  )
   }
 
 def l1 : Language trm := cfg1.language
 
-lang_def' WeirdLogic.Example0.prog_c1 :=
-  fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ ⸨pb:Val⸩ =>
-    let xx := !xl in
-    let yy := !yl in
-    if pb > 10 then
-      let temp0 := xx + yy in
-      yl := temp0
+lang_def' prog_c1 :=
+  fun ⸨y: Loc⸩ ⸨a:Val⸩ =>
+    let xx := !y in
+    if a > 0 then
+      y := xx + 1
     else
-      let temp1 := xx - yy in
-      yl := temp1
+      y := xx + 2
 
 def pay_index' := @Set.univ payload
 abbrev lang := List trm
@@ -68,12 +64,12 @@ def cfg_expand : Set ( List (Symbol T N)) :=
 
 def pay_index1 : Set payload :=
   {
-    p | p > 10 ∧ p ∈ pay_index'
+    p | p > 0 ∧ p ∈ pay_index'
   }
 
 def pay_index2 : Set payload :=
   {
-    p | p <= 10 ∧ p ∈ pay_index'
+    p | p <= 0 ∧ p ∈ pay_index'
   }
 
 def pay_index : Set (trm × payload) :=
@@ -168,7 +164,7 @@ lemma pay_index_union_univ :
   simp
   ext x
   simp
-  exact Int.lt_or_le 10 x
+  exact Int.lt_or_le 0 x
 
 
 lemma lang_index_union_univ :
@@ -186,17 +182,17 @@ def inLang2 (a : (trm × payload)ˡ) : Prop :=
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example1_spec (xv : ℤ) (yv : ℤ):
+lemma example1_spec (xv : ℤ):
   {
-    [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
+    xl ~⟨i in {⟨0,p⟩ | p ∈ pay_index} ∪ {⟨1,l⟩ | l ∈ lang_index}⟩~> xv
   }
-  [0| p in pay_index => prog_c1(⸨xl: Loc⸩, ⸨yl: Loc⸩, ⟨p.val.2⟩)]
-  [1| l in lang_index => l.val.fst(⸨xl: Loc⸩, ⸨yl: Loc⸩)]
+  [0| p in pay_index => prog_c1(⸨xl: Loc⸩, ⟨p.val.2⟩)]
+  [1| l in lang_index => l.val.fst(⸨xl: Loc⸩)]
   { v,
     fun h => ∀ l ∈ lang_index, ∃ p ∈ pay_index , h ⟨1, l⟩= h ⟨0, p⟩
   }
   := by
-  unfold LGTM.triple
+  unfold LGTM.triple hhsingle
   rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1} ∪ {⟨ 1,(l,default_payload)⟩ | l ∈ lang_set1}) (s₂ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index2} ∪ {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set2} )]
   rotate_left
   { apply disjoint_iff.mpr
@@ -206,14 +202,18 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
     apply disjoint_iff.mpr; simp
     apply pair_set_union_index_right
     unfold pay_index1 pay_index2; aesop
-    unfold trm1 trm2 trm_funs; simp; unfold trm_funs; simp; unfold trm_funs; simp;
+    unfold trm1 trm2 trm_funs; aesop
   }
   {
     conv_rhs =>  rw [Set.union_right_comm, ←Set.union_assoc]
     conv_rhs =>  rw [pair_set_union_index_eq_left pay_index1 pay_index2 pay_index' _ pay_index_union_univ]; rw [Set.union_assoc, Set.union_comm]
     conv_rhs =>  rw [pair_set_union_index_eq_right lang_set2 lang_set1 lang_index' _ lang_index_union_univ]; rw [Set.union_comm]
-    unfold pay_index lang_index labSet
-    simp
+    rw [pair_wrap_eq_right _ default_trm pay_index' pay_index ]
+    rw [pair_wrap_eq_left _ default_payload lang_index' lang_index]
+    · unfold lang_index default_payload; simp
+    · unfold lang_index; aesop
+    · unfold pay_index default_trm; aesop
+    · unfold pay_index; aesop
   }
   dsimp only
   /- Step 1: GrmDisj -/
@@ -225,7 +225,7 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
   · simp; apply disjoint_label_set.mpr; simp
   · apply pair_set_union_left
     unfold lang_set1 lang_set2
-    unfold trm1 trm2 trm_funs; simp; unfold trm_funs; simp; unfold trm_funs; simp;
+    unfold trm1 trm2 trm_funs; simp
   · unfold lang_index
     rw [lang_index'_unfold]
     apply pair_set_union_eq_right
@@ -241,7 +241,7 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
     apply weird_lang_lemma=>//
     { apply disjoint_label_set.mpr; aesop}
     /- Step 3: Payload -/
-    rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1 \ {20}}) (s₂ := {⟨0,(default_trm,20)⟩} ∪ {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set1} )]
+    rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p ∈ pay_index1 \ {10}}) (s₂ := {⟨0,(default_trm,10)⟩} ∪ {⟨ 1, (l,default_payload)⟩ | l ∈ lang_set1} )]
     rotate_left
     { apply disjoint_iff.mpr
       unfold lang_set1
@@ -252,19 +252,19 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       ext x
       constructor
       · rintro ⟨p, hp_pos, rfl⟩
-        by_cases h10 : p = 20=>//
+        by_cases h10 : p = 10=>//
       · rintro (rfl | ⟨p, ⟨hp_pos, hp_ne⟩, rfl⟩)=>//
      }
-    apply weird_payload_index_lemma (pr := (default_trm, 20)) =>//
+    apply weird_payload_index_lemma (pr := (default_trm, 10)) =>//
     { apply disjoint_label_set.mpr; aesop}
     /- first 1/4 -/
     { unfold pay_index1 pay_index';
       simp
       dsimp [LGTM.wp, LGTM.SHTs.htrm]
-      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, yl, [lang| ⟨p.val.2⟩]]))] --remove union set
+      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))] --remove union set
       on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; intro a b ; simp only [b, reduceIte]
       unfold prog_c1 --; yapp
-      apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, yl, [lang| ⟨p.val.2⟩]])
+      apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, [lang| ⟨p.val.2⟩]])
       intro _ ; rfl ; intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
       simp  [Unary.func_call_ctx_prepare]
       all_goals
@@ -273,21 +273,16 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
         try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
       apply hwp_of_hwpgen
       simp [subst, subst.go]
-      ylet;
-      have eq : ({x | ∃ (p : payload), (10 < p ∧ ¬p = 20) ∧ ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ)
-        = (⟪0, {x | ∃ p, 10 < p ∧ (default_trm, p) = x} \ {(default_trm, 20)}⟫ : Set (trm × payload)ˡ)
+      ylet
+      have eq : ({x | ∃ (p : payload), (0 < p ∧ ¬p = 10) ∧ ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ)
+        = (⟪0, {x | ∃ p, 0 < p ∧ (default_trm, p) = x} \ {(default_trm, 10)}⟫ : Set (trm × payload)ˡ)
         := by
         ext a ; rcases a with ⟨l, ⟨a, b⟩⟩ ; simp ; aesop
           -- ext
       rw [eq] ; clear eq --; yapp htriple_get
-      rw [←bighstar_hhstar]
-      apply htriple_conseq_frame ; apply htriple_get (v := fun _ => xv) ; apply hhimpl_refl
+      apply htriple_conseq ; apply htriple_get (v := fun _ => xv) ; apply hhimpl_refl
       ysimp
       ywp ; ylet
-      rw [hhstar_comm]
-      apply htriple_conseq_frame ; apply htriple_get (v := fun _ => yv) ; apply hhimpl_refl
-      ysimp
-      ywp; ylet
       apply htriple_conseq_frame ; apply htriple_gt ; ysimp
       ysimp
       simp [subst, subst.go]
@@ -295,34 +290,23 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       rw [hwp_ht_eq (ht₂ := (fun a ↦
       [lang|
         if true then
-          let temp0 := xv + yv in
-          yl := temp0
+          let temp1 := xv + 1 in
+          xl := temp1
         else
-          let temp1 := xv - yv in
-          yl := temp1]))]
+          let temp2 := xv + 2 in
+          xl := temp2]))]
       on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; rintro ⟨l, ⟨a , b⟩⟩ bb ; congr ; simp at bb ⊢ ; aesop
       ywp ; yif
       on_goal 2=> intro a ; contradiction
       intro _
-      ywp; ylet;
-      rw [bighstar_hhstar]; dsimp
-
-      apply htriple_conseq_frame (H₂ := [∗i in ⟪0, {x | ∃ p, 10 < p ∧ (default_trm, p) = x} \ {(default_trm, 20)}⟫| xl ~~> xv ∗ yl ~~> yv]); apply htriple_binop (v₁ := fun _ => val_int xv) (v₂ := fun _ => val_int yv) (v := fun _ => val_int (xv + yv));
-      · intro a ha ; apply evalbinop.evalbinop_add
-      · rw [hhstar_hhempty_l]; apply hhimpl_refl
+      ystep
+      apply htriple_conseq ; apply htriple_set (hv := fun _ => xv) ; apply hhimpl_refl
       ysimp
-      simp [subst, subst.go]
-
-      rw [←bighstar_hhstar, hhstar_comm];
-      apply htriple_conseq_frame (H₂ := [∗i in ⟪0, {x | ∃ p, 10 < p ∧ (default_trm, p) = x} \ {(default_trm, 20)}⟫| xl ~~> xv]); apply htriple_set (hv := fun _ => yv) ; apply hhimpl_refl
-      ysimp
-
-      rw [bighstar_hhstar]; simp
-      unfold bighstar bighstarDef hsingle hhimpl
+      unfold hhsingle bighstar bighstarDef hsingle hhimpl
       simp
       intro ha pre aa hlab --hpay hgt0 heq hvalnot
       specialize pre aa
-      have ain : ¬ aa ∈ ⟪0, {x | ∃ p, 10 < p ∧ (default_trm, p) = x} \ {(default_trm, 20)}⟫ := by
+      have ain : ¬ aa ∈ ⟪0, {x | ∃ p, 0 < p ∧ (default_trm, p) = x} \ {(default_trm, 10)}⟫ := by
         simp;
         intro h_in hx hgt hheq
         have := hlab h_in hx hgt hheq
@@ -333,8 +317,7 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
     /- second 1/4 -/
     { rw [unsimp_singleton_set]
       rw [← weird_fix_lang (p := default_payload)]
-      simp only [LGTM.SHT]
-      rw [← weird_fix_payload2 (pv := 20)]
+      rw [← weird_fix_payload1 (pv := 10)]
 
       unfold lang_set1
       unfold default_payload; simp
@@ -342,32 +325,24 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       rw [← Set.union_singleton, ← bighstar_hhstar_disj]
       on_goal 2=> simp
       repeat rw [← hhsingle.eq_1]
-      apply htriple_conseq_frame (H₂ := yl ~⟨x in ⟪0, {(default_trm, 20)}⟫⟩~> yv ∗ [∗i in {⟨1, (trm1, 0)⟩}| xl ~~> xv ∗ yl ~~> yv]); apply htriple_get (v := fun _ => xv) ;
-      { rw [←bighstar_hhstar]; ysimp; rw [labSet]; simp }
+      apply htriple_conseq_frame (H₂ := xl ~⟨i in {⟨1, (trm1, 0)⟩}⟩~> xv); apply htriple_get (v := fun _ => xv) ;
+      { ysimp; rw [labSet]; simp }
       ysimp
       simp only [OfNat.ofNat, Int.ofNat]; simp
       ywp; ylet; simp [subst, subst.go];
-      apply htriple_conseq_frame (H₂ := xl ~⟨x in ⟪0, {(default_trm, 20)}⟫⟩~> xv ∗ [∗i in {⟨1, (trm1, 0)⟩}| xl ~~> xv ∗ yl ~~> yv]); apply htriple_get (v := fun _ => yv) ;
-      { ysimp}
-      ysimp
-      ywp; ylet
       apply htriple_conseq_frame ; apply htriple_gt ; ysimp
       ysimp; simp only [OfNat.ofNat, Zero.zero, Int.ofNat]; simp
       ywp; yif
       on_goal 2=> intro a ; contradiction
       intro _;
       ystep
-      apply htriple_conseq_frame; apply htriple_set (hv := fun _ => yv) ; ysimp
+      apply htriple_conseq_frame (H₂ := xl ~⟨i in {⟨1, (trm1, 0)⟩}⟩~> xv) ; apply htriple_set (hv := fun _ => xv) ; ysimp
       ysimp
 
       dsimp [LGTM.wp, LGTM.SHTs.htrm]
-      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => trm1.trm_call [xl, yl]))]
-      on_goal 2=>
-        unfold trm1 labSet; simp [Set.EqOn, fun_insert, Set.union_empty];
-
-      rw [←hhstar_assoc, bighstar_hhstar, hhstar_comm]
-      dsimp
-      apply ywp_lemma_funs (tfunc := fun _ => trm1) (ts := fun (p : (trm × payload)ˡ) => [xl, yl])
+      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => [lang| fun ⸨xk: Loc⸩ => let xx := !xk in let temp0 := xx + 1 in xk := temp0].trm_call [xl]))]
+      on_goal 2=> unfold trm1; simp [Set.EqOn, fun_insert, Set.union_empty];
+      apply ywp_lemma_funs (tfunc := fun _ => trm1) (ts := fun (p : (trm × payload)ˡ) => [xl])
       intro _ ; rfl ; intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
       simp  [Unary.func_call_ctx_prepare]
       all_goals
@@ -375,35 +350,26 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
         try simp [wpgen]
         try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
       ywp; ylet; simp [subst, subst.go]
-
-      rw [←bighstar_hhstar, hhstar_assoc]
-      apply htriple_conseq_frame (H₂ := [∗i in {⟨1, (trm1, 0)⟩}| yl ~~> yv] ∗ [∗i in ⟪0, {(default_trm, 20)}⟫| yl ~~> val_int (xv + yv) ∗ xl ~~> xv] ); apply htriple_get (v := fun _ => xv);
+      rw [hhstar_comm]
+      apply htriple_conseq_frame (H₂ := xl ~⟨a in {⟨0, (default_trm, 10)⟩}⟩~> val_int (xv + 1 )); apply htriple_get (v := fun _ => xv);
       { repeat rw [labSet]; simp; rw [labSet]; simp }
       ysimp
-
-      ywp; ylet; simp [subst, subst.go]
-      rw [hhstar_comm_assoc]
-      apply htriple_conseq_frame (H₂ :=  xl ~⟨x in ⟪1, {(trm1, 0)}⟫⟩~> xv ∗ [∗i in ⟪0, {(default_trm, 20)}⟫| yl ~~> val_int (xv + yv) ∗ xl ~~> xv] ); apply htriple_get (v := fun _ => yv);
-      { unfold hhsingle labSet; simp}
-      ysimp
-
       ystep
-
-      apply htriple_conseq_frame (H₂ := xl ~⟨x in ⟪1, {(trm1, 0)}⟫⟩~> xv ∗ [∗i in ⟪0, {(default_trm, 20)}⟫| yl ~~> val_int (xv + yv) ∗ xl ~~> xv]); apply htriple_set (hv := fun _ => yv);
-      { ysimp;}
+      apply htriple_conseq_frame (H₂ := xl ~⟨a in {⟨0, (default_trm, 10)⟩}⟩~> val_int (xv + 1 )); apply htriple_set (hv := fun _ => xv);
+      { ysimp; rw [labSet]; simp }
       ysimp
+      rw [bighstar_hhstar_disj, Set.union_singleton]
+      on_goal 2=> rw [labSet]; simp
+      rw [labSet]; simp
 
-      rw [←hhstar_assoc, bighstar_hhstar]; simp
-      rw [bighstar_hhstar_disj]
-      on_goal 2=> apply disjoint_label_set.mpr; simp
-
+      unfold hhimpl
       unfold bighstar bighstarDef
       simp;
-      unfold HStar.hStar instHStarHProp; simp; unfold hstar hsingle; simp
       intro hh hl
       have hl1 := hl ⟨1, (trm1, 0)⟩
-      have hl2 := hl ⟨0, (default_trm, 20)⟩
+      have hl2 := hl ⟨0, (default_trm, 10)⟩
       simp_all
+      rw [hl1, hl2]
     }
   /- Right Part -/
   ·
@@ -412,11 +378,11 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
         hlocal (⟪0, {x | ∃ p ∈ pay_index1, (default_trm, p) = x}⟫ ∪ ⟪1, {x | ∃ l ∈ lang_set1, (l, default_payload) = x}⟫) h ∧
         ∀ ll ∈ {x | ∃ l ∈ lang_set1, (l, default_payload) = x},
         ∃ pp ∈ {x | ∃ p ∈ pay_index1, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩) with hH3
-
+    set H₄ := [∗i in ({x | ∃ p ∈ pay_index2, ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ) ∪ ({x | ∃ l ∈ ({trm2}: Set trm), ⟨1, (l, default_payload)⟩ = x} : Set (trm × payload)ˡ)| (fun i ↦ xl) i ~~> (fun i ↦ xv) i] with hH4
     dsimp
     rw [unsimp_singleton_set]
     rw [← weird_fix_lang (p := default_payload)]
-    -- rw [hH4]
+    rw [hH4]
     rw [← bighstar_hhstar_disj]
     rw [← bighstar_hhstar_disj_dir (s₁ := {x | ∃ p ∈ pay_index2 \ {-10}, ⟨0, (default_trm, p)⟩ = x}) (s₂ := {⟨0, (default_trm, -10)⟩})]=>//
     rotate_left
@@ -431,17 +397,17 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       (pr := (default_trm, -10))
       (s₁ := {x | ∃ p ∈ pay_index2, (default_trm, p) = x})
       (s₃ := pay_index)
-      (H₁ := [∗i in {x | ∃ p ∈ pay_index2 \ {-10}, ⟨0, (default_trm, p)⟩ = x}| xl ~~> xv ∗ yl ~~> yv])=>//
+      (H₁ := [∗i in {x | ∃ p ∈ pay_index2 \ {-10}, ⟨0, (default_trm, p)⟩ = x}| xl ~~> xv])=>//
     { apply disjoint_label_set.mpr; simp}
     { unfold pay_index pay_index2 pay_index'; simp }
     /- Third 1/4 -/
     { unfold pay_index2 pay_index';
       simp
       dsimp [LGTM.wp, LGTM.SHTs.htrm]
-      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, yl, [lang| ⟨p.val.2⟩]]))] --remove union set
+      rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => prog_c1.trm_call [xl, [lang| ⟨p.val.2⟩]]))] --remove union set
       on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; intro a b ; simp only [b, reduceIte]
       unfold prog_c1 --; yapp
-      apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, yl, [lang| ⟨p.val.2⟩]])
+      apply ywp_lemma_funs (tfunc := fun _ => prog_c1) (ts := fun (p : (trm × payload)ˡ) => [xl, [lang| ⟨p.val.2⟩]])
       intro _ ; rfl ; intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
       simp  [Unary.func_call_ctx_prepare]
       all_goals
@@ -451,56 +417,38 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       apply hwp_of_hwpgen
       simp [subst, subst.go]
       ylet
-      have eq : ({x | ∃ (p : payload), (p ≤ 10 ∧ ¬p = -10) ∧ ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ)
-        = (⟪0, {x | ∃ p, p ≤ 10 ∧ (default_trm, p) = x} \ {(default_trm, -10)}⟫ : Set (trm × payload)ˡ)
+      have eq : ({x | ∃ (p : payload), (p ≤ 0 ∧ ¬p = -10) ∧ ⟨0, (default_trm, p)⟩ = x} : Set (trm × payload)ˡ)
+        = (⟪0, {x | ∃ p, p ≤ 0 ∧ (default_trm, p) = x} \ {(default_trm, -10)}⟫ : Set (trm × payload)ˡ)
         := by
         ext a ; rcases a with ⟨l, ⟨a, b⟩⟩ ; simp ; aesop
           -- ext
       rw [eq] ; clear eq --; yapp htriple_get
-      rw [←bighstar_hhstar]
-      apply htriple_conseq_frame ; apply htriple_get (v := fun _ => xv) ; apply hhimpl_refl
+      apply htriple_conseq ; apply htriple_get (v := fun _ => xv) ; apply hhimpl_refl
       ysimp
       ywp ; ylet
-      rw [hhstar_comm]
-      apply htriple_conseq_frame ; apply htriple_get (v := fun _ => yv) ; apply hhimpl_refl
-      ysimp
-      ywp; ylet
       apply htriple_conseq_frame ; apply htriple_gt ; ysimp
-      ysimp
-      simp [subst, subst.go]
+      ysimp ; simp [subst, subst.go]
 
       rw [hwp_ht_eq (ht₂ := (fun a ↦
       [lang|
         if false then
-          let temp0 := xv + yv in
-          yl := temp0
+          let temp1 := xv + 1 in
+          xl := temp1
         else
-          let temp1 := xv - yv in
-          yl := temp1]))]
+          let temp2 := xv + 2 in
+          xl := temp2]))]
       on_goal 2=> simp only [Set.EqOn, fun_insert, Set.union_empty] ; rintro ⟨l, ⟨a , b⟩⟩ bb ; congr ; simp at bb ⊢ ; aesop
       ywp ; yif
       on_goal 1=> intro a ; contradiction
       intro _
-
-      ywp; ylet;
-      rw [bighstar_hhstar]; dsimp
-
-      apply htriple_conseq_frame (H₂ := [∗i in ⟪0, {x | ∃ p ≤ 10, (default_trm, p) = x} \ {(default_trm, -10)}⟫| xl ~~> xv ∗ yl ~~> yv]); apply htriple_binop (v₁ := fun _ => val_int xv) (v₂ := fun _ => val_int yv) (v := fun _ => val_int (xv - yv));
-      · intro a ha ; apply evalbinop.evalbinop_sub
-      · rw [hhstar_hhempty_l]; apply hhimpl_refl
+      ystep
+      apply htriple_conseq ; apply htriple_set (hv := fun _ => xv) ; apply hhimpl_refl
       ysimp
-      simp [subst, subst.go]
-
-      rw [←bighstar_hhstar, hhstar_comm];
-      apply htriple_conseq_frame; apply htriple_set (hv := fun _ => yv) ; apply hhimpl_refl
-      ysimp
-
-      rw [bighstar_hhstar]
-      unfold bighstar bighstarDef hsingle hhimpl
+      unfold hhsingle bighstar bighstarDef hsingle hhimpl
       simp
       intro ha pre aa hlab --hpay hgt0 heq hvalnot
       specialize pre aa
-      have ain : ¬ aa ∈ ⟪0, {x | ∃ p, p ≤ 10 ∧ (default_trm, p) = x} \ {(default_trm, -10)}⟫ := by
+      have ain : ¬ aa ∈ ⟪0, {x | ∃ p, p ≤ 0 ∧ (default_trm, p) = x} \ {(default_trm, -10)}⟫ := by
         simp;
         intro h_in hx hgt hheq
         have := hlab h_in hx hgt hheq
@@ -518,11 +466,11 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       simp only [Set.mem_diff, Set.mem_setOf_eq, Set.mem_singleton_iff, not_and, not_exists, not_le]
       constructor
       · rintro ⟨⟨p, rfl⟩, h⟩
-        by_cases hp : p ≤ 10
+        by_cases hp : p ≤ 0
         · by_cases hp10 : p = -10
           · left; simp [hp10]    -- case p = -10
           · right
-            have hh : (∃ p_1 ≤ 10, ([lang| ()], p_1) = ([lang| ()], p)) := by
+            have hh : (∃ p_1 ≤ 0, ([lang| ()], p_1) = ([lang| ()], p)) := by
               use p
             specialize h hh
             simp [h]; simp_all
@@ -534,7 +482,7 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
           simp
         · constructor
           use a
-          have tmp : (∃ p ≤ 10, ([lang| ()], p) = x) = False := by
+          have tmp : (∃ p ≤ 0, ([lang| ()], p) = x) = False := by
             simp
             rw [←ha_eq]
             simp
@@ -544,51 +492,31 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
           simp [tmp]
     rw [payeq]; clear payeq
     set H₅ := fun x h : hheap (trm × payload)ˡ => ∀ ll ∈ lang_index, ∃ pp ∈ {x | ∃ p ∈ pay_index1 ∪ {-10}, (default_trm, p) = x}, h ⟨1, ll⟩ = h ⟨0, pp⟩ with hH5
-    rw [← weird_fix_payload2 (pv := -10)]
+    rw [← weird_fix_payload1 (pv := -10)]
     unfold default_payload; dsimp
     rw [hhstar_comm, hhstar_assoc]
     yin 0: ywp; ylet; simp [subst, subst.go]
-    rw [← hhstar_symbol_replace (hH₁ := [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv ∗ yl ~~> yv]) (hH₂ := H₃)]
-    rw [←bighstar_hhstar, hhstar_assoc]
-    apply htriple_conseq_frame (H₂ := [∗i in {⟨0, (default_trm, -10)⟩}| yl ~~> yv] ∗ hhstar [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv ∗ yl ~~> yv] H₃); apply htriple_get (v := fun _ => xv)
+    rw [← hhstar_symbol_replace (hH₁ := [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv]) (hH₂ := H₃)]
+    apply htriple_conseq_frame (H₂ := hhstar [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv] H₃); apply htriple_get (v := fun _ => xv) ;
     { ysimp; rw [labSet]; simp }
     ysimp
     simp only [OfNat.ofNat, Int.ofNat]; simp
     ywp; ylet; simp [subst, subst.go];
-
-    rw [hhstar_comm_assoc]
-    apply htriple_conseq_frame (H₂ := xl ~⟨x in ⟪0, {(default_trm, -10)}⟫⟩~> xv ∗ hhstar [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv ∗ yl ~~> yv] H₃); apply htriple_get (v := fun _ => yv)
-    { ysimp; rw [labSet]; simp }
-    ysimp
-    simp only [OfNat.ofNat, Int.ofNat]; simp
-    ywp; ylet; simp [subst, subst.go];
-
     apply htriple_conseq_frame ; apply htriple_gt ; ysimp
     ysimp; simp only [OfNat.ofNat, Zero.zero, Int.ofNat]; simp
     ywp; yif
     on_goal 1=> intro a ; contradiction
     intro _;
-
-    ywp; ylet;
-    rw [bighstar_hhstar]; dsimp
-
-    apply htriple_conseq_frame; apply htriple_binop (v₁ := fun _ => val_int xv) (v₂ := fun _ => val_int yv) (v := fun _ => val_int (xv - yv));
-    · intro a ha ; apply evalbinop.evalbinop_sub
-    · rw [hhstar_hhempty_l]; apply hhimpl_refl
+    ystep
+    apply htriple_conseq_frame (H₂ := hhstar [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv] H₃) ; apply htriple_set (hv := fun _ => xv) ; ysimp
     ysimp
-    simp [subst, subst.go]
-
-    rw [←bighstar_hhstar, hhstar_comm, ←bighstar_hhstar, hhstar_assoc, hhstar_comm_assoc];
-    apply htriple_conseq_frame; apply htriple_set (hv := fun _ => yv) ; apply hhimpl_refl
-    ysimp
-
 
     dsimp [LGTM.wp, LGTM.SHTs.htrm]
-    rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => trm2.trm_call [xl, yl]))]
+    rw [hwp_ht_eq (ht₂ := (fun (p : (trm × payload)ˡ) => [lang| fun ⸨xr: Loc⸩ => let xx := !xr in let temp0 := xx + 2 in xr := temp0].trm_call [xl]))]
     on_goal 2=> unfold trm2; simp [Set.EqOn, fun_insert, Set.union_empty];
-    apply ywp_lemma_funs (tfunc := fun _ => trm2) (ts := fun (p : (trm × payload)ˡ) => [xl, yl])
+    apply ywp_lemma_funs (tfunc := fun _ => trm2) (ts := fun (p : (trm × payload)ˡ) => [xl])
     intro _ ; unfold trm2 trm_funs; simp ;
-    intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match];
+    intro _ ; rfl ; intros ; rfl ; intros ; simp [get_vars, type_match]
     simp  [Unary.func_call_ctx_prepare]
     all_goals
       try simp [isubstE, Unary.reduce_call_isubst]; --(try simp [Unary.isubst, Unary.isubst.go])--; (srw ?Unary.guard_pos; all_goals try rfl)
@@ -596,39 +524,24 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
       try simp [AList.lookup, List.mkAlist, List.eraseP, List.dlookup]
     ywp; ylet; simp [subst, subst.go]
     rw [hhstar_comm]
-
-    rw [hhstar_assoc, hhstar_comm_assoc]
-    rw [hhstar_symbol_replace,hhstar_assoc,hhstar_assoc]
+    rw [hhstar_symbol_replace (hH₁ := [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv]) (hH₂ := H₃)]
+    rw [hhstar_assoc]
     rw [← hhstar_symbol_replace (hH₁ := H₃)]
-    set H₄ := ([∗i in ⟪0, {(default_trm, -10)}⟫| xl ~~> xv] ∗ yl ~⟨a in ⟪0, {(default_trm, -10)}⟫⟩~> val_int (xv - yv)) with hH4
-    apply htriple_conseq_frame (H₂ := [∗i in {⟨1, (trm2, 0)⟩}| yl ~~> yv] ∗ hhstar H₃ H₄); apply htriple_get (v := fun _ => xv);
-    { repeat rw [labSet]; simp;}
+    have eq : (xl ~⟨a in ⟪OfNat.ofNat (OfNat.ofNat (OfNat.ofNat 0)), {(default_trm, -10)}⟫⟩~> val_int (xv + 2)) = (xl ~⟨a in ⟪0, {(default_trm, -10)}⟫⟩~> val_int (xv + 2)) := by
+      simp
+    rw [eq]; clear eq
+    apply htriple_conseq_frame (H₂ := hhstar H₃ [∗i in {⟨0, (default_trm, -10)⟩}| xl ~~> val_int (xv + 2)]); apply htriple_get (v := fun _ => xv);
+    { repeat rw [labSet]; simp; rw [labSet]; unfold hhsingle; simp; }
+    ysimp
+    ystep
+    apply htriple_conseq_frame (H₂ := hhstar H₃ [∗i in {⟨0, (default_trm, -10)⟩}| xl ~~> val_int (xv + 2)]); apply htriple_set (hv := fun _ => xv);
+    { ysimp}
     ysimp
 
-    ywp; ylet; simp [subst, subst.go]
-    apply htriple_conseq_frame (H₂ := [∗i in {⟨1, (trm2, 0)⟩}| xl ~~> xv] ∗ hhstar H₃ H₄); apply htriple_get (v := fun _ => yv);
-    { rw [hhstar_comm_assoc] ; unfold labSet; simp}
-    ysimp
-
-    rw [labSet]; simp
-
-    ywp; ylet; simp [subst, subst.go]
-    apply htriple_conseq_frame; apply htriple_binop (v₁ := fun _ => val_int xv) (v₂ := fun _ => val_int yv) (v := fun _ => val_int (xv - yv));
-    · intro a ha ; apply evalbinop.evalbinop_sub
-    · rw [hhstar_hhempty_l]; apply hhimpl_refl
-    ysimp
-
-    apply htriple_conseq_frame; apply htriple_set (hv := fun _ => yv) ; apply hhimpl_refl
-    ysimp
-
-    -- Last step: prove Q' ===> Q
-    rw [←hhstar_assoc, bighstar_hhstar]; simp
-    unfold H₄ labSet; clear H₄ hH4 H₅ hH5; simp
-    rw [bighstar_hhstar]; simp
-    rw [hhstar_symbol_replace, hhstar_comm_assoc, hstar_comm (H2 := xl ~~> xv ), bighstar_hhstar_disj]
-    on_goal 2 => simp
-    simp
-
+    rw [hhstar_symbol_replace]
+    rw [hhstar_comm_assoc]
+    rw [bighstar_hhstar_disj, Set.union_singleton]
+    on_goal 2=> rw [labSet]; simp
     unfold H₃
     rw [labSet]; dsimp
     unfold lang_set1 lang_index; simp
@@ -671,12 +584,8 @@ lemma example1_spec (xv : ℤ) (yv : ℤ):
         have hs2' := hs2 ⟨1, (trm2, 0)⟩
         have hs2'' := hs2 ⟨0, (default_trm, -10)⟩
         simp at hs1' hs1'' hs2' hs2''
-        rw [hs1', hs2'']
-        simp; clear hs1' hs2''
-        unfold hstar hsingle at hs1'' hs2'
-        rcases hs1'' with ⟨ hhh1,hhh2,hs11, hs12,hs13,hs14⟩
-        rcases hs2' with ⟨ hhh3,hhh4,hs21, hs22,hs23,hs24⟩
-        simp_all
+        rw [hs1', hs1'', hs2', hs2'']
+        simp
 
 
-end WeirdLogic.Example0
+end WeirdLogic.Example1

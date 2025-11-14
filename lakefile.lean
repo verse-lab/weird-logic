@@ -25,7 +25,3 @@ require ssreflect from
 
 require lgtm from
     git "https://github.com/verse-lab/lean-lgtm.git" @ "v4.20.0"
-
--- @[default_target]
--- lean_lib «WeirdLogic» where
-  -- add any library configuration options here

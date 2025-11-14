@@ -1,1 +1,2 @@
-import WeirdLogic.Example1
+
+import WeirdLogic.Examples.Example4

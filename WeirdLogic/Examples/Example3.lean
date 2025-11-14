@@ -9,13 +9,12 @@ import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
 import WeirdLogic.WUtil
-import WeirdLogic.Hete
 import WeirdLogic.WUnary
 
 open Unary prim val trm
 open ContextFreeGrammar
 
-namespace WeirdLogic.Example3
+namespace WeirdLogic.Example3_old
 
 /- L -> (S1)
   S1 -> trm1; S1; trm2
@@ -95,7 +94,7 @@ def lang_fun_list : Set trm :=
 
 def pay_index : Set (trm × payload) :=
   {
-    (default_trm,p) | p ∈ { pp : ℤ | pp ≥ 0 }
+    (default_trm,p) | p ∈ @Set.univ payload
   }
 
 def lang_index : Set (trm × payload ):=
@@ -216,9 +215,7 @@ lemma example3_single_iter (xv : ℤ) (yv : ℤ):
   LGTM.wp
     [{ s := ⟪0, {(default_trm, Int.ofNat n)}⟫, ht := fun p ↦ prog_c1.trm_call [xl, yl, [lang| ⟨p.val.2⟩]] },
      { s := ⟪1, {(sn, default_payload)}⟫, ht := fun l ↦ l.val.1.trm_call [xl, yl] }]
-    fun _ =>
-      -- h => ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩
-      [∗ in {⟨0, (default_trm, n)⟩} ∪ {⟨1, (sn, default_payload)⟩}| xl ~~> (xv + n) ∗ yl ~~> (yv + n)]
+    fun _ h => ∀ l ∈ ({(sn, default_payload)} : Set (trm × payload)), ∃ p ∈ ({(default_trm, Int.ofNat n)} : Set (trm × payload)), h ⟨1, l⟩ = h ⟨0, p⟩
   := by
   intro n hsn
   unfold LGTM.wp labSet
@@ -276,22 +273,21 @@ lemma example3_single_iter (xv : ℤ) (yv : ℤ):
         · xapp ; xwp ; xlet ; xstep ; xapp ; xsimp
         · xsimp ; xsimp;
   )
-  assumption
-  -- apply hhimpl_trans ; apply tmp
-  -- clear tmp
-  -- apply hwp_conseq
-  -- ysimp
-  -- unfold bighstar bighstarDef ; open Classical in simp
-  -- intro h hh
-  -- have h1 := hh ⟨1, (trm_funs [trm_varl "xl", trm_varl "yl"] (cfgexp_grammar n trm1 trm2), 0)⟩ ; simp at h1
-  -- have h2 := hh ⟨0, (default_trm, ↑n)⟩ ; simp at h2
-  -- unfold hsingle at h1 h2;
+  apply hhimpl_trans ; apply tmp
+  clear tmp
+  apply hwp_conseq
+  ysimp
+  unfold bighstar bighstarDef ; open Classical in simp
+  intro h hh
+  have h1 := hh ⟨1, (trm_funs [trm_varl "xl", trm_varl "yl"] (cfgexp_grammar n trm1 trm2), 0)⟩ ; simp at h1
+  have h2 := hh ⟨0, (default_trm, ↑n)⟩ ; simp at h2
+  unfold hsingle at h1 h2;
 
-  -- unfold HStar.hStar instHStarHProp at h1 h2; simp at h1 h2
-  -- unfold hstar at h1 h2 ;
-  -- rcases h1 with ⟨h11,h12,hh1,hh2,hh3,hh4⟩
-  -- rcases h2 with ⟨h21,h22,hh21,hh22,hh23,hh24⟩
-  -- rw [hh24,hh4,hh1,hh2,hh21,hh22]
+  unfold HStar.hStar instHStarHProp at h1 h2; simp at h1 h2
+  unfold hstar at h1 h2 ;
+  rcases h1 with ⟨h11,h12,hh1,hh2,hh3,hh4⟩
+  rcases h2 with ⟨h21,h22,hh21,hh22,hh23,hh24⟩
+  rw [hh24,hh4,hh1,hh2,hh21,hh22]
 
 
 def regexp_grammar_injective ( i j : ℕ) ( t : trm):
@@ -359,32 +355,17 @@ def cfgexp_grammar_injective ( i j : ℕ) ( t1 t2 : trm):
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example3_spec_ (xv yv : ℤ) :
+lemma example3_spec (xv yv : ℤ) :
   {
     [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
   }
   [0| p in pay_index => prog_c1(⸨xl : Loc⸩, ⸨yl : Loc⸩, ⟨p.val.2⟩) ]
   [1| l in lang_index => l.val.fst(⸨xl: Loc⸩, ⸨yl : Loc⸩)]
   { v,
-    -- fun h => ∀ ll ∈ lang_index, ∃ pp ∈ pay_index , h ⟨1, ll⟩ = h ⟨0, pp⟩
-    -- [∗ in
-    --   ⋃ (n : payload), ({⟨0, (default_trm, n)⟩} ∪
-    --   {⟨1, ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar n trm1 trm2}], default_payload)⟩}) |
-    --   xl ~~> (xv + Int.ofNat n) ∗ yl ~~> (yv + Int.ofNat n)]
-    [∗ n in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫
-      -- ⋃ (i : payload), ({⟨0, (default_trm, i)⟩} ∪
-      -- {⟨1, ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar i trm1 trm2}], default_payload)⟩})
-      |
-      hforall fun j =>
-      hforall fun (_ :
-      n ∈ (({⟨0, (default_trm, j)⟩} ∪
-      {⟨1, ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar j trm1 trm2}], default_payload)⟩}) : Set (trm × payload)ˡ)) =>
-      (xl ~~> (xv + Int.ofNat j) ∗ yl ~~> (yv + Int.ofNat j))
-    ]
+    fun h => ∀ ll ∈ lang_index, ∃ pp ∈ pay_index , h ⟨1, ll⟩ = h ⟨0, pp⟩
   }
   := by
   unfold LGTM.triple
-  /-
   rw [← bighstar_hhstar_disj_dir (s₁ := {⟨0,(default_trm,p)⟩ | p <0 }) (s₂ := {⟨0,(default_trm,p)⟩ | p ≥ 0} ∪ ⟪1, lang_index⟫ )]
   rotate_left
   { apply Set.disjoint_union_right.mpr
@@ -420,9 +401,7 @@ lemma example3_spec_ (xv yv : ℤ) :
     rw [eq]
     constructor <;> apply Set.subset_union_left
   }
-  -/
   set Hx := xl ~~> xv ∗ yl ~~> yv with hhx
-  /-
   /- Step 1: remove negative cases-/
   apply weird_weaken_lemma' (s' := {(default_trm,p) | p ≥ 0 })=>//
   unfold pay_index; simp; simp; apply disjoint_label_set.mpr; simp
@@ -513,73 +492,12 @@ lemma example3_spec_ (xv yv : ℤ) :
     · simp [h] at hh
       assumption
   }
-  -/
   dsimp
-  /-
   set pay_index2 : Set (trm × payload) := {x | ∃ p ≥ 0, (default_trm, p) = x} with hp2
   have pidx_eq : {x | ∃ p ≥ 0, ⟨0, (default_trm, p)⟩ = x} = ⟪0,pay_index2⟫ := by
     unfold labSet pay_index2
     simp
   rw [pidx_eq]; clear pidx_eq
-  -/
-  unfold LGTM.wp ; simp
-  have eq : (⟪0, pay_index⟫ ∪ ⟪1, lang_index⟫) =
-    ⋃ (i : Nat), ({⟨0, (default_trm, Int.ofNat i)⟩} ∪
-      {⟨1, ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar i trm1 trm2}], default_payload)⟩}) := by
-    simp only [Set.iUnion_union_distrib] ; congr! 1
-    · ext a ; rcases a with ⟨al, aval⟩ ; simp [pay_index]-- ; aesop
-      constructor
-      · rintro ⟨_, ⟨p, hp1, _⟩⟩ <;> subst_eqs ; simp ; exists Int.toNat p ; simp [hp1]
-      · rintro ⟨_, ⟨p, hp1, _⟩⟩ <;> subst_eqs ; simp
-    · ext a ; rcases a with ⟨al, aval⟩ ; simp [lang_index, lang_fun_list, lang_squeeze_list] ; aesop
-  rw [← Set.biUnion_univ] at eq
-  rw [eq]
-  -- apply htriple_conseq
-  -- on_goal 2=> apply hhimpl_refl
-  apply htriple_htriple_bighstar_partition
-    (Q := fun i _ =>
-      hforall fun j =>
-      hforall fun (_ :
-      i ∈ (({⟨0, (default_trm, j)⟩} ∪
-      {⟨1, ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩=> {cfgexp_grammar j trm1 trm2}], default_payload)⟩}) : Set (trm × payload)ˡ)) =>
-      (xl ~~> (xv + Int.ofNat j) ∗ yl ~~> (yv + Int.ofNat j)))
-  on_goal 1=> {
-    intro i _ j _ h
-    simp_all ; constructor
-    on_goal 2=> aesop
-    intro h1
-    dsimp [trm_funs] at h1; simp_all
-    apply cfgexp_grammar_injective (t1 := trm1) (t2 := trm2) at h1
-    aesop
-    unfold trm1; simp
-    unfold trm2; simp
-  }
-  on_goal 2=> intros ; rfl
-  { intro k _ ; dsimp only
-    have tmp := example3_single_iter (sn := trm_funs [trm_varl "xl", trm_varl "yl"] (cfgexp_grammar k trm1 trm2)) (xl := xl) (yl := yl) (n := k) (yv := yv) (xv := xv) (by rfl)
-    unfold LGTM.wp at tmp ; dsimp only [LGTM.SHTs.set, LGTM.SHTs.htrm] at tmp
-    simp only [labSet, Set.mem_singleton_iff, exists_eq_left,
-      Set.setOf_eq_eq_singleton', Set.union_empty] at tmp
-    apply htriple_conseq
-    rw [hwp_ht_eq] at tmp ; apply tmp
-    { whnf ; simp [lang_index, lang_fun_list, lang_squeeze_list, pay_index] }
-    { apply hhimpl_refl }
-    { intro hv hh hpre ; whnf at hpre ⊢ ; intro a ; specialize hpre a ; split
-      next h=>
-        simp only [h, reduceIte] at hpre
-        whnf ; intro j ; whnf ; intro h'
-        simp at h h' ; rcases h with (h | h) <;> rcases h' with (h' | h') <;> rw [h'] at h <;> simp at h
-        { simp [trm_funs] at h
-          apply cfgexp_grammar_injective at h
-          aesop
-          unfold trm1; simp
-          unfold trm2; simp
-        }
-        { aesop }
-      next h=> simp only [Int.ofNat_eq_coe] at h ; simp only [h, reduceIte] at hpre ; assumption
-    }
-  }
-  /-
   apply weird_infdisj_lemma (s1 := pay_index2) (s2 := lang_index) (Hx := Hx)
     (f := fun i => (default_trm, Int.ofNat i))
     (g := fun i => ([lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {cfgexp_grammar i trm1 trm2}],default_payload))
@@ -615,4 +533,5 @@ lemma example3_spec_ (xv yv : ℤ) :
   rw [idx_eq]; clear idx_eq
   apply example3_single_iter (sn := trm_funs [trm_varl "xl", trm_varl "yl"] (cfgexp_grammar k trm1 trm2)) (xl := xl) (yl := yl) (n := k) (yv := yv) (xv := xv)
   simp
-  -/
+
+end WeirdLogic.Example3_old

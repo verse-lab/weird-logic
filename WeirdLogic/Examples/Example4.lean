@@ -9,13 +9,12 @@ import WeirdLogic.Gram
 import WeirdLogic.WLogic
 import WeirdLogic.WTriple
 import WeirdLogic.WUtil
-import WeirdLogic.Hete
 import WeirdLogic.GramDisjStandard
 import WeirdLogic.WUnary
 
 import WeirdLogic.GramSeq
-import WeirdLogic.Example3_1
-import WeirdLogic.Example0
+import WeirdLogic.Examples.Example3_1
+import WeirdLogic.Examples.Example0
 
 open Unary prim val trm
 open ContextFreeGrammar
