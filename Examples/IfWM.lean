@@ -18,6 +18,7 @@ namespace WeirdLogic.Example0
 /- L -> trm1 | trm 2
 
   L = {(trm1|trm2)}
+
   regular + if rule -/
 def trm1 : trm := [lang| fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ => let xx := !xl in let yy := !yl in let temp0 := xx + yy in yl := temp0]
 def trm2 : trm := [lang| fun ⸨xl: Loc⸩ ⸨yl: Loc⸩ => let xx := !xl in let yy := !yl in let temp0 := xx - yy in yl := temp0]

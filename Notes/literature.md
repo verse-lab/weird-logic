@@ -1,3 +1,0 @@
-### Literature Review
-
-* Spectre 
