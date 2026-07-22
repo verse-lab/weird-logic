@@ -139,7 +139,7 @@ theorem forall_labType {p : αˡ → Prop} :
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example4_spec (xv : ℤ) (yv : ℤ):
+lemma vulnwm_spec (xv : ℤ) (yv : ℤ):
   let tfunc (i : trm) := [lang| fun ⸨xl: Loc⸩ ⸨yl : Loc⸩ => {i}]
   {
     [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
@@ -334,14 +334,14 @@ lemma example4_spec (xv : ℤ) (yv : ℤ):
     { cases p2 <;> rfl }
   }
   { simp }
-  { apply Example3.example3_spec_ }
+  { apply Example3.forwm_spec }
   { rintro ⟨jl, ⟨jtrm, jp⟩⟩ jin
     simp [Example3.pay_index, Example3.lang_index, Example3.lang_fun_list, Example3.lang_squeeze_list] at jin
     rcases jin with ⟨_, ⟨n, jin⟩, _⟩ ; subst jl jp ; symm at jin
     dsimp only
     -- involving the oracle here
     apply LGTM.triple_conseq
-    on_goal 3=> apply Example0.example1_spec (xv + Int.ofNat (aux jtrm |>.getD 0)) (yv + Int.ofNat (aux jtrm |>.getD 0))
+    on_goal 3=> apply Example0.ifwm_spec (xv + Int.ofNat (aux jtrm |>.getD 0)) (yv + Int.ofNat (aux jtrm |>.getD 0))
     { apply bighstar_himpl
       intro a ain hh hpre ; simp [hforall] at hpre ; specialize hpre n jin
       rw [(haux jtrm n).mp jin] ; exact hpre

@@ -343,7 +343,7 @@ def cfgexp_grammar_injective ( i j : ℕ) ( t1 t2 : trm):
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example3_spec_ (xv yv : ℤ) :
+lemma forwm_spec (xv yv : ℤ) :
   {
     [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
   }

@@ -186,7 +186,7 @@ def inLang2 (a : (trm × payload)ˡ) : Prop :=
 
 set_option maxRecDepth 2000 in
 set_option maxHeartbeats 6400000 in
-lemma example1_spec (xv : ℤ) (yv : ℤ):
+lemma ifwm_spec (xv : ℤ) (yv : ℤ):
   {
     [∗ in ⟪0,pay_index⟫ ∪ ⟪1,lang_index⟫ | xl ~~> xv ∗ yl ~~> yv]
   }
