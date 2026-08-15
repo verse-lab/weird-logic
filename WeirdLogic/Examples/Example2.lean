@@ -15,7 +15,7 @@ import WeirdLogic.WUnary
 open Unary prim val trm
 open ContextFreeGrammar
 
-namespace WeirdLogic
+namespace WeirdLogic.Example2
 
 /- L -> S1
   S1 -> trm1; S1
@@ -430,3 +430,5 @@ lemma example2_spec (xv : ℤ):
   rw [idx_eq]; clear idx_eq
   apply example2_single_iter (sn := trm_funs [trm_varl "xl"] (regexp_grammar k trm1)) (xl := xl) (n := k) (xv := xv)
   simp
+
+end WeirdLogic.Example2

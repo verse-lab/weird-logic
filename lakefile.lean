@@ -24,7 +24,7 @@ require ssreflect from
     git "https://github.com/verse-lab/lean-ssr.git" @ "v4.20.0"
 
 require lgtm from
-    git "https://github.com/verse-lab/lean-lgtm.git" @ "v4.20.0"
+    git "https://github.com/verse-lab/irl.git" @ "oopsla26-artefact"
 
 -- @[default_target]
 -- lean_lib «WeirdLogic» where
