@@ -1,7 +1,5 @@
 # weird-logic
 
-# Infinitary Relational Logic
-
 ## 1. Overview
 
 This repository contains **Weird Logic**, a security-focused extension of
